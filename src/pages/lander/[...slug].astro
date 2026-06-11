@@ -1,0 +1,68 @@
+---
+/**
+ * Individual blog lander pages
+ */
+
+import Layout from "@/components/global/Layout.astro";
+import parser from "@/lib/parser";
+import { theme } from "@/lib/theme";
+import { getLanders, getLanderBySlug, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from "@/lib/wp-client";
+import PPCLanderWrapperCMO from "@/components/layouts/ppcLander/PPCLanderWrapperCMO.astro";
+
+export async function getStaticPaths() {
+    const allLanders = await getLanders()
+
+    const landers = allLanders.filter((p: any) => {
+        const fields = p.acf?.additional_blog_fields || p.acf?.additionalBlogFields || {};
+        return !fields.preview_mode && !fields.previewMode;
+    });
+
+    return landers.map((lander: any, index: number) => {
+        // Circular prev/next
+
+        return {
+            params: { slug: lander.slug },
+            props: {
+                lander,
+            },
+        };
+    });
+}
+
+const { lander } = Astro.props;
+
+const globalSettings    = await getGlobalSettings().catch(() => null);
+const favicon           = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+const seo               = lander.yoast_head_json;
+const title             = lander.title?.rendered || '';
+const uri               = extractPath(lander.link);
+
+// Determine header color
+let headerColor = 'black';
+const whiteHeaderPages = [''];
+if (whiteHeaderPages.includes(uri)) {
+  headerColor = 'white';
+}
+if (lander.acf?.header_color) {
+  headerColor = lander.acf.header_color;
+}
+
+// Accent colors
+const accentColor       = lander.acf?.accent_color || '#A9CF38';
+const secondaryColor    = lander.acf?.secondary_color || '#000000';
+
+const isB2B             = lander.slug === 'b2b-marketing-agency' ? true : false
+
+---
+<Layout
+    seo={seo}
+    favicon={favicon}
+    headerColor={headerColor}
+    accentColor={accentColor}
+    secondaryColor={secondaryColor}
+>
+    {isB2B && 
+        <PPCLanderWrapperCMO acf={lander.acf} />
+    }
+</Layout>

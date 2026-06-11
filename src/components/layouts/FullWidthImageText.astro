@@ -1,0 +1,97 @@
+---
+/**
+ * Full Width Image + Text layout
+ * Replaces Gatsby's FullWidthImageText.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage, getImageUrl } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : '';
+
+// Resolve images
+const resolvedImage = await resolveImage(content.image);
+const imageUrl = resolvedImage?.source_url || getImageUrl(content.image) || '';
+const imageAlt = resolvedImage?.alt_text || content.image?.altText || '';
+const isSvg = imageUrl.endsWith('.svg');
+
+const resolvedMobile = await resolveImage(content.mobile);
+const mobileUrl = resolvedMobile?.source_url || getImageUrl(content.mobile) || '';
+const mobileAlt = resolvedMobile?.alt_text || content.mobile?.altText || '';
+
+const hasMobile = !!mobileUrl;
+const imageClasses = hasMobile ? 'hidden md:block' : '';
+
+// Alignment modes
+const alignment = content.alignment || '';
+let headerClasses = '';
+let imageWrapperClasses = 'mt-20';
+
+if (alignment === 'overlap') {
+  headerClasses = 'z-20 relative';
+  imageWrapperClasses = 'relative bottom-6 z-10';
+}
+
+const textAlign = settings?.classes?.includes('text-left') ? 'text-left' : 'text-center';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class={textAlign}>
+      {content.heading && (
+        <h2 class={`${theme.text.H2} ${headerClasses} ${textColor} max-w-[1120px] mx-auto`} set:html={parser(content.heading)} />
+      )}
+
+      {alignment !== 'overlap' && content.body && (
+        <p class={`mt-6 ${theme.text.P_STD} max-w-[1120px] mx-auto ${textColor}`} set:html={parser(content.body)} />
+      )}
+
+      {imageUrl && (
+        <div class={`mx-auto max-w-[1120px] ${alignment === 'overlapBottom' ? 'z-20 relative' : ''} ${imageWrapperClasses}`}>
+          {isSvg ? (
+            <img src={imageUrl} alt={imageAlt} class={`mx-auto ${imageClasses}`} />
+          ) : (
+            <div class={imageClasses}>
+              <WpImage src={imageUrl} alt={imageAlt} responsive />
+            </div>
+          )}
+          {hasMobile && (
+            <img src={mobileUrl} alt={mobileAlt} class="mx-auto md:hidden" />
+          )}
+        </div>
+      )}
+
+      {alignment === 'overlap' && content.intro && (
+        <p class={`text-left mt-8 ${theme.text.H4_LTE} ${textColor}`} set:html={parser(content.intro)} />
+      )}
+
+      {alignment === 'overlap' && content.body && (
+        <p class={`text-left mt-8 ${theme.text.P_STD} ${textColor}`} set:html={parser(content.body)} />
+      )}
+
+      {content.componentButton?.link && (
+        <div class="text-center pt-4 mt-10">
+          <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+        </div>
+      )}
+    </div>
+  </Container>
+  {alignment === 'overlapBottom' && (
+    <div class="bg-white absolute bottom-0 w-full h-[150px]"></div>
+  )}
+</Section>

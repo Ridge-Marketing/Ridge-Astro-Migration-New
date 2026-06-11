@@ -1,0 +1,201 @@
+---
+/**
+ * Dynamic layout block renderer
+ * Replaces Gatsby's FlexibleLayouts.js + layoutIndex.js
+ *
+ * Statically imports all layout components and uses a lookup object
+ * since Astro can't dynamically import .astro components by string name.
+ */
+import { resolveLayoutName } from '@/lib/layout-map';
+import { transformKeys } from '@/lib/wp-client';
+
+// Phase 1 layout components
+import TwoColImageText from './layouts/TwoColImageText.astro';
+import TextBlock from './layouts/TextBlock.astro';
+import FullWidthImage from './layouts/FullWidthImage.astro';
+import PageHeader from './layouts/PageHeader.astro';
+import HomeHero from './layouts/HomeHero.astro';
+import IconTextBoxes from './layouts/IconTextBoxes.astro';
+import LogoCloud from './layouts/LogoCloud.astro';
+import Quotes from './layouts/Quotes.astro';
+import LineBreak from './layouts/LineBreak.astro';
+import PostCards from './layouts/PostCards.astro';
+
+// Phase 3 layout components
+import Results from './layouts/Results.astro';
+import ButtonRow from './layouts/ButtonRow.astro';
+import FeaturedProjectsCarousel from './layouts/FeaturedProjectsCarouselWrapper.astro';
+import FeaturedProjectsGridDev from './layouts/FeaturedProjectsGridDevWrapper.astro';
+
+// Phase 4 layout components
+import FullWidthImageText from './layouts/FullWidthImageText.astro';
+import FullWidthImageVideoText from './layouts/FullWidthImageVideoText.astro';
+import FrequentlyAskedQuestions from './layouts/FrequentlyAskedQuestions.astro';
+import CtaForm from './layouts/CtaForm.astro';
+import CareersForm from './layouts/CareersForm.astro';
+import ContactFourSquare from './layouts/ContactFourSquare.astro';
+import ProjectBlocks from './layouts/ProjectBlocks.astro';
+import FlexibleProjectBlocks from './layouts/FlexibleProjectBlocks.astro';
+
+// Phase 5 layout components
+import TwoColBreakoutImageText from './layouts/TwoColBreakoutImageText.astro';
+import TwoColBreakoutImageHeading from './layouts/TwoColBreakoutImageHeading.astro';
+import TeamGrid from './layouts/TeamGrid.astro';
+import QuarterImageText from './layouts/QuarterImageText.astro';
+import TwoColTextQuote from './layouts/TwoColTextQuote.astro';
+import ResultsTextBlock from './layouts/ResultsTextBlock.astro';
+import BrandingCards from './layouts/BrandingCards.astro';
+import TwoColImageList from './layouts/TwoColImageList.astro';
+import TwoColIconText from './layouts/TwoColIconText.astro';
+import ResultsMixed from './layouts/ResultsMixed.astro';
+import VerticalSlider from './layouts/VerticalSlider.astro';
+import AuditCard from './layouts/AuditCard.astro';
+import ProjectPortfolio from './layouts/ProjectPortfolio.astro';
+import MediaBlocks from './layouts/MediaBlocks.astro';
+import VideoPlayer from './layouts/VideoPlayer.astro';
+import TextVideoOverhang from './layouts/TextVideoOverhang.astro';
+import ImagesTopAlignedText from './layouts/ImagesTopAlignedText.astro';
+import PullquoteImage from './layouts/PullquoteImage.astro';
+import ResultsImage from './layouts/ResultsImage.astro';
+import ImageCarousel from './layouts/ImageCarousel.astro';
+import CtaFooterPpc from './layouts/CtaFooterPpc.astro';
+import TwoColTextForm from './layouts/TwoColTextForm.astro';
+
+// Phase 6 layout components (PPC/audit pages)
+import AuditStats from './layouts/AuditStats.astro';
+import TwoColContentPpc from './layouts/TwoColContentPpc.astro';
+import TwoColTextQuoteCard from './layouts/TwoColTextQuoteCard.astro';
+import StepsWithImages from './layouts/StepsWithImages.astro';
+import StepsWithCard from './layouts/StepsWithCard.astro';
+import PpcProjectSlider from './layouts/PpcProjectSliderWrapper.astro';
+import PpcForm from './layouts/PpcForm.astro';
+import FullWidthImageGallery from './layouts/FullWidthImageGallery.astro';
+import ExpandableIconBoxes from './layouts/ExpandableIconBoxes.astro';
+import BulletsWithImage from './layouts/BulletsWithImage.astro';
+
+const layoutComponents: Record<string, any> = {
+  TwoColImageText,
+  TextBlock,
+  FullWidthImage,
+  PageHeader,
+  HomeHero,
+  IconTextBoxes,
+  LogoCloud,
+  Quotes,
+  LineBreak,
+  PostCards,
+  Results,
+  ButtonRow,
+  FeaturedProjectsCarousel,
+  FeaturedProjectsGridDev,
+  FullWidthImageText,
+  FullWidthImageVideoText,
+  FrequentlyAskedQuestions,
+  CtaForm,
+  CareersForm,
+  ContactFourSquare,
+  ProjectBlocks,
+  FlexibleProjectBlocks,
+  TwoColBreakoutImageText,
+  TwoColBreakoutImageHeading,
+  TeamGrid,
+  QuarterImageText,
+  TwoColTextQuote,
+  ResultsTextBlock,
+  BrandingCards,
+  TwoColImageList,
+  TwoColIconText,
+  ResultsMixed,
+  VerticalSlider,
+  AuditCard,
+  ProjectPortfolio,
+  MediaBlocks,
+  VideoPlayer,
+  TextVideoOverhang,
+  ImagesTopAlignedText,
+  PullquoteImage,
+  ResultsImage,
+  ImageCarousel,
+  CtaFooterPpc,
+  TwoColTextForm,
+  AuditStats,
+  TwoColContentPpc,
+  TwoColTextQuoteCard,
+  StepsWithImages,
+  StepsWithCard,
+  PpcProjectSlider,
+  PpcForm,
+  FullWidthImageGallery,
+  ExpandableIconBoxes,
+  BulletsWithImage,
+};
+
+interface Props {
+  layouts: any[];
+}
+
+const { layouts } = Astro.props;
+
+/**
+ * Extract layoutContent and layoutSettings from a REST API layout block.
+ *
+ * REST API ACF flexible content blocks have the shape:
+ * {
+ *   acf_fc_layout: "text_block",
+ *   layout__text_block: {
+ *     layout__content: { ... },
+ *     layout__settings: { ... }
+ *   }
+ * }
+ *
+ * We extract the nested content/settings and transform keys to camelCase
+ * so components receive { layoutContent: { headingStyle, ... }, layoutSettings: { backgroundColor, ... } }.
+ */
+function extractLayoutData(block: any) {
+  const layoutName = block.acf_fc_layout;
+
+  // Try to find the nested layout data under layout__<name>
+  // Also try a normalized key (dashes → underscores, collapse double underscores)
+  // because WP stores the field key normalized even if acf_fc_layout has dashes.
+  const nestedKey       = `layout__${layoutName}`;
+  const normalizedName  = layoutName.replace(/-/g, '_').replace(/_{2,}/g, '_');
+  const normalizedKey   = `layout__${normalizedName}`;
+  const nested          = block[nestedKey] || block[normalizedKey];
+
+  if (nested) {
+    const rawContent = nested.layout__content || nested['layout__content'] || {};
+    const rawSettings = nested.layout__settings || nested['layout__settings'] || {};
+    return {
+      layoutContent: transformKeys(rawContent),
+      layoutSettings: transformKeys(rawSettings),
+    };
+  }
+
+  // Fallback: try flat structure (in case data shape differs)
+  return {
+    layoutContent: transformKeys(block.layout_content || block.layoutContent || block),
+    layoutSettings: transformKeys(block.layout_settings || block.layoutSettings || {}),
+  };
+}
+---
+
+<div>
+  {layouts?.map((block: any, index: number) => {
+    const layoutName = block.acf_fc_layout;
+    const componentName = resolveLayoutName(layoutName);
+
+    if (!componentName) {
+      return <div class="container py-4 text-red-500 text-sm">Layout "{layoutName}" not recognized</div>;
+    }
+
+    const Component = layoutComponents[componentName];
+
+    if (!Component) {
+      return <div class="container py-4 text-orange-500 text-sm">Layout "{componentName}" not yet implemented</div>;
+    }
+
+    const layoutData = extractLayoutData(block);
+
+    return <Component layoutData={layoutData} />;
+  })}
+</div>

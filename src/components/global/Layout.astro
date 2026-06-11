@@ -1,0 +1,80 @@
+---
+/**
+ * Base HTML layout — wraps every page
+ * Replaces Gatsby's Layout.js + wrapPageElement
+ */
+import Head from './Head.astro';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import '@/styles/global.css';
+
+interface Props {
+  seo?: any;
+  favicon?: string;
+  headerColor?: string;
+  headerPosition?: string;
+  accentColor?: string;
+  secondaryColor?: string;
+  showFooterCta?: boolean;
+  landerData?: any;
+  noindex?: boolean;
+}
+
+const {
+  seo,
+  favicon,
+  headerColor = 'white',
+  headerPosition = 'fixed',
+  accentColor,
+  secondaryColor = '#000000',
+  showFooterCta = true,
+  landerData,
+  noindex = false,
+} = Astro.props;
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {noindex
+      ? <>
+          {/* Preview mode: shareable page, but no SEO data and no indexing */}
+          <meta name="robots" content="noindex" />
+          <Head seo={null} favicon={favicon} />
+        </>
+      : <Head seo={seo} favicon={favicon} />
+    }
+    <!-- Typekit fonts -->
+    <link rel="stylesheet" href="https://use.typekit.net/thq8rzi.css" />
+    <!-- Google Tag Manager -->
+    <script is:inline>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-NV9M24V');
+    </script>
+  </head>
+  <body>
+    <!-- GTM noscript -->
+    <noscript>
+      <iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-NV9M24V"
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
+      ></iframe>
+    </noscript>
+
+    <Header color={headerColor} position={headerPosition} />
+
+    <main id="mainContent" tabindex="0" aria-label="Main Content">
+      <slot />
+    </main>
+
+    <Footer showCta={showFooterCta} landerData={landerData} />
+  </body>
+</html>

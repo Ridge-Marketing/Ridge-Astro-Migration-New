@@ -1,0 +1,63 @@
+---
+/**
+ * FeaturedProjectsCarousel wrapper — resolves WP data at build time
+ * Passes resolved slides to the React island
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FeaturedProjectsCarousel from './FeaturedProjectsCarousel.tsx';
+import { getProjectById, resolveImage, extractPath } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+const heading = content.heading || '';
+const featuredProjects = content.featuredProjects || [];
+
+// Resolve all project data in parallel at build time
+const slides = await Promise.all(
+  featuredProjects.map(async (item: any) => {
+    const projectId = item.project;
+    if (!projectId) return null;
+
+    const project = await getProjectById(typeof projectId === 'number' ? projectId : parseInt(projectId));
+    if (!project) return null;
+
+    // Resolve carousel feature image from project ACF
+    const carouselImageId = project.acf?.images?.carousel_feature;
+    const resolved = await resolveImage(carouselImageId);
+
+    return {
+      caption: item.caption || '',
+      title: project.title?.rendered || '',
+      link: extractPath(project.link || ''),
+      imageUrl: resolved?.source_url || '',
+      imageAlt: resolved?.alt_text || '',
+    };
+  })
+);
+
+const validSlides = slides.filter(Boolean);
+---
+
+{validSlides.length > 0 && (
+  <div style="background: linear-gradient(to bottom, white 70%, black 70%)">
+    <Section settings={settings} transparent={true} classes="flex justify-center">
+      <Container container="none" classes="md:container xl:max-w-[1120px] relative">
+        <FeaturedProjectsCarousel
+          client:visible
+          heading={heading}
+          slides={validSlides}
+        />
+      </Container>
+    </Section>
+  </div>
+)}

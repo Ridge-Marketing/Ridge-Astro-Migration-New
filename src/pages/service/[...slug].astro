@@ -1,0 +1,67 @@
+---
+/**
+ * Service page route template
+ * Replaces Gatsby's service.js template
+ */
+import Layout from '@/components/global/Layout.astro';
+import FlexibleLayouts from '@/components/FlexibleLayouts.astro';
+import ServiceHeader from '@/components/global/ServiceHeader.astro';
+import SeoPopup from '@/components/blog/SeoPopup.tsx';
+import { getServices, getGlobalSettings, extractPath, transformKeys } from '@/lib/wp-client';
+
+export async function getStaticPaths() {
+  const allServices = await getServices();
+
+  return allServices.map((service: any) => {
+    const path = extractPath(service.link);
+    // Service paths are like /service/slug/ — extract just the slug part
+    const slug = path.replace(/^\/service\//, '').replace(/^\/|\/$/g, '');
+    return {
+      params: { slug: slug || undefined },
+      props: { service },
+    };
+  });
+}
+
+const { service } = Astro.props;
+
+const globalSettings  = await getGlobalSettings().catch(() => null);
+const favicon         = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+const seo = service.yoast_head_json;
+const uri = extractPath(service.link);
+
+// Service header data: REST API puts it at acf.service_header with layout__content / layout__settings
+const serviceHeaderRaw  = service.acf?.service_header || service.acf?.serviceHeader;
+const serviceHeader     = serviceHeaderRaw ? {
+  layoutContent: transformKeys(serviceHeaderRaw.layout__content || serviceHeaderRaw.layoutContent || serviceHeaderRaw),
+  layoutSettings: transformKeys(serviceHeaderRaw.layout__settings || serviceHeaderRaw.layoutSettings || {}),
+} : null;
+
+// Flexible layouts
+const flexibleLayouts = service.acf?.layouts || [];
+
+// Show SEO popup on SEO service page
+const showSeoPopup = uri === '/service/ai-and-search-engine-optimization/';
+---
+
+<Layout
+  seo={seo}
+  favicon={favicon}
+  headerColor="white"
+>
+  {showSeoPopup && (
+    <SeoPopup client:idle />
+  )}
+
+  {serviceHeader && (
+    <ServiceHeader
+      layoutContent={serviceHeader.layoutContent}
+      layoutSettings={serviceHeader.layoutSettings}
+    />
+  )}
+
+  {flexibleLayouts.length > 0 && (
+    <FlexibleLayouts layouts={flexibleLayouts} />
+  )}
+</Layout>

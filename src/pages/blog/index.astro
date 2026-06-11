@@ -1,0 +1,56 @@
+---
+/**
+ * Blog listing page
+ * Replaces Gatsby's blog.js template
+ */
+import Layout from '@/components/global/Layout.astro';
+import BlogIndex from '@/components/blog/BlogIndex.tsx';
+import { getPosts, getGlobalSettings, getPageBySlug } from '@/lib/wp-client';
+import { theme } from '@/lib/theme';
+
+const allPosts        = await getPosts();
+const globalSettings  = await getGlobalSettings().catch(() => null);
+const favicon         = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+// Get the blog page's SEO data from WordPress (page slug: "blog", id: 289)
+const blogPage        = await getPageBySlug('blog').catch(() => null);
+const seo             = blogPage?.yoast_head_json;
+
+// Filter out preview mode posts
+const posts           = allPosts.filter((p: any) => {
+  const fields = p.acf?.additional_blog_fields || p.acf?.additionalBlogFields || {};
+  return !fields.preview_mode && !fields.previewMode;
+});
+
+// Pre-process posts for the React island (pass only serializable data)
+const serializedPosts = posts.map((post: any) => {
+  const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0];
+  return {
+    id: post.id,
+    title: post.title?.rendered || '',
+    excerpt: post.excerpt?.rendered || '',
+    link: `/blog/${post.slug}/`,
+    featuredImageUrl: featuredMedia?.source_url || '',
+    featuredImageAlt: featuredMedia?.alt_text || '',
+  };
+});
+---
+
+<Layout
+  seo={seo}
+  favicon={favicon}
+  headerColor="white"
+>
+  <div
+    class="w-full bg-cover bg-center bg-no-repeat"
+    style="background-image: url('https://cms.ridgemarketing.com/wp-content/uploads/2022/07/blog-hero.png');"
+  >
+    <hgroup class="container mx-auto">
+      <h1 class={`${theme.text.H1_STD}text-rm-white text-left py-12`}>
+        The Barn of Brands <span class="text-rm-green">Blog</span>
+      </h1>
+    </hgroup>
+  </div>
+
+  <BlogIndex posts={serializedPosts} client:load />
+</Layout>

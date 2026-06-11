@@ -1,0 +1,227 @@
+---
+/**
+ * Project Header
+ * Replaces Gatsby's layouts/layouts/ProjectHeader.js
+ */
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage, getServices, extractPath } from '@/lib/wp-client';
+
+interface Props {
+  header: any;
+  info: {
+    logos?: any;
+    websites?: Array<{ url: string }>;
+    services?: Array<{
+      service_link?: boolean;
+      service?: number;
+      title_override?: string;
+    }>;
+    accentColor?: string;
+    secondaryAccent?: string;
+  };
+}
+
+const { header, info } = Astro.props;
+
+const content = header || {};
+
+const bgImage       = await resolveImage(content.background_image);
+const featuredImage = await resolveImage(content.featured_image);
+const imageOverhang = await resolveImage(content.image_overhang);
+const lightLogo     = await resolveImage(info?.logos?.light);
+
+const accentColor     = info.accentColor ?? false
+const secondaryColor  = info.secondaryAccent ?? false
+
+const videoOverhang   = content.video_overhang || '';
+const hasVideoOverhang = !!videoOverhang;
+const isVimeo         = hasVideoOverhang && videoOverhang.includes('vimeo');
+
+const backgroundColor = content.background_color || '';
+const textTheme       = content.text_theme || 'black';
+
+const heading         = parser(content.heading || '');
+const body            = content.body ? parser(content.body) : '';
+const postBodyHeading = content.post_body_heading || '';
+
+// All services for link resolution
+const allServices   = await getServices().catch(() => []);
+const serviceMap    = new Map<number, string>();
+for (const s of allServices) {
+  serviceMap.set((s as any).id, extractPath((s as any).link));
+}
+
+const websites      = info?.websites || [];
+const services      = info?.services || [];
+
+const top           = featuredImage ? 'top-52 lg:top-96' : 'top-0';
+const isSvgBg       = typeof content.background_image === 'object' && content.background_image?.url?.endsWith?.('.svg');
+---
+
+<section
+  class={`relative project-header text-${textTheme}`}
+  data-has-featured={featuredImage ? 'true' : 'false'}
+>
+<style define:vars={{ accentColor, secondaryColor }}>
+  .accent-text { color: var(--accentColor) !important; }
+  .secondary-text { color: var(--secondaryColor) !important; }
+</style>
+
+  {backgroundColor && (
+    <div
+      class={`project-header__bg-color absolute ${top} bottom-80 left-0 w-full h-full object-cover`}
+      style={`background-color: ${backgroundColor};`}
+    />
+  )}
+
+  {bgImage?.source_url && (
+    isSvgBg ? (
+      <img
+        src={bgImage.source_url}
+        alt=""
+        class={`project-header__bg-image absolute ${top} bottom-80 left-0 w-full h-full object-cover`}
+      />
+    ) : (
+      <img
+        src={bgImage.source_url}
+        alt=""
+        loading="eager"
+        class={`project-header__bg-image absolute ${top} bottom-80 left-0 w-full h-full object-cover`}
+      />
+    )
+  )}
+
+  {featuredImage?.source_url && (
+    <Container container="none" classes="md:container mx-auto">
+      <div class="md:mt-8">
+        <WpImage
+          src={featuredImage.source_url}
+          alt={featuredImage.alt_text || 'featured image'}
+          class="mx-auto"
+        />
+      </div>
+    </Container>
+  )}
+
+  <Container container="slim" classes="pt-20 pb-14 md:pb-16">
+    {lightLogo?.source_url && (
+      <div class="max-w-[300px] lg:max-w-[400px] mb-16">
+        <img
+          src={lightLogo.source_url}
+          alt={lightLogo.alt_text || ''}
+          class="object-contain"
+        />
+      </div>
+    )}
+
+    <div class="xl:flex">
+      <div class="xl:w-3/4">
+        <h2 set:html={heading} class={theme.text.H1_STD} />
+        {body && (
+          <p set:html={body} class={`${theme.text.P_STD} mt-8`} />
+        )}
+      </div>
+      <div class="mt-9 xl:pl-10 md:grid md:grid-cols-2 md:w-8/12 xl:block xl:w-auto">
+        {websites.length > 0 && (
+          <div class="pb-8">
+            <p class={theme.text.P_BLD}>Website</p>
+            <ul>
+              {websites.map((w) => (
+                <li>
+                  <a class="underline font-basic-sans" href={w.url} target="_blank" rel="noopener noreferrer">
+                    {w.url.replace(/^https?:\/\//, '')}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {services.length > 0 && (
+          <div>
+            <p class={theme.text.P_BLD}>Services Provided</p>
+            <ul>
+              {services.map((s) => {
+                const url = s.service ? serviceMap.get(s.service) : undefined;
+                const label = s.title_override || '';
+                return url && s.service_link !== false ? (
+                  <li><a class="underline font-basic-sans" href={url}>{label}</a></li>
+                ) : (
+                  <li>{label}</li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {postBodyHeading && (
+      <h2 class="text-left mb-4 mt-8">
+        <span class="font-stratos uppercase font-bold text-50px leading-H2-H3 block pt-[30px] -mb-[20px]">
+          {postBodyHeading}
+        </span>
+      </h2>
+    )}
+  </Container>
+
+  <Container container="slim">
+    {hasVideoOverhang && (
+      <div class="project-header__overhang" data-overhang>
+        {isVimeo ? (
+          <div class="relative w-full" style="padding-top:56.25%;">
+            <iframe
+              src={videoOverhang}
+              class="absolute inset-0 w-full h-full"
+              frameborder="0"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowfullscreen
+              title="Project video"
+            />
+          </div>
+        ) : (
+          <video
+            preload="metadata"
+            controls
+            src={videoOverhang}
+            poster={imageOverhang?.source_url || undefined}
+            class="w-full"
+          />
+        )}
+      </div>
+    )}
+    {!hasVideoOverhang && imageOverhang?.source_url && (
+      <div class="project-header__overhang" data-overhang>
+        <WpImage
+          src={imageOverhang.source_url}
+          alt={imageOverhang.alt_text || ''}
+        />
+      </div>
+    )}
+  </Container>
+</section>
+
+<script>
+  // Recompute the masking max-height for the section's bg layer so it
+  // ends partway up the overhang media (matches the Gatsby behavior).
+  function syncOverhangMask() {
+    document.querySelectorAll<HTMLElement>('.project-header').forEach((section) => {
+      const overhang = section.querySelector<HTMLElement>('[data-overhang]');
+      if (!overhang) return;
+      const hasFeatured = section.dataset.hasFeatured === 'true';
+      const offset      = hasFeatured ? 224 : 100;
+      const maxPx       = overhang.clientHeight / 2 + offset;
+      const layers      = section.querySelectorAll<HTMLElement>(
+        '.project-header__bg-color, .project-header__bg-image'
+      );
+      layers.forEach((el) => {
+        el.style.maxHeight = `calc(100% - ${maxPx}px)`;
+      });
+    });
+  }
+  syncOverhangMask();
+  window.addEventListener('resize', syncOverhangMask);
+  window.addEventListener('load', syncOverhangMask);
+</script>

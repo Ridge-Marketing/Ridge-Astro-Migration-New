@@ -1,0 +1,159 @@
+---
+/**
+ * Project Portfolio layout
+ * Replaces Gatsby's layouts/layouts/ProjectPortfolio.js
+ *
+ * Renders a vertical stack of portfolio images (with optional mobile/tablet/
+ * desktop variants). A background color or background image spans from the
+ * top of the first image to the bottom of the last, sized via a small
+ * client script that measures the rendered start/end anchors.
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const innerSettings = content.settings || {};
+const images        = content.images   || [];
+
+// Resolve bg image + every image variant in parallel
+const bgImagePromise = resolveImage(innerSettings.backgroundImage);
+const resolvedImages = await Promise.all(
+  images.map(async (img: any) => ({
+    desktop : await resolveImage(img.desktop),
+    tablet  : await resolveImage(img.tablet),
+    mobile  : await resolveImage(img.mobile),
+    padding : img.padding || '',
+  }))
+);
+const bgImage = await bgImagePromise;
+const bgIsSvg = bgImage?.source_url?.toLowerCase().endsWith('.svg');
+
+let textAlign = 'lg:text-left';
+if (innerSettings.textAlign === 'center') textAlign = '';
+if (innerSettings.textAlign === 'right')  textAlign = 'lg:text-right';
+
+const headingAlign  = settings?.classes?.includes('text-left') ? 'text-left' : 'text-center';
+const bgColor       = innerSettings.backgroundColor || '';
+const singleImage   = resolvedImages.length === 1;
+---
+
+<Section settings={settings} classes="relative">
+  <Container>
+    {content.heading && (
+      <h2 class={`mb-8 ${headingAlign} ${textAlign} ${theme.text.H2}`}>{content.heading}</h2>
+    )}
+    {content.body && (
+      <p class={`mb-12 text-center lg:text-left ${theme.text.P_STD}`}>{content.body}</p>
+    )}
+  </Container>
+
+  <div class="relative project-portfolio" data-single={singleImage ? 'true' : 'false'}>
+    {bgColor && (
+      <div
+        class="project-portfolio__bg absolute w-full"
+        style={`background-color: ${bgColor};`}
+      />
+    )}
+    {bgImage?.source_url && (
+      bgIsSvg ? (
+        <img
+          src={bgImage.source_url}
+          alt=""
+          class="project-portfolio__bg object-cover absolute w-full"
+        />
+      ) : (
+        <img
+          src={bgImage.source_url}
+          alt=""
+          class="project-portfolio__bg object-cover absolute w-full"
+          loading="lazy"
+        />
+      )
+    )}
+
+    <Container>
+      <div class="relative">
+        {resolvedImages.map((img, index) => {
+          const first   = index === 0;
+          const last    = index === resolvedImages.length - 1;
+          const padding = img.padding || '';
+
+          // Visibility classes match the Gatsby logic:
+          // if a desktop variant exists, tablet+mobile hide on xl;
+          // if a tablet variant exists, desktop+mobile hide on md;
+          // if a mobile variant exists, desktop+tablet hide below md.
+          let desktopCls = 'text-center ';
+          let tabletCls  = 'text-center ';
+          let mobileCls  = 'text-center ';
+          if (img.desktop) { tabletCls += 'xl:hidden '; mobileCls += 'xl:hidden '; }
+          if (img.tablet)  { desktopCls += 'md:hidden '; mobileCls += 'md:hidden '; }
+          if (img.mobile)  { desktopCls += 'hidden xl:block '; tabletCls += 'hidden md:block '; }
+
+          return (
+            <div class={`portfolio-image relative ${padding}`}>
+              {first && (
+                <div class="portfolio-start absolute top-[12.5%]" data-portfolio-start />
+              )}
+              {last && (
+                <div
+                  class={`portfolio-end absolute ${singleImage ? 'bottom-[12.5%]' : 'bottom-[87.5%] xl:bottom-2/3'}`}
+                  data-portfolio-end
+                />
+              )}
+              {img.mobile?.source_url && (
+                <div class={mobileCls}>
+                  <WpImage src={img.mobile.source_url} alt={img.mobile.alt_text || ''} />
+                </div>
+              )}
+              {img.tablet?.source_url && (
+                <div class={tabletCls}>
+                  <WpImage src={img.tablet.source_url} alt={img.tablet.alt_text || ''} />
+                </div>
+              )}
+              {img.desktop?.source_url && (
+                <div class={desktopCls}>
+                  <WpImage src={img.desktop.source_url} alt={img.desktop.alt_text || ''} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Container>
+  </div>
+</Section>
+
+<script>
+  // Size the bg layer so it spans from the first image's start marker
+  // to the last image's end marker (matches Gatsby behavior).
+  function syncPortfolioBg() {
+    document.querySelectorAll<HTMLElement>('.project-portfolio').forEach((root) => {
+      const start = root.querySelector<HTMLElement>('[data-portfolio-start]');
+      const end   = root.querySelector<HTMLElement>('[data-portfolio-end]');
+      const bgs   = root.querySelectorAll<HTMLElement>('.project-portfolio__bg');
+      if (!start || !end || bgs.length === 0) return;
+      const height = end.getBoundingClientRect().top - start.getBoundingClientRect().top;
+      const top    = (start.offsetParent as HTMLElement | null) ? start.offsetTop : 0;
+      bgs.forEach((el) => {
+        el.style.height = `${height}px`;
+        el.style.top    = `${top}px`;
+      });
+    });
+  }
+  syncPortfolioBg();
+  window.addEventListener('resize', syncPortfolioBg);
+  window.addEventListener('load', syncPortfolioBg);
+</script>

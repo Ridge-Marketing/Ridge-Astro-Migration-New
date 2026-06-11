@@ -1,0 +1,83 @@
+---
+/**
+ * Quarter Image + Text layout
+ * Image occupies ~1/4 of the width; text takes the remaining ~3/4.
+ *
+ * ACF fields (layout__content):
+ *   image_position          – "left" | "right"
+ *   intro_text              – optional lead paragraph above body
+ *   Body                    – main body text (capital B from ACF)
+ *   component__button       – optional CTA button
+ *   component__flexible_media – { type, image (WP media ID), image_alt }
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent || {};
+const settings  = layoutData.layoutSettings || {};
+
+const isImageLeft = (content.imagePosition || 'left') === 'left';
+const textColor   = settings.backgroundColor === 'black' ? 'text-white' : '';
+
+// Resolve image from componentFlexibleMedia
+const mediaImage  = content.componentFlexibleMedia?.image;
+const resolved    = await resolveImage(mediaImage);
+const imageUrl    = resolved?.source_url || '';
+const imageAlt    = resolved?.alt_text || content.componentFlexibleMedia?.imageAlt || '';
+
+// Column order
+const imageOrder = isImageLeft ? '' : 'lg:order-2';
+const textOrder  = isImageLeft ? '' : 'lg:order-1';
+---
+
+<Section settings={settings}>
+  <Container container={'slim'}>
+    {content.introText && (
+      <p
+        class={`${theme.text.H4_LTE} ${textColor} mb-6`}
+        set:html={parser(content.introText)}
+      />
+    )}
+    <div class="lg:grid lg:grid-cols-[1fr_3fr] lg:gap-16 items-start">
+
+      <!-- Image column (~25%) -->
+      <div class={`mb-10 lg:mb-0 ${imageOrder}`}>
+        {imageUrl ? (
+          <WpImage src={imageUrl} alt={imageAlt} />
+        ) : null}
+      </div>
+
+      <!-- Text column (~75%) -->
+      <div class={`${textOrder}`}>
+        {content.Body && (
+          <p
+            class={`${theme.text.P_STD} ${textColor}`}
+            set:html={parser(content.Body)}
+          />
+        )}
+        {content.componentButton?.link && (
+          <div class="mt-8">
+            <Buttons
+              content={content.componentButton}
+              sectionBackground={settings.backgroundColor}
+            />
+          </div>
+        )}
+      </div>
+
+    </div>
+  </Container>
+</Section>

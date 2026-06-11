@@ -1,0 +1,62 @@
+---
+/**
+ * Text + Video Overhang layout — heading/body block with a laptop-framed
+ * autoplaying video that overhangs into the section below.
+ * Replaces Gatsby's TextVideoOverhang.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const video   = content.video || '';
+const bgColor = content.bgColor || '';
+
+const LAPTOP_TOP    = 'https://cms.ridgemarketing.com/wp-content/uploads/2022/12/MacBookPro-Laptop-Top-2.svg';
+const LAPTOP_BOTTOM = 'https://cms.ridgemarketing.com/wp-content/uploads/2022/12/MacBookPro-Laptop-Bottom.svg';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth} classes="text-center">
+    <div
+      class="w-full pt-16 lg:p-20 pb-[180px] lg:pb-[360px]"
+      style={bgColor ? `background-color: ${bgColor};` : ''}
+    >
+      {content.heading && (
+        <p class={`${theme.text.H2} text-white pb-10 px-4`}>{content.heading}</p>
+      )}
+      {content.body && (
+        <p class={`${theme.text.P_STD} text-white px-10`}>{content.body}</p>
+      )}
+    </div>
+
+    <div class="py-20 max-w-[1020px] mx-auto -mt-[180px] lg:-mt-[360px]">
+      <div class="w-[84%] relative mx-auto">
+        <img src={LAPTOP_TOP} alt="laptop screen" class="relative mx-auto z-10" />
+        {video && (
+          <video
+            class="mx-auto absolute top-0 left-0 w-full h-full object-cover p-[1%]"
+            autoplay
+            loop
+            muted
+            playsinline
+            src={video}
+          />
+        )}
+      </div>
+      <div class="-mt-px z-20 relative">
+        <img src={LAPTOP_BOTTOM} alt="laptop keyboard" />
+      </div>
+    </div>
+  </Container>
+</Section>

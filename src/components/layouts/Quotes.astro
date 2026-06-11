@@ -1,0 +1,149 @@
+---
+/**
+ * Quotes layout — slider with parallax quote marks
+ * The slider logic is handled by client-side JS.
+ * Replaces Gatsby's Quotes.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { getReviewById } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+// Resolve review post objects at build time (same pattern as FeaturedProjectsCarouselWrapper)
+const rawQuotes = content.quotes || [];
+const slides = (await Promise.all(
+  rawQuotes.map(async (item: any) => {
+    const id = typeof item === 'number' ? item : item?.id;
+    if (!id) return null;
+
+    const review = await getReviewById(id);
+    if (!review) return null;
+
+    return {
+      title: review.title?.rendered || '',
+      content: parser(review.content?.rendered || ''),
+      reviewsFields: {
+        titleCompany: review.acf?.title_company || '',
+      },
+    };
+  })
+)).filter(Boolean);
+
+const hasArrows = slides.length > 1;
+const firstSlide = slides[0] || {};
+---
+
+<div class="relative overflow-hidden" data-quotes-parallax>
+  <!-- Quote marks sit before Section in DOM so they render behind the content -->
+  <span
+    aria-hidden="true"
+    class={`${theme.text.STATS} text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[50%] lg:top-[75%] left-[30%] lg:left-[20%]`}
+    data-quote-left
+  >
+    &ldquo;
+  </span>
+  <span
+    aria-hidden="true"
+    class={`${theme.text.STATS} text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[75%] lg:top-[125%] right-[30%] lg:right-[20%]`}
+    data-quote-right
+  >
+    &rdquo;
+  </span>
+
+  <Section settings={settings}>
+    <Container container={settings.containerWidth}>
+      {content.heading && (
+        <h2 class={theme.text.H2}>{content.heading}</h2>
+      )}
+      <div class="mt-12 flex w-full flex-wrap justify-between relative" data-quotes-slider>
+        <div class="frosted-glass p-8 lg:p-14 w-full">
+          <div class="animate-quote" data-quote-content>
+            <q
+              set:html={firstSlide.content.replaceAll('<br>', '') || ''}
+              class={`${theme.text.Q} block transition-all ease-in-out before:hidden after:hidden`}
+              data-quote-text
+            />
+            <p class={`${theme.text.P_BLD} pt-8 pb-2`} data-quote-title>
+              {firstSlide.title || ''}
+            </p>
+            <small class={theme.text.FOOTER} data-quote-company>
+              {firstSlide.reviewsFields?.titleCompany || firstSlide.reviews_fields?.title_company || ''}
+            </small>
+          </div>
+        </div>
+        {hasArrows && (
+          <div class="w-[175px] flex bg-rm-pale-grey lg:ml-10">
+            <button class="flex-1 px-5 py-3 text-40px" data-quote-prev aria-label="Previous quote">
+              <svg width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2020/svg"><path d="M9.5 1L1.5 10L9.5 19" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+            <span class={`${theme.text.FOOTER} flex items-center font-basic-sans`} data-quote-counter>
+              1 / {slides.length}
+            </span>
+            <button class="flex-1 px-5 py-3 text-40px" data-quote-next aria-label="Next quote">
+              <svg width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2020/svg"><path d="M1.5 1L9.5 10L1.5 19" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </Container>
+  </Section>
+</div>
+
+<script define:vars={{ slidesData: JSON.stringify(slides) }}>
+  // Quotes slider logic
+  const slides = JSON.parse(slidesData);
+  if (slides.length > 0) {
+    let currentSlide = 0;
+    let userInteracted = false;
+
+    const textEl = document.querySelector('[data-quote-text]');
+    const titleEl = document.querySelector('[data-quote-title]');
+    const companyEl = document.querySelector('[data-quote-company]');
+    const counterEl = document.querySelector('[data-quote-counter]');
+    const prevBtn = document.querySelector('[data-quote-prev]');
+    const nextBtn = document.querySelector('[data-quote-next]');
+
+    function updateSlide(idx) {
+      currentSlide = idx;
+      const slide = slides[idx];
+      if (textEl) textEl.innerHTML = slide.content || '';
+      if (titleEl) titleEl.textContent = slide.title || '';
+      if (companyEl) companyEl.textContent = slide.reviewsFields?.titleCompany || slide.reviews_fields?.title_company || '';
+      if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        userInteracted = true;
+        updateSlide((currentSlide - 1 + slides.length) % slides.length);
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        userInteracted = true;
+        updateSlide((currentSlide + 1) % slides.length);
+      });
+    }
+
+    // Auto-advance
+    if (slides.length > 1) {
+      setInterval(() => {
+        if (!userInteracted) {
+          updateSlide((currentSlide + 1) % slides.length);
+        }
+      }, 6000);
+    }
+  }
+</script>

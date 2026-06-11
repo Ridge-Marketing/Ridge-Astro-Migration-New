@@ -1,0 +1,68 @@
+---
+/**
+ * PPC Case Studies — heading/body plus the auto-advancing media slider.
+ * Resolves item media IDs at build time and hands plain URLs to the
+ * PpcCaseStudiesSlider island.
+ * Replaces Gatsby's ppcLander/PpcCaseStudies.js
+ */
+import Container from '@/components/global/Container.astro'
+import parser from '@/lib/parser'
+import { theme } from '@/lib/theme'
+import { resolveImage } from '@/lib/wp-client'
+import PpcCaseStudiesSlider from './PpcCaseStudiesSlider'
+
+interface Props {
+    acf : {
+        heading : string,
+        body    : string,
+        items   : any[]
+    }
+}
+
+const { acf } = Astro.props
+const heading = acf.heading ?? false
+const body    = acf.body ?? false
+
+const items = await Promise.all(
+    (acf.items || []).map(async (item: any) => {
+        const [image, mobileImage, video] = await Promise.all([
+            resolveImage(item.image),
+            resolveImage(item.mobile_image),
+            resolveImage(item.video),
+        ])
+        return {
+            heading:        item.heading || '',
+            body:           item.body ? parser(item.body) : '',
+            industry:       item.industry || '',
+            tactic:         item.tactic || '',
+            mediaType:      item.media_type || 'image',
+            imageUrl:       image?.source_url || '',
+            imageAlt:       image?.alt_text || '',
+            mobileImageUrl: mobileImage?.source_url || '',
+            mobileImageAlt: mobileImage?.alt_text || '',
+            videoUrl:       video?.source_url || '',
+            videoMime:      video?.mime_type || 'video/mp4',
+        }
+    })
+)
+---
+
+{items.length > 0 &&
+    <section class="py-20 xl:pt-0 xl:pb-40">
+        {(heading || body) &&
+            <Container container="default" classes="mb-12 lg:mb-20 text-center">
+                {heading &&
+                    <h2 class={`${theme.text.H5} text-black`}>{heading}</h2>
+                }
+                {body &&
+                    <div
+                        set:html={parser(body)}
+                        class={`${theme.text.H4_LTE} !text-[21px] !leading-[28px] md:!text-[26px] md:!leading-[36px] text-black mt-4 max-w-[800px] mx-auto`}
+                    />
+                }
+            </Container>
+        }
+
+        <PpcCaseStudiesSlider client:visible items={items} />
+    </section>
+}

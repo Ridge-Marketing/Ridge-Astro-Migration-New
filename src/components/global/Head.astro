@@ -1,0 +1,40 @@
+---
+/**
+ * SEO head component — consumes Yoast REST API data (yoast_head_json)
+ */
+interface Props {
+  seo: any;
+  favicon?: string;
+}
+
+const { seo, favicon } = Astro.props;
+---
+
+{seo?.title && <title>{seo.title}</title>}
+{favicon && <link rel="icon" type="image/x-icon" href={favicon} />}
+
+<meta name="description" content={seo?.description || seo?.og_description || ''} />
+{seo?.title && <meta name="title" content={seo.title} />}
+{seo?.robots?.index === 'noindex' && (
+  <>
+    <meta name="robots" content="noindex" />
+    <meta name="googlebot-news" content="noindex" />
+  </>
+)}
+{seo?.robots?.follow === 'nofollow' && (
+  <meta name="robots" content="nofollow" />
+)}
+
+<!-- Open Graph -->
+<meta property="og:type" content={seo?.og_type || 'website'} />
+{seo?.og_url && <meta property="og:url" content={seo.og_url} />}
+{seo?.og_title && <meta property="og:title" content={seo.og_title} />}
+{seo?.og_description && <meta property="og:description" content={seo.og_description} />}
+{seo?.og_image?.[0]?.url && <meta property="og:image" content={seo.og_image[0].url} />}
+
+<!-- Twitter -->
+<meta property="twitter:card" content={seo?.twitter_card || 'summary_large_image'} />
+{seo?.og_url && <meta property="twitter:url" content={seo.og_url} />}
+{seo?.twitter_title && <meta property="twitter:title" content={seo.twitter_title} />}
+{seo?.twitter_description && <meta property="twitter:description" content={seo.twitter_description} />}
+{seo?.twitter_image && <meta property="twitter:image" content={seo.twitter_image} />}

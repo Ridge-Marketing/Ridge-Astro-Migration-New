@@ -1,0 +1,178 @@
+---
+/**
+ * Icon Text Boxes layout
+ * Replaces Gatsby's IconTextBoxes.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage, convertCMSLink } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent;
+const settings        = layoutData.layoutSettings;
+
+
+// Pre-resolve all box icon images (may be integer IDs)
+const boxes = content.boxes || [];
+const resolvedBoxImages = await Promise.all(
+  boxes.map((item: any) => resolveImage(item.image))
+);
+
+let textColor = settings.backgroundColor === 'black' ? 'white' : 'black';
+
+const headingFont       = content.body ? theme.text.H2 : theme.text.H1_STD;
+const boxSettings       = content.settings || {};
+const cols              = boxSettings.columns === 3 ? 'xl:grid-cols-3' : '';
+const isStack           = boxSettings.type === 'stack';
+const isThreeCols       = boxSettings.columns === 3;
+const leftover          = boxes.length % 3;
+const hasSingleLastItem = isThreeCols && leftover === 1;
+
+let flexDirection = '';
+if (settings.classes) {
+  if (settings.classes.includes('columnOrder')) {
+    flexDirection = 'md:flex-col md:flex-wrap';
+  } else if (settings.classes.includes('rowOrder')) {
+    flexDirection = 'md:flex-row md:flex-wrap';
+  }
+}
+
+const wrapperClasses = isStack
+  ? `${content.heading || content.subheading ? 'mt-16' : 'mt-0'} grid gap-x-8 gap-y-6 md:grid-cols-2 md:gap-y-12 ${cols} gap-8 max-w-[1100px] mx-auto`
+  : `${!content.heading && !content.subheading ? 'mt-0' : 'mt-24'} flex w-full flex-wrap justify-between ${flexDirection} threeColIconsText ${hasSingleLastItem ? '[&>*:last-child]:mx-auto' : ''}`;
+
+const bottomHeadingMargin = isStack ? 'lg:mt-20' : '';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div>
+      {content.heading && (
+        <h2
+          class={`text-center mb-14 text-${textColor} ${headingFont}`}
+          set:html={parser(content.heading)}
+        />
+      )}
+      {content.body && (
+        <p
+          set:html={parser(content.body)}
+          class={`${theme.text.P_STD} max-w-[1120px] mx-auto text-center text-${textColor}`}
+        />
+      )}
+      {content.subheading && (
+        <p class={`mt-10 text-center text-${textColor}`}>
+          <span set:html={parser(content.subheading)} class={theme.text.H4} />
+        </p>
+      )}
+    </div>
+
+    <div class={wrapperClasses}>
+      {boxes.map((item: any, idx: number) => {
+        const resolved  = resolvedBoxImages[idx];
+        const iconUrl   = resolved?.source_url || '';
+        const iconAlt   = resolved?.alt_text || '';
+        const feature   = boxSettings.feature ?? false
+        const isNumber  = boxSettings.feature === 'number';
+
+        const accentPadding = feature === 'accent-line' ? 'py-4' : ''
+
+        const flexHeadingFont = item.body ? theme.text.H4 : theme.text.H5
+
+        return isStack ? (
+          <div class={accentPadding}>
+            <div class="flex justify-start">
+              {feature === 'accent-line' && 
+                <span class={'block w-[138px] ml-auto mr-auto md:ml-0 md:mr-0 border-t-2 border-t-rm-green mb-7'}></span>
+              }
+              {isNumber ? (
+                <span class={`${theme.text.CIRCLE_NUM} w-[55px] h-[55px] border-rm-green text-${textColor}`}>
+                  {idx + 1}
+                </span>
+              ) : iconUrl ? (
+                <img src={iconUrl} alt={iconAlt} class="h-[60px] w-auto mb-5" />
+              ) : null}
+            </div>
+            <div class="flex flex-col text-left">
+              {item.heading && (
+                <h3 class={`${theme.text.H5} text-${textColor} mb-3`}>{item.heading}</h3>
+              )}
+              {item.body && (
+                <p set:html={parser(item.body)} class={`${theme.text.P_STD} text-${textColor}`} />
+              )}
+              {item.link?.url && (
+                <a href={convertCMSLink(item.link.url)} target={item.link.target || undefined} class={`${theme.text_links.BASE_STYLING} ${theme.text_links.STD} ${theme.text_links.FWD_BASE} ${theme.text_links.ARW_FWD_GREEN} text-rm-green mt-4`}>
+                  {item.link.title}
+                </a>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div class={`flex items-start gap-x-4 mb-16 ${isThreeCols ? 'w-full md:w-[48%] xl:w-[30%]' : 'w-full md:w-[48%]'}`}>
+            <div class="flex justify-start">
+              {isNumber && (
+                <span class={`${theme.text.CIRCLE_NUM} w-[55px] h-[55px] border-rm-green text-${textColor}`}>
+                  {idx + 1}
+                </span>
+              )}
+
+              {!isNumber && iconUrl ? (
+                <img src={iconUrl} alt={iconAlt} class="h-[80px] max-w-[75px] w-auto" />
+              ) : null}
+
+              {feature === 'icon-number' &&
+                <span class={`${theme.text.CIRCLE_NUM} w-[55px] min-w-[55px] min-h-[55px] h-[55px] ml-6 border-${textColor} text-${textColor}`}>
+                  {idx + 1}
+                </span>
+              }
+
+            </div>
+            <div class="flex flex-col text-left">
+              {item.heading && (
+                <h3 class={`${flexHeadingFont} text-${textColor} mb-3 !capitalize`}>{item.heading}</h3>
+              )}
+              {item.body && (
+                <p set:html={parser(item.body)} class={`${theme.text.P_STD} text-${textColor}`} />
+              )}
+              {item.link?.url && (
+                <a href={convertCMSLink(item.link.url)} target={item.link.target || undefined} class={`${theme.text_links.BASE_STYLING} ${theme.text_links.STD} ${theme.text_links.FWD_BASE} ${theme.text_links.ARW_FWD_GREEN} text-rm-green mt-4`}>
+                  {item.link.title}
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <div>
+      {content.bottomHeading && (
+        <h3 class={`mt-10 ${bottomHeadingMargin} mb-12 text-center text-${textColor}`}>
+          <span set:html={parser(content.bottomHeading)} class={theme.text.H5} />
+        </h3>
+      )}
+      {content.bottomBody && (
+        <p class={`mt-16 text-center text-${textColor} lg:w-3/4 ml-auto mr-auto`}>
+          <span set:html={parser(content.bottomBody)} class={theme.text.P_STD} />
+        </p>
+      )}
+      {content.componentButton?.link && (
+        <div class="text-center my-8">
+          <Buttons
+            content={content.componentButton}
+            sectionBackground={settings.backgroundColor}
+          />
+        </div>
+      )}
+    </div>
+  </Container>
+</Section>

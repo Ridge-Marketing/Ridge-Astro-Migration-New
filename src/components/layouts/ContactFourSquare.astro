@@ -1,0 +1,92 @@
+---
+/**
+ * Contact Four Square layout — heading + form + image + address/phone
+ * Replaces Gatsby's ContactFourSquare.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import FormContactPage from '@/components/global/FormContactPage.tsx';
+import { theme } from '@/lib/theme';
+import { getGlobalSettings, resolveImage, getOptionsPage } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content       = layoutData.layoutContent;
+const settings      = layoutData.layoutSettings;
+
+// Global settings for address/phone
+const globalSettings  = await getGlobalSettings().catch(() => null);
+const globalContact   = globalSettings?.contact;
+const address         = globalContact?.address?.address || '';
+const phone           = globalContact?.phone?.phone || { title: '', url: '' };
+
+// Contact info heading
+const iconsHeader = content.contactInfo?.heading || '';
+
+// Resolve image
+const resolvedImage = await resolveImage(content.componentFlexibleMedia?.image);
+const imageUrl      = resolvedImage?.source_url || '';
+const imageAlt      = resolvedImage?.alt_text || '';
+
+const options       = await getOptionsPage() ?? false
+const locationSVG   = options ? options?.contact?.address?.icon : false
+const phoneSVG      = options ? options?.contact?.phone?.icon : false
+---
+
+<Section settings={settings}>
+  <Container classes="flex flex-col xl:flex-row">
+    <div class="w-full xl:w-1/2">
+      {content.heading && (
+        <h2 class={theme.text.H1_STD} set:html={parser(content.heading)} />
+      )}
+      {content.body && (
+        <p class={`${theme.text.P_STD} mt-5`}>{content.body}</p>
+      )}
+    </div>
+    <div class="mt-10 xl:mt-0 xl:ml-4 xl:w-[50%] xl:max-w-[800px]">
+      <h2 class={`${theme.text.H5} mb-6`}>{content.formHeading}</h2>
+      <div class="shadow-block pt-10 px-10 pb-12 bg-white">
+        <FormContactPage client:visible classes="bg-white text-rm-black" submitLabel="Submit" />
+      </div>
+    </div>
+  </Container>
+</Section>
+
+<div class="flex flex-col xl:flex-row">
+  <div class="w-full xl:w-3/5 -mt-10 xl:-mt-36 bg-rm-black">
+    {imageUrl && (
+      <WpImage src={imageUrl} alt={imageAlt} class="w-full md:w-3/4 lg:w-full md:mx-auto lg:mx-0 md:block lg:h-[800px] object-cover" responsive />
+    )}
+  </div>
+  <section class="bg-rm-black xl:w-2/5 xl:pr-[15%] xl:pl-[5%] xl:-mt-14 flex items-center">
+    <div class="mt-14 mx-auto block xl:mx-0 xl:mt-0">
+      {iconsHeader && (
+        <h3 class={`${theme.text.H2} text-center w-3/4 mx-auto block mb-10 xl:mx-0 xl:w-full lg:text-left text-rm-white`}>
+          {iconsHeader}
+        </h3>
+      )}
+      <address class="not-italic mx-3 lg:mx-0">
+        {address && (
+          <div class="flex mb-10 last-of-type:mb-0">
+            <WpImage src={locationSVG.url} alt={locationSVG.alt} class="h-[25px] w-[25px] min-w-[25px] mr-3" />
+            <p class={`${theme.text.H4} text-rm-white`} set:html={address} />
+          </div>
+        )}
+        {phone.title && (
+          <div class="flex mb-10 last-of-type:mb-0">
+            <WpImage src={phoneSVG.url} alt={phoneSVG.alt} class="h-[25px] w-[25px] min-w-[25px] mr-3" />
+            <a href={phone.url} class={`${theme.text.H4} text-rm-white`}>{phone.title}</a>
+          </div>
+        )}
+      </address>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,73 @@
+---
+/**
+ * PPC Form layout — gradient section with heading/body + image and the
+ * 2-step 2026 lander form.
+ * Replaces Gatsby's PpcFormLayout.js → ppcLander/PpcForm.js
+ * (always rendered with cmo={true} pt={true}, so the cloud variant is omitted)
+ */
+import Container from '@/components/global/Container.astro';
+import FormLander2026 from '@/components/global/FormLander2026';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+
+const heading = content.heading ? parser(content.heading) : '';
+const body    = content.body ? parser(content.body) : '';
+
+const resolved = await resolveImage(content.image);
+const imageUrl = resolved?.source_url || '';
+const imageAlt = resolved?.alt_text || '';
+---
+
+<section class="bg-white -mt-[1px]">
+  <div class="pb-[160px] relative mt-40 pt-10 md:pt-[160px] bg-[#f3f1ee] bg-[linear-gradient(225deg,rgba(0,171,182,0.25)_0%,transparent_35%,transparent_65%,rgba(0,171,182,0.25)_100%)] z-20">
+    <Container classes="flex flex-col gap-[100px]">
+      <div class="flex flex-col-reverse items-center justify-center xl:flex-row xl:flex-wrap flex-nowrap xl:gap-6">
+        <div class="flex flex-col gap-6 text-left flex-1">
+          {heading && (
+            <h2
+              id="form"
+              set:html={heading}
+              class="pt-8 md:pt-20 text-center xl:text-left text-[2.5rem] leading-[2.7rem] md:text-[4.5rem] md:leading-[4.475rem] font-stratos font-semibold text-black uppercase"
+            />
+          )}
+          {body && (
+            <p
+              set:html={body}
+              class={`text-center xl:text-left ${theme.text.H4_LTE} text-rm-grey max-w-[835px] mx-auto`}
+            />
+          )}
+        </div>
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={imageAlt}
+            class="flex xl:self-start max-w-[250px] md:max-w-[459px] md:w-[459px] md:h-[459px] object-contain"
+          />
+        )}
+      </div>
+      <div class="flex flex-col gap-4">
+        <h2 class={`${theme.text.H5} !text-[26px] !leading-[36px] !normal-case md:!text-[40px] md:!leading-[44px] font-semibold text-black text-center xl:text-left`}>
+          Let's Talk
+        </h2>
+        <FormLander2026
+          client:visible
+          classes="w-full"
+          submitLabel="Submit"
+          btnContainerClasses="md:col-span-2 text-center"
+          redirectForm={true}
+        />
+      </div>
+    </Container>
+  </div>
+</section>

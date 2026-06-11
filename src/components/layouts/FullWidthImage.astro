@@ -1,0 +1,78 @@
+---
+/**
+ * Full Width Image layout
+ * Replaces Gatsby's FullWidthImage.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent;
+const settings        = layoutData.layoutSettings;
+
+const desktopImage    = await resolveImage(content.image);
+const desktopImageUrl = desktopImage?.source_url || '';
+const desktopAlt      = desktopImage?.alt_text || '';
+const mobileImg       = await resolveImage(content.mobileImage);
+const mobileImageUrl  = mobileImg?.source_url || '';
+const mobileAlt       = mobileImg?.alt_text || '';
+
+const overlap         = content.imageOverlap;
+const overlapBkg      = content.backgroundColor;
+const textAlignment   = settings?.classes?.includes('text-center') ? 'text-center' : 'text-center lg:text-left';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    {content.heading && (
+      <p class={`${theme.text.H2} px-2 pb-8 ${textAlignment}`}>{content.heading}</p>
+    )}
+    <div class={`mx-auto ${overlap ? 'z-10 relative' : ''}`}>
+      {mobileImageUrl ? (
+        <>
+          <div class="md:hidden">
+            <WpImage src={mobileImageUrl} alt={mobileAlt} responsive />
+          </div>
+          <div class="hidden md:block text-center">
+            <WpImage src={desktopImageUrl} alt={desktopAlt} class={content.imageClasses || ''} responsive />
+          </div>
+        </>
+      ) : desktopImageUrl ? (
+        <WpImage src={desktopImageUrl} alt={desktopAlt} responsive />
+      ) : null}
+    </div>
+    {content.caption && (
+      <p class={`${theme.text.P_STD} mt-4 text-left`}>{content.caption}</p>
+    )}
+  </Container>
+</Section>
+{overlap && (
+  <div class={`block w-full relative bg-${theme.backgroundColor[overlapBkg] || overlapBkg}`} data-overlap></div>
+)}
+
+{overlap && (
+  <script>
+    // Handle overlap background height calculation
+    const overlapDiv = document.querySelector('[data-overlap]');
+    const imageContainer = overlapDiv?.previousElementSibling?.querySelector('[class*="z-10"]');
+    if (overlapDiv && imageContainer) {
+      const setHeight = () => {
+        const h = imageContainer.clientHeight;
+        (overlapDiv as HTMLElement).style.marginTop = `-${h / 2}px`;
+        (overlapDiv as HTMLElement).style.height = `${h / 1.5}px`;
+      };
+      setHeight();
+      window.addEventListener('resize', setHeight);
+    }
+  </script>
+)}

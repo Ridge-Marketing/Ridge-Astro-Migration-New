@@ -1,0 +1,187 @@
+---
+/**
+ * FlexibleMedia — image / video (file or vimeo) / lottie media renderer.
+ * Replaces Gatsby's components/global/FlexibleMedia.js.
+ *
+ * Data shape (after transformKeys to camelCase):
+ *   { type: 'image' | 'video' | 'lottie',
+ *     image, imageAlt, lottie,
+ *     videoSource: 'file' | 'vimeo',
+ *     video: { videoUrl, mobileVideoUrlOptional, thumbnailImage, autoplay, controls } }
+ *
+ * Vimeo videos render in an iframe with a click-to-play thumbnail overlay.
+ * Self-hosted videos with autoplay="Yes" autoplay via IntersectionObserver
+ * once 50% in view (mirrors the Gatsby behavior).
+ */
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  data: any;
+  paddingRatio?: string;
+  className?: string;
+  wrapperClassName?: string;
+}
+
+const { data, paddingRatio, className = '', wrapperClassName = '' } = Astro.props;
+
+const type        = data?.type;
+const ratio       = paddingRatio || '56.25%';
+
+const isImage     = type === 'image';
+const isVideo     = type === 'video';
+const isLottie    = type === 'lottie';
+
+const imageData   = isImage ? await resolveImage(data.image) : null;
+const imageAlt    = data?.imageAlt || imageData?.alt_text || '';
+
+const video       = isVideo ? data.video : null;
+const videoSource = isVideo ? data.videoSource : null;
+const isFileVideo = isVideo && videoSource === 'file';
+const isVimeo     = isVideo && videoSource === 'vimeo';
+
+const thumb       = isVimeo ? await resolveImage(video?.thumbnailImage) : null;
+
+// File-video flags
+const showControls  = !video || !video.controls || video.controls !== 'Hide';
+const autoplay     = video?.autoplay === 'Yes';
+const mobileSrc    = video?.mobileVideoUrlOptional || '';
+const desktopSrc   = video?.videoUrl || '';
+
+const lottieSrc    = isLottie ? data.lottie : '';
+---
+
+<div class={wrapperClassName}>
+  {isImage && imageData?.source_url && (
+    <div>
+      <WpImage src={imageData.source_url} alt={imageAlt} class={className} />
+    </div>
+  )}
+
+  {isLottie && lottieSrc && (
+    <div>
+      <div
+        class="flexible-media-lottie"
+        data-lottie-src={lottieSrc}
+        style="height:auto;width:100%;"
+      />
+    </div>
+  )}
+
+  {isFileVideo && (
+    <div>
+      {mobileSrc && (
+        <video
+          preload="metadata"
+          class="md:hidden w-full z-0 flexible-media-video"
+          data-autoplay={autoplay ? 'true' : 'false'}
+          controls={showControls}
+          muted={autoplay}
+          loop={autoplay}
+          playsinline
+        >
+          <source src={mobileSrc} type="video/mp4" />
+        </video>
+      )}
+      <video
+        preload="metadata"
+        class={`${mobileSrc ? 'hidden md:block' : ''} w-full z-0 flexible-media-video`}
+        data-autoplay={autoplay ? 'true' : 'false'}
+        controls={showControls}
+        autoplay={autoplay}
+        muted={autoplay}
+        loop={autoplay}
+        playsinline
+      >
+        <source src={desktopSrc} type="video/mp4" />
+      </video>
+    </div>
+  )}
+
+  {isVimeo && video?.videoUrl && (
+    <>
+      <div
+        class="w-full relative media-video flexible-media-vimeo"
+        style={`padding-top:${ratio};`}
+        data-vimeo-url={video.videoUrl}
+      >
+        {thumb?.source_url && (
+          <div class="absolute top-0 left-0 w-full h-full z-30 flex flex-col items-center justify-center flexible-media-vimeo-thumb">
+            <img
+              src={thumb.source_url}
+              alt={thumb.alt_text || ''}
+              class="absolute top-0 left-0 w-full h-full object-cover"
+              loading="eager"
+            />
+          </div>
+        )}
+        <button
+          type="button"
+          class="absolute inset-0 z-40 flex items-center justify-center text-white flexible-media-play"
+          aria-label="Play video"
+        >
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+            <circle cx="40" cy="40" r="40" fill="white" fill-opacity="0.85" />
+            <path d="M33 26 L57 40 L33 54 Z" fill="black" />
+          </svg>
+        </button>
+      </div>
+      {data.caption && (
+        <p class={`mt-2 ${theme.text.P_STD} max-w-[1120px] mx-auto`}>{data.caption}</p>
+      )}
+    </>
+  )}
+</div>
+
+<script>
+  import lottie from 'lottie-web';
+
+  // Lottie animations
+  document.querySelectorAll<HTMLElement>('.flexible-media-lottie').forEach((el) => {
+    const path = el.dataset.lottieSrc;
+    if (!path) return;
+    lottie.loadAnimation({
+      container: el,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path,
+    });
+  });
+
+  // Mobile/in-view autoplay for self-hosted videos
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const v = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting) v.play().catch(() => {});
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll<HTMLVideoElement>('.flexible-media-video[data-autoplay="true"]').forEach((v) => {
+      io.observe(v);
+    });
+  }
+
+  // Vimeo: swap to iframe on click
+  document.querySelectorAll<HTMLElement>('.flexible-media-vimeo').forEach((root) => {
+    const button = root.querySelector<HTMLButtonElement>('.flexible-media-play');
+    const url = root.dataset.vimeoUrl;
+    if (!button || !url) return;
+    button.addEventListener('click', () => {
+      // Build a vimeo embed URL with autoplay
+      let embed = url;
+      const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (m) embed = `https://player.vimeo.com/video/${m[1]}?autoplay=1`;
+      const iframe = document.createElement('iframe');
+      iframe.src = embed;
+      iframe.className = 'absolute top-0 left-0 w-full h-full';
+      iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+      iframe.setAttribute('allowfullscreen', '');
+      const thumb = root.querySelector('.flexible-media-vimeo-thumb');
+      thumb?.remove();
+      button.remove();
+      root.appendChild(iframe);
+    });
+  });
+</script>

@@ -7,6 +7,12 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+/dist/*
+/dist/
+
+/netlify/*
+/netlify/
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -134,3 +140,13 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Astro / Netlify build state
+.astro/
+.netlify/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS
+.DS_Store

@@ -1,0 +1,146 @@
+---
+/**
+ * PPC CMO Hero — desktop variant (hidden below lgz)
+ * Text/list column + autoplaying video, then the half-overlapping callout
+ * card with email capture that pre-fills the main lander form.
+ * Replaces Gatsby's ppcLander/PpcHeroCmoDesktop.js
+ * (heading_desktop/sub_heading_desktop don't exist in the b2b field group, so
+ * the left column renders just the list — matches the live Gatsby page)
+ */
+import Container from '@/components/global/Container.astro'
+import parser from '@/lib/parser'
+import { theme } from '@/lib/theme'
+import { resolveImage } from '@/lib/wp-client'
+import PpcHeroEmailCapture from './PpcHeroEmailCapture'
+
+interface Props {
+    acf : {
+        heading             : string,
+        sub_heading         : string,
+        component__button   : any,
+        image               : number,
+        media_type          : string,
+        video               : number,
+        list                : any[],
+        callout             : any
+    }
+}
+
+const { acf } = Astro.props
+const heading           = (acf as any).heading_desktop ?? false
+const subHeading        = (acf as any).sub_heading_desktop ?? false
+const mediaType         = acf.media_type ?? 'image'
+const buttonData        = acf.component__button ?? false
+const callout           = acf.callout ?? false
+const list              = acf.list ?? false
+
+const resolvedVideo     = await resolveImage(acf.video)
+const resolvedImage     = await resolveImage(acf.image)
+const videoUrl          = resolvedVideo?.source_url || ''
+const videoMime         = resolvedVideo?.mime_type || 'video/mp4'
+const imageUrl          = resolvedImage?.source_url || ''
+const imageAlt          = resolvedImage?.alt_text || ''
+
+const uid = `ppchero-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div class="hidden lgz:block">
+    <section class="relative bg-[#f3f1ee] overflow-hidden">
+        <div class="absolute inset-0 pointer-events-none bg-[#eeede9]"></div>
+
+        <Container container="default" classes="relative z-10 pb-[450px] md:pb-[300px] xl:max-w-[1400px] xl:translate-x-[60px]">
+            <div class="flex flex-col xl:flex-row items-center gap-12 xl:gap-0 pt-12 md:py-20 min-h-[500px] xl:min-h-[642px]">
+
+                <!-- Left Column - Text Content -->
+                <div class="flex flex-col gap-6 xl:gap-8 xl:w-[55%] xl:max-w-[625px] text-center xl:text-left pt-8 xl:pt-12 z-10">
+                    {heading &&
+                        <h1
+                            set:html={parser(heading)}
+                            class="font-stratos uppercase font-semibold text-[40px] md:text-[52px] xl:text-[64px] leading-[1] text-black"
+                        />
+                    }
+                    {subHeading &&
+                        <p
+                            set:html={parser(subHeading)}
+                            class={`${theme.text.H4_LTE} text-black`}
+                        />
+                    }
+                    {list && list.length > 0 &&
+                        <ul class="flex flex-col gap-1 xl:items-start items-center">
+                            {list.map((item: any) => (
+                                <li class="flex items-center gap-3 font-basic-sans text-[26px] leading-[1.7]">
+                                    <svg class="w-[20px] shrink-0" viewBox="0 0 26 20" fill="none">
+                                        <path d="M8.81055 19.0176L0.380859 10.5879C-0.126953 10.0801 -0.126953 9.2168 0.380859 8.70898L2.20898 6.88086C2.7168 6.37305 3.5293 6.37305 4.03711 6.88086L9.77539 12.5684L21.9629 0.380859C22.4707 -0.126953 23.2832 -0.126953 23.791 0.380859L25.6191 2.20898C26.127 2.7168 26.127 3.58008 25.6191 4.08789L10.6895 19.0176C10.1816 19.5254 9.31836 19.5254 8.81055 19.0176Z" fill="#A9CF38"/>
+                                    </svg>
+                                    <span class="text-black">{item.item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    }
+                </div>
+
+                <!-- Right Column - Image or Video -->
+                <div class="relative xl:absolute xl:right-0 xl:pt-12 xl:w-[45%] xl:min-w-[800px] xl:translate-x-[15px] xlz:-translate-x-[20px] flex items-center justify-center">
+                    {mediaType === 'video' && videoUrl
+                        ? <video id={uid} muted loop playsinline preload="metadata" class="w-full object-contain">
+                            <source src={videoUrl} type={videoMime} />
+                          </video>
+                        : imageUrl &&
+                            <img src={imageUrl} alt={imageAlt} class="w-full object-contain" />
+                    }
+                </div>
+            </div>
+        </Container>
+    </section>
+
+    <!-- Description and Quote Callout -->
+    {callout && <>
+        <section class="relative z-10 -translate-y-1/2" data-ppc-callout>
+            <Container container="default">
+                <div class="bg-[#107d84] rounded-[21px] py-16 px-8 md:px-20 text-center text-white flex flex-col items-center gap-6">
+                    {callout.heading &&
+                        <h2 class={`${theme.text.H5} text-white`}>
+                            {callout.heading}
+                        </h2>
+                    }
+                    {callout.body &&
+                        <p
+                            set:html={parser(callout.body)}
+                            class={`${theme.text.H4_LTE} text-white max-w-[1100px]`}
+                        />
+                    }
+                    <PpcHeroEmailCapture
+                        client:visible
+                        buttonLabel={buttonData?.link?.title || 'Get a Quote'}
+                        buttonUrl={buttonData?.link?.url || '#form'}
+                    />
+                </div>
+            </Container>
+        </section>
+        <div class="mb-20 xl:mb-40 w-full"></div>
+    </>}
+</div>
+
+<script define:vars={{ uid }}>
+    // Autoplay the hero video when scrolled into view
+    const video = document.getElementById(uid);
+    if (video) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) video.play();
+            });
+        }, { threshold: 0.25 });
+        observer.observe(video);
+    }
+
+    // The callout is pulled up by 50% of its own height; compensate the flow
+    // below it with a matching negative margin (mirrors the Gatsby resize logic)
+    const callout = document.querySelector('[data-ppc-callout]');
+    if (callout) {
+        const update = () => {
+            callout.style.marginBottom = `-${callout.offsetHeight / 2}px`;
+        };
+        update();
+        window.addEventListener('resize', update);
+    }
+</script>

@@ -1,0 +1,44 @@
+---
+/**
+ * Pullquote + Image layout — large italic green quote next to an image.
+ * Replaces Gatsby's PullquoteImage.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const image = await resolveImage(content.image);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-3 gap-16">
+      <div class="md:col-span-3 lg:col-span-2">
+        {content.quote && (
+          <p class="text-45px font-semibold font-basic-sans italic text-rm-green leading-[1.135]">
+            {content.quote}
+          </p>
+        )}
+      </div>
+      <div class="col-span-1">
+        <div class="flex justify-center">
+          {image?.source_url && (
+            <WpImage src={image.source_url} alt={image.alt_text || ''} />
+          )}
+        </div>
+      </div>
+    </div>
+  </Container>
+</Section>

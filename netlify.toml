@@ -1,0 +1,6 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[images]
+  remote_images = ["https://cms\\.ridgemarketing\\.com/.*"]

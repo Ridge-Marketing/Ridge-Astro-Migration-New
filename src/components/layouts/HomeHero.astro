@@ -1,0 +1,112 @@
+---
+/**
+ * Home Hero layout — animated heading cycle with background image/video
+ * Replaces Gatsby's HomeHero.js
+ * The heading animation is handled by client-side JS.
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FlexibleLink from '@/components/global/FlexibleLink.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: any;
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent || layoutData;
+const settings = layoutData.layoutSettings || {};
+
+// Resolve image IDs to URLs (ACF returns integer IDs for image fields)
+const bgImage = await resolveImage(content.backgroundImage);
+const mobileImage = await resolveImage(content.mobileImage);
+const tabletImage = await resolveImage(content.tabletImage);
+
+const imageUrl = bgImage?.source_url || '';
+const mobileImageUrl = mobileImage?.source_url || '';
+const tabletImageUrl = tabletImage?.source_url || '';
+
+const headingsList = content.headingCycle || [];
+const video = content.video;
+const isImage = !video;
+---
+
+<Section classes="relative mt-[-100px]" settings={settings}>
+  {!isImage && (
+    <video
+      playsinline
+      autoplay
+      muted
+      loop
+      src={video}
+      class="absolute object-cover object-center w-full h-full"
+    />
+  )}
+  {isImage && imageUrl && (
+    <div class="absolute bg-cover top-0 left-0 w-full h-full bg-no-repeat">
+      {/* Desktop image */}
+      <img src={imageUrl} alt="" class="z-[-10] hidden xl:block w-full h-full object-cover" loading="eager" />
+      {/* Tablet image */}
+      {tabletImageUrl && (
+        <img src={tabletImageUrl} alt="" class="z-[-10] hidden md:block xl:hidden w-full h-full object-cover" loading="eager" />
+      )}
+      {/* Mobile image */}
+      {mobileImageUrl && (
+        <img src={mobileImageUrl} alt="" class="z-[-10] md:hidden block w-full h-full object-cover" loading="eager" />
+      )}
+    </div>
+  )}
+  <Container classes="homeHero" container="slim">
+    <div class="pt-[60px] md:pt-20 xl:pt-0 max-w-[520px] lg:max-w-[700px] xl:max-w-full ml-auto relative -bottom-[100px]">
+    </div>
+  </Container>
+</Section>
+
+<div class="-mt-px w-full lg:-mt-44">
+  <div class="w-full ml-auto mr-auto lg:max-w-[930px] xl:max-w-[1120px] xl:pl-12">
+    <div class="relative z-10 max-w-full mx-auto bg-black text-white px-9 pt-11 pb-14 md:px-14 md:py-16 md:pt-16 md:ml-0 w-full sm:w-full xl:w-min xl:max-w-min">
+      <h1 class="w-min">
+        <ul class="h-min overflow-hidden relative">
+          {headingsList.map((data: any, idx: number) => (
+            <li
+              id={`heading${idx + 1}`}
+              class={`${idx === 0 ? 'animate-textFadeIn !block' : 'hidden absolute top-0 left-0'} font-stratos uppercase text-80px xl:text-[83px] leading-[75px] font-bold w-full md:w-max`}
+            >
+              {data.heading}
+            </li>
+          ))}
+        </ul>
+        <span set:html={parser(content.subheading)} class="relative font-stratos uppercase font-light text-30px lg:text-40px w-min" />
+      </h1>
+      {content.componentButton?.link && (
+        <div class="pt-10 w-max">
+          <FlexibleLink
+            link={content.componentButton.link}
+            classes={`${theme.text_links.BASE_STYLING} ${theme.text_links.FWD_BASE} ${theme.text_links.HOVER_GREEN} ${theme.text_links.STD} ${theme.text_links.ARW_FWD_WHITE} ${theme.text_links.HOVER_ARW_FWD_GREEN}`}
+          />
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ length: headingsList.length, timer: 4000 }}>
+  // Heading cycle animation
+  if (length > 1) {
+    let aniIdx = 1;
+    setInterval(() => {
+      const idxToChange = aniIdx === length ? 1 : aniIdx + 1;
+      const current = document.getElementById(`heading${aniIdx}`);
+      const next = document.getElementById(`heading${idxToChange}`);
+      if (current && next) {
+        current.classList.remove('animate-textFadeIn');
+        current.classList.add('animate-textFadeOut');
+        next.classList.remove('hidden', 'animate-textFadeOut');
+        next.classList.add('animate-textFadeIn');
+      }
+      aniIdx = idxToChange;
+    }, timer);
+  }
+</script>

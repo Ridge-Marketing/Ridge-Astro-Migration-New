@@ -1,0 +1,54 @@
+---
+/**
+ * CTA Footer PPC layout — aqua-bg CTA banner with optional left image.
+ * Replaces Gatsby's CtaFooterPpc.js
+ */
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage, convertCMSLink } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+
+const image     = await resolveImage(content.image);
+const link      = content.link;
+const linkUrl   = link?.url ? convertCMSLink(link.url) : '';
+---
+
+<section class="-mt-px pt-24 px-0 bg-rm-aqua overflow-hidden">
+  <Container container="slim">
+    <div class={`flex flex-col-reverse lg:grid lg:gap-10 ${image?.source_url ? 'lg:grid-cols-10' : 'lg:grid-cols-7'}`}>
+      {image?.source_url && (
+        <div class="lg:col-span-3 relative">
+          <div class="hidden lg:block lg:absolute -bottom-4 left-0 w-full h-auto">
+            <WpImage src={image.source_url} alt={image.alt_text || ''} class="w-full object-contain" />
+          </div>
+        </div>
+      )}
+
+      <div class={`${image?.source_url ? 'lg:col-span-7' : 'lg:col-span-7 lg:col-start-1'} pb-28`}>
+        {content.heading && (
+          <h2 class={`${theme.text.HERO} text-white`}>{content.heading}</h2>
+        )}
+
+        {linkUrl && (
+          <a
+            href={linkUrl}
+            target={link.target || undefined}
+            class={`mx-auto mt-8 lg:mx-0 text-white border-2 border-white py-3 px-16 !inline-flex ${theme.text_links.BASE_STYLING}${theme.text_links.FWD_BASE}${theme.text_links.STD}!text-[1.75rem] !leading-[1.12] !px-9 ${theme.text_links.ARW_FWD_WHITE}${theme.text_links.HOVER_ARW_FWD_BLACK}hover:bg-white hover:text-rm-black`}
+          >
+            {link.title}
+          </a>
+        )}
+      </div>
+    </div>
+  </Container>
+</section>

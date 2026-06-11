@@ -1,0 +1,115 @@
+---
+/**
+ * Results + Image layout — large heading/body + services list + result cards,
+ * with an optional image floating top-right on desktop.
+ * Replaces Gatsby's ResultsImage.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import ResultCard from '@/components/global/ResultCard.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage, getServices, extractPath } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const image     = await resolveImage(content.image);
+const columnsCl = String(content.columns) === '1' ? '' : 'lg:justify-between';
+
+// Resolve service IDs to URLs
+const allServices = await getServices().catch(() => []);
+const serviceMap  = new Map<number, string>();
+for (const s of allServices) serviceMap.set((s as any).id, extractPath((s as any).link));
+
+const services = content.services || [];
+const results  = content.results  || [];
+const button   = content.componentButton;
+const hasButton = !!(button?.link?.title || button?.link?.url);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth} classes={`bg-rm-${content.backgroundColor || 'white'}`}>
+    <Container classes="px-8 py-16 xl:py-20 w-full mx-auto lg:w-[calc(100%-360px)] xl:w-[calc(100%-520px)] lg:ml-0">
+      <div class="lg:flex">
+        <div class="lg:w-3/4 lg:max-w-[80%] xl:pr-24">
+          {content.heading && (
+            <h2
+              class={`${theme.text.H2} text-[80px] font-semibold`}
+              set:html={content.heading}
+            />
+          )}
+          {content.body && (
+            <p
+              class={`${theme.text.H4_LTE} mt-12 text-[50px] font-semibold`}
+              set:html={content.body}
+            />
+          )}
+          {hasButton && (
+            <div class="mt-8">
+              <Buttons content={button} sectionBackground={settings.backgroundColor} />
+            </div>
+          )}
+        </div>
+        <div class="mt-12 lg:mt-0 lg:pl-10 lg:w-auto">
+          {services.length > 0 && (
+            <div>
+              <p class={`${theme.text.H4} mb-3`}>Services Provided</p>
+              <ul>
+                {services.map((s: any) => {
+                  const url = typeof s.service === 'number'
+                    ? serviceMap.get(s.service)
+                    : (s.service?.link ? extractPath(s.service.link) : null);
+                  return (
+                    <li class="mb-1">
+                      <a
+                        class={`${theme.text.LINK} ${theme.text_links.HOVER_GREEN}`}
+                        href={url || '#'}
+                      >
+                        {s.titleOverride || s.title_override}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {results.length > 0 && (
+        <div class={`flex flex-wrap justify-center ${columnsCl}`}>
+          {results.map((result: any) => (
+            <div class="w-full md:w-[48%]">
+              <ResultCard content={result} columns={String(content.columns || 2)} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {content.secondaryBody && (
+        <div class="mt-8 text-center lg:text-left">
+          <p
+            class={`${theme.text.H4_LTE} text-[21px] font-light leading-[28px]`}
+            set:html={content.secondaryBody}
+          />
+        </div>
+      )}
+    </Container>
+  </Container>
+
+  {image?.source_url && (
+    <div class="relative w-full lg:absolute top-0 lg:top-60 right-0 lg:max-w-[450px] xl:max-w-[600px] 2xl:max-w-[700px]">
+      <WpImage src={image.source_url} alt={image.alt_text || ''} />
+    </div>
+  )}
+</Section>

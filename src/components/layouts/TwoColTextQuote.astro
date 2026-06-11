@@ -1,0 +1,118 @@
+---
+/**
+ * Two Column Text + Quote layout
+ * Left column: heading, intro, body
+ * Right column: pull quote with optional author attribution
+ *
+ * ACF fields (layout__content):
+ *   quote_position  – "left" | "right" (default right)
+ *   text_content    – { heading, intro, body }
+ *   quote_content   – { quotations (bool), quote, author, title }
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent || {};
+const settings        = layoutData.layoutSettings || {};
+
+const textContent     = content.textContent  || {};
+const quoteContent    = content.quoteContent || {};
+
+const isQuoteRight    = (content.quotePosition || 'right') === 'right';
+const textColor       = settings.backgroundColor === 'black' ? 'text-white' : '';
+
+const quoteOrder      = isQuoteRight ? 'lg:order-2' : 'lg:order-1';
+const textOrder       = isQuoteRight ? 'lg:order-1' : 'lg:order-2';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="lg:grid lg:grid-cols-2 lg:gap-16">
+
+      <!-- Text column -->
+      <div class={textOrder}>
+        {textContent.heading && (
+          <h2
+            class={`${theme.text.H2} ${textColor} mb-8`}
+            set:html={parser(textContent.heading)}
+          />
+        )}
+        {textContent.intro && (
+          <p
+            class={`${theme.text.H4_LTE} ${textColor}`}
+            set:html={parser(textContent.intro)}
+          />
+        )}
+        {textContent.body && (
+          <p
+            class={`${theme.text.H4_LTE} ${textColor} mt-6`}
+            set:html={parser(textContent.body)}
+          />
+        )}
+        {content.componentButton?.link && (
+          <div class="mt-8">
+            <Buttons
+              content={content.componentButton}
+              sectionBackground={settings.backgroundColor}
+            />
+          </div>
+        )}
+      </div>
+
+      <!-- Quote column -->
+      <div class={`mt-12 lg:mt-0 ${quoteOrder}`}>
+        <div class="relative">
+          {quoteContent.quotations && (
+            <span
+              aria-hidden="true"
+              class={`font-basic-sans italic font-semibold text-30px md:text-45px leading-36px md:leading-[50px] text-rm-green text-rm-green absolute -ml-6`}
+            >
+              &ldquo;
+            </span>
+          )}
+          {quoteContent.quote && (
+            <q
+              class={`font-basic-sans italic font-semibold text-30px md:text-45px leading-36px md:leading-[50px] text-rm-green text-rm-green before:hidden after:hidden`}
+              set:html={parser(quoteContent.quote)}
+            />
+          )}
+
+          {quoteContent.quotations && (
+            <span
+              aria-hidden="true"
+              class={`font-basic-sans italic font-semibold text-30px md:text-45px leading-36px md:leading-[50px] text-rm-green text-rm-green`}
+            >
+              &rdquo;
+            </span>
+          )}
+          {(quoteContent.author || quoteContent.title) && (
+            <div class="mt-6 border-t border-rm-green pt-6">
+              {quoteContent.author && (
+                <p class={`${theme.text.P_BLD} ${textColor}`}>
+                  {quoteContent.author}
+                </p>
+              )}
+              {quoteContent.title && (
+                <p class={`${theme.text.P_STD} text-rm-green`}>
+                  {quoteContent.title}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+    </div>
+  </Container>
+</Section>

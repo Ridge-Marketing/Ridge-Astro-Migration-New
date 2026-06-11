@@ -1,0 +1,33 @@
+---
+/**
+ * Line Break layout — simple horizontal rule
+ * Replaces Gatsby's LineBreak.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const settings        = layoutData.layoutSettings;
+
+const lineClasses = `ml-auto mr-auto h-[1px] w-full block border-none`;
+let lineColor     = ``;
+
+if (settings.backgroundColor === 'black'){
+    lineColor = `bg-rm-white`;
+} else {
+    lineColor = `bg-rm-black`;
+}
+---
+
+<Section settings={settings} role='separator'>
+  <Container container={settings?.containerWidth}>
+    <hr class={`${lineClasses} ${lineColor}`} />
+  </Container>
+</Section>

@@ -1,0 +1,130 @@
+---
+/**
+ * Expandable Icon Boxes layout — heading/intro plus a grid of icon boxes,
+ * each with an optional "Read More" expandable body (vanilla JS toggle
+ * instead of React state).
+ * Replaces Gatsby's ExpandableIconBoxes.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+const settings       = layoutData.layoutSettings;
+
+const heading   = content.heading || '';
+const introBody = content.introBody ? parser(content.introBody) : '';
+const columns   = Number(content.columns) || 2;
+
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : 'text-black';
+const gridCols  = columns === 3 ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2';
+
+const boxes = await Promise.all(
+  (content.boxes || []).map(async (box: any) => {
+    const resolved = await resolveImage(box.image);
+    return {
+      heading:      box.heading || '',
+      body:         box.body ? parser(box.body) : '',
+      expandedBody: box.expandedBody ? parser(box.expandedBody) : '',
+      iconUrl:      resolved?.source_url || '',
+      iconAlt:      resolved?.alt_text || '',
+      iconIsSvg:    (resolved?.source_url || '').endsWith('.svg'),
+    };
+  })
+);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="flex flex-col gap-10 lg:gap-[43px] items-center">
+
+      {(heading || introBody) && (
+        <div class="flex flex-col gap-6 text-center max-w-[1122px]">
+          {heading && (
+            <h2 class={`font-stratos font-semibold uppercase text-[40px] md:text-[50px] leading-[0.995] ${textColor}`}>
+              {heading}
+            </h2>
+          )}
+          {introBody && (
+            <div
+              set:html={introBody}
+              class={`font-basic-sans font-light text-[21px] leading-[28px] ${textColor} [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline [&_strong]:font-bold`}
+            />
+          )}
+        </div>
+      )}
+
+      {boxes.length > 0 && (
+        <div class={`grid grid-cols-1 ${gridCols} gap-x-12 gap-y-16 lg:gap-x-[46px] lg:gap-y-[97px] w-full items-start`}>
+          {boxes.map((box) => (
+            <div class="flex gap-5 items-start expandable-icon-box">
+              {box.iconUrl && (
+                <div class="w-[60px] shrink-0">
+                  {box.iconIsSvg ? (
+                    <img src={box.iconUrl} alt={box.iconAlt} class="w-auto h-[55px] object-contain" />
+                  ) : (
+                    <WpImage src={box.iconUrl} alt={box.iconAlt} class="w-auto h-[55px] object-contain" />
+                  )}
+                </div>
+              )}
+              <div class="flex flex-col gap-6 flex-1 min-w-0">
+                {box.heading && (
+                  <h3 class={`font-basic-sans font-semibold text-[26px] leading-[32px] ${textColor}`}>
+                    {box.heading}
+                  </h3>
+                )}
+                {box.body && (
+                  <p
+                    set:html={box.body}
+                    class={`font-basic-sans font-normal text-[18px] leading-[26px] ${textColor}`}
+                  />
+                )}
+                {box.expandedBody && (
+                  <div
+                    set:html={box.expandedBody}
+                    class={`expandable-icon-box__more hidden font-basic-sans font-normal text-[18px] leading-[26px] ${textColor} [&_p]:mb-4 [&_p:last-child]:mb-0 [&_a]:underline [&_strong]:font-bold`}
+                  />
+                )}
+                {box.expandedBody && (
+                  <button
+                    type="button"
+                    aria-expanded="false"
+                    class={`expandable-icon-box__toggle ${theme.text_links.BASE_STYLING} ${theme.text_links.STD} text-[#A9CF38] uppercase font-stratos text-[21px] leading-[28px] inline-flex items-center gap-2 self-start cursor-pointer`}
+                  >
+                    Read More +
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  </Container>
+</Section>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.expandable-icon-box__toggle').forEach((button) => {
+    button.addEventListener('click', () => {
+      const box      = button.closest('.expandable-icon-box');
+      const more     = box?.querySelector('.expandable-icon-box__more');
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+
+      more?.classList.toggle('hidden', expanded);
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? 'Read More + ' : 'Read Less – ';
+    });
+  });
+</script>

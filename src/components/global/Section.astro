@@ -1,0 +1,45 @@
+---
+/**
+ * Section wrapper — applies padding, background color, anchor IDs
+ * Replaces the Section export from Gatsby's Wrappers.js
+ */
+import { theme } from '@/lib/theme';
+
+interface Props {
+  settings?: {
+    padding?: { top?: string; bottom?: string };
+    backgroundColor?: string;
+    position?: string;
+    id?: string;
+    anchorId?: string;
+    classes?: string;
+  };
+  classes?: string;
+  transparent?: boolean;
+  role?: string;
+}
+
+const { settings, classes: extraClasses = '', transparent = false, role = '' } = Astro.props;
+
+const pt = settings?.padding?.top ? (theme.paddingTop[settings.padding.top] || '') : 'py-12';
+const pb = settings?.padding?.bottom ? (theme.paddingBottom[settings.padding.bottom] || '') : '';
+const padding = (settings?.padding) ? `${pt} ${pb}` : 'py-12 px-0';
+
+let bg = settings?.backgroundColor || 'white';
+if (transparent) bg = 'transparent';
+const bgClass = theme.backgroundColor[bg] || bg;
+
+const position = settings?.position || 'relative';
+const id = settings?.id || '';
+const anchorId = settings?.anchorId || '';
+const settingsClasses = settings?.classes || '';
+---
+
+{anchorId && <div id={anchorId} class="relative -top-[100px]"></div>}
+<section
+  id={id}
+  class={`-mt-px ${padding} bg-${bgClass} ${position} ${settingsClasses} ${extraClasses}`}
+  role={role || undefined}
+>
+  <slot />
+</section>

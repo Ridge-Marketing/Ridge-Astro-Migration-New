@@ -1,0 +1,62 @@
+---
+/**
+ * Desktop navigation — static, CSS-driven hover dropdowns
+ * Replaces Gatsby's DesktopMenu.js
+ */
+import { theme } from '@/lib/theme';
+import { convertCMSLink } from '@/lib/wp-client';
+
+interface Props {
+  menuItems: any[];
+}
+
+const { menuItems } = Astro.props;
+
+// Triangle SVG for dropdown indicator
+const triangleSvg = `<svg width="45" height="17" viewBox="0 0 45 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.1209 0.929763L0 17H44.5L24.8313 0.990563C23.7569 0.116045 22.2234 0.0909171 21.1209 0.929763Z" fill="currentColor"/></svg>`;
+---
+
+<div class="flex justify-end h-full items-center gap-10">
+  {menuItems.map((navItem, index) => {
+    const label = navItem.title?.rendered || navItem.title || '';
+    const uid = label.replace(/\s/g, '_');
+    const children = navItem.children || [];
+
+    return (
+      <li
+        class={`${theme.text.P_STD} group flex flex-col h-full justify-center relative list-none`}
+      >
+        <a
+          title={label}
+          href={convertCMSLink(navItem.url)}
+          class="py-2 border-b border-transparent group-hover:text-rm-green group-hover:border-rm-green"
+        >
+          <span>{label}</span>
+        </a>
+        {children.length > 0 && (
+          <div class="hidden group-hover:block absolute top-full min-w-max left-1/2 right-1/2 -translate-x-1/2">
+            <span class="w-[44px] mx-auto block text-white" set:html={triangleSvg} />
+            <div class={`bg-white pt-6 pb-8 px-5 text-rm-black shadow-block ${children.length > 6 ? 'grid grid-cols-2 gap-y-4 gap-x-6' : 'flex flex-col gap-6'}`}>
+              {children.map((subItem: any, subIdx: number) => {
+                const subLabel  = subItem.title?.rendered || subItem.title || '';
+                const iconUrl   = subItem.acf?.icon?.source_url || subItem.acf?.icon?.sourceUrl || '';
+                return (
+                  <a
+                    href={convertCMSLink(subItem.url)}
+                    class="flex hover:text-rm-green hover:underline"
+                    set:html={subLabel}
+                  >
+                    {iconUrl && (
+                      <img src={iconUrl} alt="" class="h-[40px] w-[40px] mr-5 block" />
+                    )}
+
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </li>
+    );
+  })}
+</div>

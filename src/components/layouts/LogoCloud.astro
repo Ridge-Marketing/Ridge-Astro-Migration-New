@@ -1,0 +1,81 @@
+---
+/**
+ * Logo Cloud layout — grid of logos (carousel type deferred to Phase 3)
+ * Replaces Gatsby's LogoCloud.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+const heading = content.heading ? parser(content.heading) : '';
+const body = content.body ? parser(content.body) : '';
+const logos = content.logos || [];
+const isCarousel = content.type === 'carousel';
+
+// Pre-resolve all logo images (may be integer IDs)
+const resolvedLogos = await Promise.all(
+  logos.map((logo: any) => resolveImage(logo.image))
+);
+
+const logoItems = logos.map((_logo: any, index: number) => ({
+  url: resolvedLogos[index]?.source_url || '',
+  alt: resolvedLogos[index]?.alt_text || '',
+})).filter((l: any) => l.url);
+
+// Duplicate for seamless infinite loop
+const carouselItems = [...logoItems, ...logoItems];
+---
+
+<Section settings={settings}>
+  <Container>
+    {heading && (
+      <h2 class={`${theme.text.H2} text-center`} set:html={heading} />
+    )}
+    {body && (
+      <p class={`${theme.text.P_STD} text-center my-4`} set:html={body} />
+    )}
+
+    {isCarousel ? (
+      <div class="mt-12 overflow-hidden">
+        <div class="flex items-center w-max [animation:marquee_30s_linear_infinite]">
+          {carouselItems.map((logo: any) => (
+            <div class="mx-8 w-32 flex-shrink-0">
+              <img src={logo.url} alt={logo.alt} class="w-full object-contain" loading="lazy" />
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : (
+      <div class="mt-12 flex w-full flex-wrap justify-center items-center lg:justify-around gap-y-6 md:gap-y-8 gap-x-10 sm:gap-x-12 md:gap-x-20 lg:gap-x-6">
+        {logoItems.map((logo: any) => (
+          <div class="w-[24%] lg:w-[15%] h-full">
+            <img src={logo.url} alt={logo.alt} class="w-full object-contain" loading="lazy" />
+          </div>
+        ))}
+      </div>
+    )}
+
+    {content.componentButton?.link && (
+      <div class="text-center my-12">
+        <Buttons
+          content={content.componentButton}
+          sectionBackground={settings.backgroundColor}
+        />
+      </div>
+    )}
+  </Container>
+</Section>

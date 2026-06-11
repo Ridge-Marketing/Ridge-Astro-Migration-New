@@ -1,0 +1,134 @@
+---
+/**
+ * Two Column Breakout Image + Text layout
+ * Image breaks out to the viewport edge; text is internally padded.
+ *
+ * ACF fields (layout__content):
+ *   image_position  – "left" | "right"
+ *   image_overflow  – "overflow" (image extends to viewport edge)
+ *   image           – WP media ID or object
+ *   eyebrow         – small label above heading (optional)
+ *   heading         – main heading
+ *   body            – rich text / shortcodes
+ *   list            – optional repeater (unused / null)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '../global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent || {};
+const settings        = layoutData.layoutSettings || {};
+
+const isImageLeft = (content.imagePosition || 'left') === 'left';
+const body        = parser(content.body || '');
+const heading     = parser(content.heading || '');
+
+const resolved = await resolveImage(content.image);
+const imageUrl = resolved?.source_url || '';
+const imageAlt = resolved?.alt_text || '';
+
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : '';
+
+let imageWidth      = `xl:w-[calc(40%+2.25rem+(50vw-50%))]`;
+let imageCss        = ``;
+let imageStyle      = ``;
+let imgWrapperCss   = `xl:left-[62%]`;
+let FlexWrapperCss  = `xl:flex`;
+let textCss         = `xl:mr-9 xl:mr-14`;
+
+
+if (content.imagePosition && content.imagePosition === `left`) {
+  // imgWrapperCss   = `xl:left-[calc(-40%+2.25rem)]`;
+  imgWrapperCss   = `xl:right-[62%]`;
+  FlexWrapperCss  = `xl:flex lg:flex-row-reverse`;
+  textCss         = `xl:ml-9 xl:ml-14`;
+}
+
+if (content.imageOverflow && content.imageOverflow === `overflow`) {
+  imageWidth      = `xl:w-full`;
+  imageCss        = `h-full w-auto max-w-none overflow-visible block`;
+  imageStyle      = `height: 100%; width: auto; max-width: none;`;
+}
+
+---
+
+<Section settings={settings} classes="overflow-hidden 2xl:max-w-[1920px] 2xl:mx-auto overflow-hidden 2xl:overflow-visible">
+  <Container>
+    <div class={`justify-start ${FlexWrapperCss}`}>
+
+        <div class={`text-center xl:text-left xl:w-3/5 w-full flex-1 ${textCss}`}>
+          <!-- <div class={`w-full py-14 lg:py-20 ${textPadding}`}> -->
+
+            {content.eyebrow && (
+              <p class="font-stratos uppercase font-bold text-rm-green text-sm tracking-widest mb-4">
+                {content.eyebrow}
+              </p>
+            )}
+
+            {heading && (
+              <h2
+                class={`${theme.text.H1_STD} ${textColor}`}
+                set:html={heading}
+              />
+            )}
+
+            {body && (
+              <p
+                class={`${theme.text.P_STD} mt-6 text-rm-grey`}
+                set:html={body}
+              />
+            )}
+
+             {content.list && 
+              <ul class={`md:flex md:flex-wrap md:justify-between mt-10`}>
+                  {content.list.map((data : any, index : number) => {
+                    const uid  = data.item.replace(' ', '_')
+                    return (
+                      <li class={`${theme.text.P_STD} text-left font-normal md:w-[48%] mb-4 text-rm-grey text-21px`}>
+                          {data.item}
+                      </li>                                       
+                    )
+                  })}
+              </ul>
+            }
+
+            {content.componentButton?.link && (
+              <div class="mt-8">
+                <Buttons
+                  content={content.componentButton}
+                  sectionBackground={settings.backgroundColor}
+                />
+              </div>
+            )}
+
+          <!-- </div> -->
+        </div>
+        <div class={`max-w-[40%] w-full flex-1`}></div>
+      </div>
+
+      <div class={`flex justify-end h-full mt-10 xl:mt-0 mx-auto xl:absolute xl:top-0 ${imageWidth} ${imgWrapperCss}`}>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              class={imageCss}
+              style={imageStyle}
+              loading="lazy"
+            />
+          ) : (
+            <div class="absolute inset-0 bg-gray-200" />
+          )}
+      </div>
+    </Container>
+</Section>

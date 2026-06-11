@@ -1,0 +1,176 @@
+---
+/**
+ * Full Width Image/Video + Text layout
+ * Replaces Gatsby's FullWidthImageVideoText.js
+ *
+ * Fields:
+ *   content.heading       — main heading
+ *   content.intro         — intro paragraph (shown above image, or styled as H4 on overlap)
+ *   content.image         — desktop image (ID or object)
+ *   content.mobile        — mobile video (object with mediaItemUrl/sourceUrl + mimeType)
+ *   content.columns[]     — array of { column } text columns shown below image
+ *   content.body          — body paragraph (shown below image / after columns)
+ *   content.alignment     — '', 'overlap', or 'overlapBottom'
+ *   content.componentButton — CTA button
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage, getImageUrl } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content  = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : '';
+const textAlign = settings?.classes?.includes('text-left') ? 'text-left' : 'text-center';
+const alignment = content.alignment || '';
+
+// Image (desktop)
+const resolvedImage = await resolveImage(content.image);
+const imageUrl = resolvedImage?.source_url || getImageUrl(content.image) || '';
+const imageAlt = resolvedImage?.alt_text || content.image?.altText || '';
+const isSvg = imageUrl.endsWith('.svg');
+const hasMobileVideo = !!(content.mobile?.mediaItemUrl || content.mobile?.sourceUrl);
+const imageClasses = hasMobileVideo ? 'hidden md:block' : '';
+
+// Mobile video
+const mobileVideoUrl  = content.mobile?.mediaItemUrl || content.mobile?.sourceUrl || '';
+const mobileVideoMime = content.mobile?.mimeType || 'video/mp4';
+
+// Alignment-driven classes
+let headerClasses       = '';
+let imageWrapperClasses = 'my-10';
+if (alignment === 'overlap') {
+  headerClasses       = 'z-20 relative';
+  imageWrapperClasses = 'relative bottom-6 z-10';
+}
+
+// Multi-column text blocks
+const columns: any[] = content.columns || [];
+
+// Unique ID so the IntersectionObserver targets the right video
+const uid = `fwivt-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class={textAlign}>
+
+      {/* Heading */}
+      {content.heading && (
+        <h2
+          class={`${theme.text.H2} ${headerClasses} ${textColor} max-w-[1120px] mx-auto`}
+          set:html={parser(content.heading)}
+        />
+      )}
+
+      {/* Intro — shown above image when not in overlap mode */}
+      {alignment !== 'overlap' && content.intro && (
+        <p
+          class={`mt-8 ${theme.text.P_STD} ${textColor}`}
+          set:html={parser(content.intro)}
+        />
+      )}
+
+      {/* Desktop image */}
+      {imageUrl && (
+        <div class={`mx-auto max-w-[1120px] ${alignment === 'overlapBottom' ? 'z-20 relative' : ''} ${imageWrapperClasses}`}>
+          {isSvg ? (
+            <img src={imageUrl} alt={imageAlt} class={`mx-auto ${imageClasses}`} />
+          ) : (
+            <div class={imageClasses}>
+              <WpImage src={imageUrl} alt={imageAlt} responsive />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Mobile video — hidden on md+, plays when scrolled into view */}
+      {hasMobileVideo && (
+        <video
+          id={uid}
+          class="md:hidden block mx-auto"
+          muted
+          loop
+          playsinline
+          preload="metadata"
+        >
+          <source src={mobileVideoUrl} type={mobileVideoMime} />
+        </video>
+      )}
+
+      {/* Multi-column text blocks */}
+      {columns.length > 0 && (
+        <div class="flex flex-col md:flex-row md:text-left md:gap-12 px-4">
+          {columns.map((el: any) => (
+            <p
+              class={`mt-6 ${theme.text.P_STD} max-w-[1120px] mx-auto ${textColor}`}
+              set:html={parser(el.column)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Body — shown below image/columns when not in overlap mode */}
+      {alignment !== 'overlap' && content.body && (
+        <p
+          class={`mt-10 ${theme.text.P_STD} max-w-[1120px] mx-auto ${textColor}`}
+          set:html={parser(content.body)}
+        />
+      )}
+
+      {/* Overlap mode: intro as large light text, then body */}
+      {alignment === 'overlap' && content.intro && (
+        <p
+          class={`text-left mt-8 ${theme.text.H4_LTE} ${textColor}`}
+          set:html={parser(content.intro)}
+        />
+      )}
+      {alignment === 'overlap' && content.body && (
+        <p
+          class={`text-left mt-10 ${theme.text.P_STD} ${textColor}`}
+          set:html={parser(content.body)}
+        />
+      )}
+
+      {/* CTA button */}
+      {content.componentButton?.link && (
+        <div class="text-center pt-4 mt-10">
+          <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+        </div>
+      )}
+
+    </div>
+  </Container>
+
+  {/* overlapBottom: white bar at bottom of section to bleed into next section */}
+  {alignment === 'overlapBottom' && (
+    <div class="bg-white absolute bottom-0 w-full h-[150px]"></div>
+  )}
+</Section>
+
+{/* IntersectionObserver: play mobile video when it scrolls into view */}
+{hasMobileVideo && (
+  <script define:vars={{ uid }}>
+    (function () {
+      const video = document.getElementById(uid);
+      if (!video) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) video.play(); },
+        { root: null, rootMargin: '0px', threshold: 0.5 }
+      );
+      observer.observe(video);
+    })();
+  </script>
+)}

@@ -1,0 +1,98 @@
+---
+/**
+ * Audit Stats layout — dark (carbon) section with heading/body and a row of
+ * large animated stat items.
+ * Replaces Gatsby's AuditStatsLayout.js → auditLander/AuditStats.js
+ * (rendered with cmo={true} pb={true}; CSS animation instead of Framer Motion)
+ */
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+
+const heading = content.heading ? parser(content.heading) : '';
+const body    = content.body    ? parser(content.body)    : '';
+const subBody = content.subBody ? parser(content.subBody) : '';
+const stats   = content.stats || [];
+---
+
+<section class="bg-rm-carbon -mt-[1px] pb-40">
+  <Container container="none" classes="max-w-[1450px] mx-auto px-4">
+    <!-- Section Header -->
+    <div class="flex flex-col gap-6 text-center mb-16">
+      {heading && (
+        <h2
+          set:html={heading}
+          class={`${theme.text.H5} !text-[34px] !leading-[1.1] !font-semibold lg:!text-[40px] lg:!leading-[44px] lg:!font-bold text-white`}
+        />
+      )}
+      {body && (
+        <div
+          set:html={body}
+          class="text-center text-[2.125rem] leading-[2.125rem] text-white font-basic-sans font-semibold max-w-[1110px] mx-auto"
+        />
+      )}
+    </div>
+
+    {subBody && (
+      <div class="text-center mb-12">
+        <p set:html={subBody} class={`${theme.text.H3} !text-[34px] text-white`} />
+      </div>
+    )}
+
+    <!-- Stats Grid -->
+    {stats.length > 0 && (
+      <div class="flex flex-col xl:flex-row gap-12 xl:gap-0 px-4 xl:px-0 items-center flex-nowrap justify-center">
+        {stats.map((stat: any, index: number) => (
+          <div
+            class="audit-stat-item flex flex-col gap-4 text-center w-full md:w-[446px]"
+            style={`animation-delay: ${index * 0.2}s`}
+          >
+            <div class="flex flex-col gap-3">
+              {stat.stat && (
+                <p class={`${theme.text.STATS} !text-[100px] md:!text-[120px] !leading-[1] text-rm-green tracking-[-6px]`}>
+                  {stat.stat}
+                </p>
+              )}
+              {stat.heading && (
+                <p class={`${theme.text.H3} !text-[34px] md:!text-[50px] !leading-[1.1] md:!leading-H2-H3 text-white`}>
+                  {stat.heading}
+                </p>
+              )}
+            </div>
+            {stat.subHeading && (
+              <p class={`${theme.text.H4_LTE} text-white`}>{stat.subHeading}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </Container>
+</section>
+
+<style>
+  @keyframes auditStatScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .audit-stat-item {
+    opacity: 0;
+    animation: auditStatScaleIn 0.5s ease-out forwards;
+  }
+</style>

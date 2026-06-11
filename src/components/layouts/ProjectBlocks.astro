@@ -1,0 +1,140 @@
+---
+/**
+ * Project Blocks layout — project grid with 2 or 3 column modes
+ * Replaces Gatsby's ProjectBlocks.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage, getImageUrl, extractPath, getProjectById } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent;
+const settings        = layoutData.layoutSettings;
+
+const textColor = settings.backgroundColor === 'black' ? 'white' : 'black';
+const cols = content.columns === 3 ? 'lg:w-[31%]' : 'md:h-[360px]';
+
+if (content.shadowbox) {
+  settings.position = ' ';
+}
+
+// Resolve project images at build time
+const projects = content.projects || [];
+
+const resolvedProjects = await Promise.all(
+  projects.map(async (project: any) => {
+
+      const projectData = await getProjectById(project)
+      if (projectData) {
+        const title   = projectData.title?.rendered || project.title || '';
+        const uri     = `/project/${projectData.slug ?? '#'}`;
+
+        // ACF data — REST API returns under `acf`, GraphQL uses `projectInformation`
+        const acf     = projectData.acf || projectData.projectInformation || {};
+        const images  = acf.images || {};
+        const logos   = acf.logos || {};
+
+        // Resolve feature screens (3-col mode)
+        const featureScreen   = await resolveImage(images.services_feature_screens);
+        // Resolve project index grid (2-col mode)
+        const gridImage       = await resolveImage(images.project_index_grid);
+        // Resolve dark logo (2-col mode overlay)
+        const darkLogo        = await resolveImage(logos.dark || logos.light);
+
+        return {
+          title,
+          uri,
+          featureScreenUrl  : featureScreen?.source_url || '',
+          featureScreenAlt  : featureScreen?.alt_text || title,
+          gridImageUrl      : gridImage?.source_url || '',
+          gridImageAlt      : gridImage?.alt_text || '',
+          darkLogoUrl       : darkLogo?.source_url || getImageUrl(logos.dark || logos.light) || '',
+          darkLogoAlt       : darkLogo?.alt_text || `${title} logo`,
+          isSvgLogo         : (darkLogo?.source_url || getImageUrl(logos.dark || logos.light) || '').endsWith('.svg'),
+        }
+      }
+  })
+);
+---
+
+<Section settings={settings} transparent={true}>
+  <Container>
+    <div class={`relative ${!content.topHeading && content.overlap ? '-top-8 -mb-8' : ''}`}>
+      {content.topHeading && (
+        <h2
+          class={`${theme.text.H2} text-center text-${textColor}`}
+          style={content.overlap ? 'margin-top: -20vh; padding-bottom: 5vh;' : 'padding-bottom: 5rem;'}
+          set:html={parser(content.topHeading)}
+        />
+      )}
+
+      {resolvedProjects.length > 0 && (
+        <div class="flex w-full flex-wrap justify-between">
+          {resolvedProjects.map((project: any) => {
+            if (content.columns === 3) {
+              // 3-column mode: feature screen images + title links
+              if (!project.featureScreenUrl) return null;
+              return (
+                <div class={`flex flex-col justify-center items-center w-full md:w-[48%] ${cols} mb-12`}>
+                  <WpImage src={project.featureScreenUrl} alt={project.featureScreenAlt} class="object-cover w-full" responsive />
+                  <a
+                    class={`${theme.text_links.BASE_STYLING}${theme.text_links.STD}${theme.text_links.FWD_BASE}${theme.text_links.ARW_FWD_BLACK}${theme.text_links.HOVER_GREEN}${theme.text_links.HOVER_ARW_FWD_GREEN} mt-3`}
+                    href={project.uri}
+                  >
+                    {project.title}
+                  </a>
+                </div>
+              );
+            } else {
+              // 2-column mode: grid images with hover overlay
+              if (!project.gridImageUrl) return null;
+              const logoClasses = 'w-3/4 xl:w-3/5 mb-8 block h-auto -translate-y-5 group-hover:translate-y-0 focus-within:translate-y-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 cursor-pointer z-20 transition-all duration-300 ease-out';
+              return (
+                <div class={`flex flex-col justify-center items-center w-full md:w-[49%] ${cols} mb-12`}>
+                  <div class="mt-3 h-full w-full relative group">
+                    <div class="w-full h-full flex flex-col justify-center items-center absolute top-0 left-0">
+                      {project.darkLogoUrl && (
+                        <img src={project.darkLogoUrl} alt={project.darkLogoAlt} class={logoClasses} />
+                      )}
+                      <a
+                        href={project.uri}
+                        class={`${theme.button.BASE_STYLING} ${theme.button.SOLID_GREEN_HOVER_LIGHT} -translate-y-5 group-hover:translate-y-0 focus-within:translate-y-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 cursor-pointer min-w-max h-min z-20 transition-all duration-300 ease-out`}
+                      >
+                        CASE STUDY
+                      </a>
+                      <div class="w-full h-[0%] bg-rm-black opacity-80 z-10 absolute top-0 left-0 group-hover:h-[100%] focus-within:h-[100%] transition-all duration-300 ease-out"></div>
+                    </div>
+                    <WpImage src={project.gridImageUrl} alt={project.gridImageAlt} class="object-cover w-full h-full" responsive />
+                  </div>
+                </div>
+              );
+            }
+          })}
+        </div>
+      )}
+
+      {content.bottomHeading && (
+        <h2 class={`${theme.text.H5} text-center text-rm-${textColor}`}>
+          {content.bottomHeading}
+        </h2>
+      )}
+
+      {content.componentButton?.link && (
+        <div class="text-center mt-10">
+          <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+        </div>
+      )}
+    </div>
+  </Container>
+</Section>

@@ -1,0 +1,84 @@
+---
+/**
+ * Button component — renders styled CTA buttons
+ * Replaces Gatsby's Buttons.js
+ */
+import { theme } from '@/lib/theme';
+import FlexibleLink from './FlexibleLink.astro';
+
+interface Props {
+  content: {
+    style?: string;
+    link?: {
+      url: string;
+      title: string;
+      target?: string;
+    };
+    colors?: {
+      resting: string;
+    };
+    icon?: string;
+  };
+  sectionBackground?: string;
+}
+
+const { content, sectionBackground = 'white' } = Astro.props;
+
+if (!content?.link) return;
+
+const icon  = content.icon || 'none';
+let bkg     = sectionBackground;
+
+let background: string;
+switch (bkg) {
+  case 'white':
+    background = '_HOVER_DARK';
+    break;
+  case 'pale-grey':
+    background = '_GREY_HOVER_DARK';
+    break;
+  case 'transparent':
+  case 'pale-teal':
+    background = content.style === 'solid' ? '_HOVER_DARK' : '_TRANSPARENT';
+    break;
+  default:
+    background = '_HOVER_LIGHT';
+    break;
+}
+
+const style     = content.style === 'solid' ? 'SOLID_' : 'GHOST_';
+const baseColor = content.colors?.resting || 'GREEN';
+
+let buttonClass = style + baseColor + background;
+
+// Transparent background with white hover state
+if (baseColor.toUpperCase() === 'TRANSPARENT') {
+  buttonClass = 'GHOST_TRANSPARENT_WHITE';
+}
+
+// Fallback if button class doesn't exist in theme
+if (
+  baseColor.toUpperCase() === background.toUpperCase() ||
+  !theme.button[buttonClass]
+) {
+  buttonClass = sectionBackground === 'black'
+    ? 'SOLID_GREEN_HOVER_LIGHT'
+    : 'SOLID_GREEN_HOVER_DARK';
+}
+
+const buttonClasses = theme.button.BASE_STYLING + (theme.button[buttonClass] || '');
+---
+
+{content.link && (
+  <FlexibleLink
+    link={content.link}
+    classes={buttonClasses}
+  >
+    {content.link.title}
+    {icon === 'button' && (
+      <span class="inline-block ml-2">
+        <img src="/images/arrow-right-white.svg" alt="" class="w-[20px] h-[20px] inline" />
+      </span>
+    )}
+  </FlexibleLink>
+)}

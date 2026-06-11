@@ -1,0 +1,59 @@
+---
+/**
+ * Homepage — renders the WordPress front page
+ */
+import Layout from '@/components/global/Layout.astro';
+import HomeHero from '@/components/layouts/HomeHero.astro';
+import FlexibleLayouts from '@/components/FlexibleLayouts.astro';
+import AuditCard from '@/components/layouts/AuditCard.astro';
+import { getPages, getGlobalSettings, extractPath, transformKeys } from '@/lib/wp-client';
+
+// Find the front page
+const allPages = await getPages();
+const frontPage = allPages.find((p: any) =>
+  p.slug === 'homepage' ||
+  p.acf?.isFrontPage ||
+  p.template === 'front-page' ||
+  extractPath(p.link) === '/'
+) || allPages[0];
+
+const globalSettings = await getGlobalSettings().catch(() => null);
+const favicon = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+const seo = frontPage?.yoast_head_json;
+
+// REST API: home hero data is at acf.layout__home_hero
+const homeHeroRaw = frontPage?.acf?.layout__home_hero;
+const homeHero = homeHeroRaw ? {
+  layoutContent: transformKeys(homeHeroRaw.layout__content || homeHeroRaw),
+  layoutSettings: transformKeys(homeHeroRaw.layout__settings || {}),
+} : null;
+
+// REST API: audit card data is at acf.layout__audit_card
+const auditCardRaw = frontPage?.acf?.layout__audit_card;
+const auditCard = auditCardRaw ? {
+  layoutContent: transformKeys(auditCardRaw.layout__content || auditCardRaw),
+  layoutSettings: transformKeys(auditCardRaw.layout__settings || {}),
+} : null;
+
+// REST API: flexible layouts array is at acf.layouts
+const flexibleLayouts = frontPage?.acf?.layouts || [];
+---
+
+<Layout
+  seo={seo}
+  favicon={favicon}
+  headerColor="black"
+>
+  {homeHero && (
+    <HomeHero layoutData={homeHero} />
+  )}
+
+  {auditCard && (
+    <AuditCard layoutData={auditCard} />
+  )}
+
+  {flexibleLayouts.length > 0 && (
+    <FlexibleLayouts layouts={flexibleLayouts} />
+  )}
+</Layout>

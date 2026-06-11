@@ -1,0 +1,24 @@
+---
+/**
+ * Section + Container wrappers
+ * Replaces Gatsby's Wrappers.js (Section + Container exports)
+ *
+ * Usage:
+ *   <Section settings={layoutSettings}>
+ *     <Container container="slim">
+ *       ...content...
+ *     </Container>
+ *   </Section>
+ *
+ * Since Astro doesn't support multiple named exports from .astro files,
+ * we export Section and Container as separate files. This file provides Section.
+ * Container is in Container.astro.
+ *
+ * For convenience, re-import them where needed:
+ *   import Section from '@/components/global/Section.astro';
+ *   import Container from '@/components/global/Container.astro';
+ */
+
+// This file is a convenience re-export reference.
+// Actual components are in Section.astro and Container.astro.
+---

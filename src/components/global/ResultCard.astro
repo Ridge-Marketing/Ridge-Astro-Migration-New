@@ -1,0 +1,61 @@
+---
+/**
+ * ResultCard — individual stat card for Results layout
+ * Replaces Gatsby's ResultCard.js (static display, no counter animation)
+ */
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  content: {
+    stat?: string;
+    description?: string;
+    company?: string;
+    caseStudy?: string;
+  };
+  columns?: string;
+}
+
+const { content, columns = '3' } = Astro.props;
+
+const columnsNum = parseInt(columns);
+
+const columnClasses: Record<number, string> = {
+  1: 'md:flex items-center gap-8 max-w-[800px] justify-center',
+  2: 'md:flex-[45%] lg:flex-[50%] px-4',
+  3: 'md:w-[45%] lg:w-[30%] px-4',
+  4: 'md:w-[45%] xl:w-[24%] px-4',
+};
+
+let statClass = `accent-text font-semibold font-stratos text-[100px] xl:text-[120px]`;
+if (columnsNum === 4) {
+  statClass = 'accent-text text-[100px] xl:text-[100px] font-semibold font-stratos';
+}
+if (columnsNum !== 3 && columnsNum !== 4) {
+  statClass += ' lg:text-[160px]';
+}
+
+const descriptionClass = columns === '1' ? 'md:max-w-[60%]' : '';
+---
+
+<div class={`text-center md:text-left ${columns !== '1' ? columnClasses[columnsNum] || '' : ''} my-6`}>
+  <div class={`w-fit ml-0 ${columns === '1' ? columnClasses[1] : ''}`}>
+    {content.stat && (
+      <span class={statClass}>{content.stat}</span>
+    )}
+    {content.description && (
+      <p set:html={parser(content.description)} class={`${theme.text.H5} font-basic-sans normal-case ${descriptionClass}`} />
+    )}
+    {content.company && (
+      <p class={`${theme.text.P_STD} mt-4`}>{content.company}</p>
+    )}
+    {content.caseStudy && (
+      <a
+        href={content.caseStudy}
+        class={`${theme.text_links.BASE_STYLING}${theme.text_links.FWD_BASE}${theme.text_links.STD}${theme.text_links.ARW_FWD_BLACK}`}
+      >
+        VIEW CASE STUDY
+      </a>
+    )}
+  </div>
+</div>

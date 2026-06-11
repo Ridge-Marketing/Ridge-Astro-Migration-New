@@ -1,0 +1,113 @@
+---
+/**
+ * Header component — static shell with React island for interactivity
+ */
+import { getGlobalSettings, getMenuItems } from '@/lib/wp-client';
+import DesktopMenu from './DesktopMenu.astro';
+import HeaderIsland from './HeaderIsland';
+
+interface Props {
+  color?: string;
+  position?: string;
+}
+
+const { color = 'white', position = 'fixed' } = Astro.props;
+
+// Fetch header data at build time
+let logoLight = '';
+let logoDark = '';
+let logoAlt = 'Ridge Marketing';
+let desktopMenuItems: any[] = [];
+let mobileMenuItems: any[] = [];
+
+try {
+  const globalSettings = await getGlobalSettings();
+  logoLight = globalSettings.logos?.light?.source_url || globalSettings.logos?.light?.sourceUrl || '';
+  logoDark = globalSettings.logos?.dark?.source_url || globalSettings.logos?.dark?.sourceUrl || '';
+  logoAlt = globalSettings.logos?.light?.alt_text || 'Ridge Marketing';
+} catch (e) {
+  console.warn('Failed to fetch global settings for header:', e);
+}
+
+try {
+  const menus = await import('@/lib/wp-client').then(m => m.getMenus()).catch(() => []);
+
+  const isPrimary = (m: any) => {
+    const name = (m.name || '').toLowerCase();
+    const slug = (m.slug || '').toLowerCase();
+    return name.includes('primary') || name.includes('main') || name.includes('header') || name.includes('desktop') || name.includes('navigation') || slug.includes('primary') || slug.includes('main') || slug.includes('header');
+  };
+
+  const isMobile = (m: any) => {
+    const name = (m.name || '').toLowerCase();
+    const slug = (m.slug || '').toLowerCase();
+    return name.includes('mobile') || slug.includes('mobile');
+  };
+
+  const primaryMenu = (menus as any[]).find(isPrimary) ?? (menus as any[])[0];
+  const mobileMenu  = (menus as any[]).find(isMobile)  ?? (menus as any[])[1] ?? (menus as any[])[0];
+
+  if (primaryMenu) {
+    desktopMenuItems = await getMenuItems(primaryMenu.id);
+  }
+  if (mobileMenu) {
+    mobileMenuItems = await getMenuItems(mobileMenu.id);
+  }
+} catch (e) {
+  console.warn('Failed to fetch menus for header:', e);
+}
+
+const textColor = color === 'black' ? 'text-rm-white' : 'text-rm-black';
+const headerBgClass = color === 'black' ? 'bg-black/70' : 'bg-white';
+const headerPadding = color === 'black' ? 'hidden' : 'h-[100px]';
+---
+
+<header
+  class={`${textColor} ${headerBgClass} ${position} w-full z-50 top-0 flex items-center transition-all duration-500 h-[100px] justify-center`}
+  data-header
+>
+  <button
+    type="button"
+    onclick="document.getElementById('mainContent')?.focus()"
+    class="bg-rm-white text-rm-black p-5 font-basic-sans text-18px absolute -top-96 -left-96 focus:left-0 focus:top-0 focus:underline z-50"
+    title="skip main navigation"
+  >
+    Skip Main Navigation
+  </button>
+
+  <section class="container h-full">
+    <nav class="h-full">
+      <ul class="flex items-center justify-between h-full">
+        <!-- React island handles: logo, scroll shrink, mobile toggle, mobile menu -->
+        <HeaderIsland
+          client:load
+          logoLight={logoLight}
+          logoDark={logoDark}
+          logoAlt={logoAlt}
+          color={color}
+          menuItems={desktopMenuItems}
+          mobileMenuItems={mobileMenuItems}
+        />
+        <!-- Desktop menu (static, CSS hover dropdowns) -->
+        <div class="hidden xl:flex flex-col h-full justify-center">
+          <DesktopMenu menuItems={desktopMenuItems} />
+        </div>
+      </ul>
+    </nav>
+  </section>
+</header>
+<div class={headerPadding}></div>
+
+<script>
+  // Scroll detection for header shrink
+  const header = document.querySelector('[data-header]');
+  if (header) {
+    window.addEventListener('scroll', () => {
+      if (window.pageYOffset > 100) {
+        header.classList.add('is-scrolled', '!h-[65px]');
+      } else {
+        header.classList.remove('is-scrolled', '!h-[65px]');
+      }
+    }, { passive: true });
+  }
+</script>

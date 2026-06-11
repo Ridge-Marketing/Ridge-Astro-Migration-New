@@ -1,0 +1,45 @@
+---
+/**
+ * Results layout — stat cards in a grid
+ * Replaces Gatsby's Results.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import ResultCard from '@/components/global/ResultCard.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+const columns = content.columns || '3';
+const columnsJustify = columns === '1' ? '' : 'md:justify-between';
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.heading && (
+      <h2 class="text-center mb-4">
+        <span class={theme.text.H2} set:html={parser(content.heading)} />
+      </h2>
+    )}
+    {content.body && (
+      <p class="mb-6 text-center">
+        <span class={theme.text.P_STD} set:html={parser(content.body)} />
+      </p>
+    )}
+    <div class={`flex flex-wrap justify-center ${columnsJustify}`}>
+      {content.results && content.results.map((result: any) => (
+        result && <ResultCard content={result} columns={columns} />
+      ))}
+    </div>
+  </Container>
+</Section>

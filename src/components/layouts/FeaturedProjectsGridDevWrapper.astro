@@ -1,0 +1,121 @@
+---
+/**
+ * FeaturedProjectsGridDev wrapper — resolves all WP images at build time,
+ * then passes plain-object props to the React island.
+ */
+import FeaturedProjectsGridDev from './FeaturedProjectsGridDev.tsx';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent  || {};
+
+// ── helpers ────────────────────────────────────────────────────────────────
+
+async function resolveUrl(imgField: any): Promise<string> {
+  if (!imgField) return '';
+  const r = await resolveImage(imgField);
+  return r?.source_url || imgField?.sourceUrl || imgField?.source_url || '';
+}
+
+async function resolveLightboxImages(images: any[]): Promise<string[]> {
+  if (!Array.isArray(images)) return [];
+  const urls = await Promise.all(images.map((li: any) => resolveUrl(li?.image || li)));
+  return urls.filter(Boolean);
+}
+
+async function resolveImageSlot(slot: any) {
+  if (!slot) return { imageUrl: '', mobileImageUrl: '', title: '', link: null, sidePin: 'center', lightboxImages: [] };
+  const pin = slot.desktopImageSidePin?.toLowerCase() || 'center';
+  return {
+    imageUrl:        await resolveUrl(slot.image),
+    mobileImageUrl:  await resolveUrl(slot.mobileImage),
+    title:           slot.title || '',
+    link:            slot.link?.url ? { url: slot.link.url, title: slot.link.title || '', target: slot.link.target || '_self' } : null,
+    sidePin:         pin === 'left' ? 'left' : pin === 'right' ? 'right' : 'center',
+    lightboxImages:  await resolveLightboxImages(slot.lightboxImages || []),
+  };
+}
+
+async function resolveProjectBlock(block: any) {
+  const [largeImage, smallImageTop, smallImageBottom] = await Promise.all([
+    resolveImageSlot(block?.group?.largeImage),
+    resolveImageSlot(block?.group?.smallImageTop),
+    resolveImageSlot(block?.group?.smallImageBottom),
+  ]);
+  return { largeImage, smallImageTop, smallImageBottom };
+}
+
+// –– Header ───────────────────────────────────────────────────────────────
+
+const header = content.portfolioHeader ? content.portfolioHeader : false
+
+// ── Websites ───────────────────────────────────────────────────────────────
+
+const websiteBlocks = await Promise.all(
+  (content.websiteProjects || []).map(resolveProjectBlock)
+);
+
+// ── Branding ───────────────────────────────────────────────────────────────
+
+const brandingBlocks = await Promise.all(
+  (content.brandingProjects || []).map(resolveProjectBlock)
+);
+
+// ── Video ──────────────────────────────────────────────────────────────────
+
+const videoCategories = await Promise.all(
+  (content.videoProjects || []).map(async (item: any) => {
+    const cat = item?.category || item;
+    const videos = await Promise.all(
+      (cat?.videos || []).map(async (v: any) => {
+        const g = v?.group || v;
+        return {
+          title:       g.title || '',
+          subtitle:    g.subtitle || '',
+          videoUrl:    g.videoUrl || g.video_url || '',
+          websiteLink: g.website || g.websiteLink || '',
+          imageUrl:    await resolveUrl(g.image),
+        };
+      })
+    );
+    return { title: cat?.title || '', videos };
+  })
+);
+
+// ── Interactive ────────────────────────────────────────────────────────────
+
+const interactiveCategories = await Promise.all(
+  (content.interactiveProjects || []).map(async (item: any) => {
+    const cat = item?.category || item;
+    const videos = await Promise.all(
+      (cat?.videos || []).map(async (v: any) => {
+        const g = v?.group || v;
+        return {
+          title:       g.title || '',
+          subtitle:    g.subtitle || '',
+          videoUrl:    g.videoUrl || g.video_url || '',
+          websiteLink: g.website || g.websiteLink || '',
+          imageUrl:    await resolveUrl(g.image),
+        };
+      })
+    );
+    return { title: cat?.title || '', videos };
+  })
+);
+---
+
+<FeaturedProjectsGridDev
+  client:load
+  websiteBlocks={websiteBlocks}
+  brandingBlocks={brandingBlocks}
+  videoCategories={videoCategories}
+  interactiveCategories={interactiveCategories}
+  header={header}
+/>

@@ -1,0 +1,62 @@
+---
+/**
+ * Two Column Text + Form layout — text block on the left, CTA form on the right.
+ * Replaces Gatsby's TwoColTextForm.js (which used FormLanders).
+ * Reuses the existing FormCTALayout React island for the form rendering.
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FormCTALayout from '@/components/global/FormCTALayout.tsx';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const textContent = content.textContent || {};
+const formContent = content.formContent || {};
+const textHeading = textContent.heading;
+const textBody    = textContent.body;
+const formHeading = formContent.heading;
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div class="col-span-1">
+        {textHeading && (
+          <h2
+            class="font-stratos uppercase font-bold text-[2.875rem] leading-[1.1] mb-8"
+            set:html={parser(textHeading)}
+          />
+        )}
+        {textBody && (
+          <div
+            class="block two-col-text-form-body"
+            set:html={parser(textBody)}
+          />
+        )}
+      </div>
+      <div class="col-span-1 relative">
+        <div id="contact-form" class="absolute -top-20" />
+        {formHeading && (
+          <h3 class={`${theme.text.H5} mb-5`}>{formHeading}</h3>
+        )}
+        <div class="shadow-block p-10">
+          <FormCTALayout
+            client:visible
+            bgColor={settings.backgroundColor}
+          />
+        </div>
+      </div>
+    </div>
+  </Container>
+</Section>

@@ -1,0 +1,53 @@
+---
+/**
+ * Text Block layout
+ * Replaces Gatsby's TextBlock.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+const alignment = `text-${content.alignment || 'center'}`;
+let buttonAlignment = ' justify-center';
+if (content.alignment === 'left') {
+  buttonAlignment = ' justify-start';
+} else if (content.alignment === 'right') {
+  buttonAlignment = ' justify-end';
+}
+
+const body = parser(content.body);
+const heading = parser(content.heading);
+
+let headingStyle = content.headingStyle || 'H2';
+if (headingStyle === 'H1') {
+  headingStyle = 'H1_LTE';
+}
+
+const headingClass = theme.text[headingStyle] || theme.text.H2;
+---
+
+<Section settings={settings}>
+  <Container classes={`${alignment} ${settings.classes || ''}`} container={settings.containerWidth}>
+    <h2 class={`${headingClass} pb-6 lg:w-[95%]`} set:html={heading} />
+    <p class={`${theme.text.P_STD} lg:w-[95%] mb-6`} set:html={body} />
+    {(content.componentButton?.link?.title || content.componentButton?.link?.url) && (
+      <Buttons
+        content={content.componentButton}
+        sectionBackground={settings.backgroundColor}
+      />
+    )}
+  </Container>
+</Section>

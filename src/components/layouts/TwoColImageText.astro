@@ -1,0 +1,61 @@
+---
+/**
+ * Two Column Image + Text layout
+ * Replaces Gatsby's TwoColImageText.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+const order = content.imagePosition === 'left' ? 'lg:order-2' : '';
+const body = parser(content.body);
+
+// Resolve image from componentFlexibleMedia or direct image field (may be integer ID)
+const mediaImage = content.componentFlexibleMedia?.image || content.image;
+const resolved = await resolveImage(mediaImage);
+const imageUrl = resolved?.source_url || '';
+const imageAlt = resolved?.alt_text || content.componentFlexibleMedia?.imageAlt || '';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="lg:grid grid-cols-2 gap-16">
+      <div class={`pb-12 lg:pb-0 flex items-center ${order}`}>
+        <div>
+          <h3 class={`${theme.text.H2} text-center lg:text-left`}>
+            {content.heading}
+          </h3>
+          <p set:html={body} class={`${theme.text.P_STD} mt-8 text-center lg:text-left`} />
+          {content.componentButton?.link && (
+            <div class="lg:text-left text-center my-8">
+              <Buttons
+                content={content.componentButton}
+                sectionBackground={settings.backgroundColor}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      <div class="lg:text-left text-center">
+        {imageUrl && (
+          <WpImage src={imageUrl} alt={imageAlt} />
+        )}
+      </div>
+    </div>
+  </Container>
+</Section>

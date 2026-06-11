@@ -1,0 +1,95 @@
+---
+/**
+ * Bullets With Image layout — heading/intro, two-col bullets + image, outro.
+ * Replaces Gatsby's BulletsWithImage.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+const settings       = layoutData.layoutSettings;
+
+const heading    = content.heading || '';
+const introBody  = content.introBody ? parser(content.introBody) : '';
+const subHeading = content.subHeading || '';
+const bullets    = content.bullets || [];
+const outroBody  = content.outroBody ? parser(content.outroBody) : '';
+
+const resolved = await resolveImage(content.image);
+const imageUrl = resolved?.source_url || '';
+const imageAlt = resolved?.alt_text || '';
+const isSvg    = imageUrl.endsWith('.svg');
+
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : 'text-black';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="flex flex-col gap-10 lg:gap-[34px]">
+
+      {(heading || introBody) && (
+        <div class="flex flex-col gap-6 lg:gap-[34px] max-w-[1114px]">
+          {heading && (
+            <h2 class={`font-stratos font-semibold uppercase text-[40px] md:text-[50px] leading-[0.995] ${textColor}`}>
+              {heading}
+            </h2>
+          )}
+          {introBody && (
+            <div
+              set:html={introBody}
+              class={`font-basic-sans font-light text-[21px] leading-[28px] ${textColor} [&_p]:mb-4 [&_a]:underline [&_strong]:font-bold`}
+            />
+          )}
+        </div>
+      )}
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
+        <div class="flex flex-col gap-4">
+          {subHeading && (
+            <p class={`font-basic-sans font-semibold text-[26px] leading-[36px] ${textColor}`}>
+              {subHeading}
+            </p>
+          )}
+          {bullets.length > 0 && (
+            <ul class={`flex flex-col gap-3.5 font-basic-sans font-light text-[21px] leading-[28px] ${textColor}`}>
+              {bullets.map((b: any) => (
+                <li class="flex items-start gap-4">
+                  <span class="text-[24px] leading-[24px] shrink-0">•</span>
+                  <span>{b.item}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {imageUrl && (
+          <div class="w-full flex items-center justify-center max-w-[750px] xl:max-w-full mx-auto">
+            {isSvg ? (
+              <img src={imageUrl} alt={imageAlt} class="w-full h-auto object-contain" />
+            ) : (
+              <WpImage src={imageUrl} alt={imageAlt} class="w-full h-auto rounded-[20px] object-contain" />
+            )}
+          </div>
+        )}
+      </div>
+
+      {outroBody && (
+        <div
+          set:html={outroBody}
+          class={`font-basic-sans font-light text-[21px] leading-[28px] max-w-[1119px] ${textColor} [&_p]:mb-4 [&_a]:underline [&_strong]:font-bold`}
+        />
+      )}
+
+    </div>
+  </Container>
+</Section>

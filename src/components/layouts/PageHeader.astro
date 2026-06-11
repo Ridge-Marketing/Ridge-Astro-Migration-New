@@ -1,0 +1,91 @@
+---
+/**
+ * Page Header layout (hero banner with heading overlay)
+ * Replaces Gatsby's PageHeader.js
+ */
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: any;
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent || layoutData;
+const settings = layoutData.layoutSettings || {};
+
+const bgImage = await resolveImage(content.backgroundImage);
+const imageUrl = bgImage?.source_url || '';
+const video = content.backgroundVideo || false;
+
+let noBox: string;
+let noSpace: string;
+if (content.heading || content.subheading || content.eyebrow) {
+  noBox = 'absolute';
+  noSpace = '';
+} else {
+  noBox = 'relative';
+  noSpace = 'hidden';
+}
+
+const width = settings.containerWidth === 'default' ? 'lg:w-4/6' : 'lg:w-4/5';
+const objectPos = content.objectPosition || content.object_position || 'center';
+---
+
+<section class="relative">
+  {imageUrl && (
+    <img
+      src={imageUrl}
+      alt=""
+      class={`${noBox} top-0 left-0 w-full h-[400px] lg:h-[580px] object-cover`}
+      style={`object-position: ${objectPos} center;`}
+      loading="eager"
+    />
+  )}
+
+  {video && (
+    <video
+      playsinline
+      autoplay
+      muted
+      loop
+      src={video}
+      class="absolute object-cover object-center w-full h-full"
+    />
+  )}
+
+  <div class={`absolute bottom-0 left-0 w-full h-16 bg-white ${noSpace}`}></div>
+
+  <div>
+    <Container
+      container={settings.containerWidth}
+      classes={`${noSpace} pt-[320px] lg:pt-[500px] xl:pt-96 ${settings.classes || ''}`}
+    >
+      {content.heading && (
+        <div class={`bg-black text-white py-12 px-6 lg:px-12 xl:pt-14 xl:pb-12 xl:pl-20 xl:pr-16 ${width} ${content.maxWidth ? 'xl:w-auto' : ''}`} style={content.maxWidth ? `max-width:${content.maxWidth}px` : ''}>
+          {content.eyebrow && (
+            <span class={`block mb-8 ${theme.text.H4}`}>{content.eyebrow}</span>
+          )}
+          {(content.heading || content.subheading) && (
+            <h2 class={`flex flex-col ${content.reverseHeading ? 'flex-col-reverse' : ''}`}>
+              {content.heading && (
+                <span set:html={parser(content.heading)} class={`block ${theme.text.PAGE_HEADER}`} />
+              )}
+              {content.subheading && (
+                <span
+                  class={`block ${theme.text.H1_LTE}`}
+                  style={content.subheadingFontSize ? `font-size: ${content.subheadingFontSize}` : ''}
+                >
+                  {content.subheading}
+                </span>
+              )}
+            </h2>
+          )}
+        </div>
+      )}
+    </Container>
+  </div>
+</section>

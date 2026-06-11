@@ -1,0 +1,653 @@
+[
+    {
+        "fromPath": "/service/seo", "toPath": "/service/ai-and-search-engine-optimization"
+    },
+    {
+        "fromPath": "/work", "toPath": "/our-work"
+    },
+    {
+        "fromPath": "/websites", "toPath": "/portfolio"
+    },
+    {
+        "fromPath": "/brand-building", "toPath": "/service/branding-agency"
+    },
+    {
+        "fromPath": "/website-design", "toPath": "/service/web-design"
+    },
+    {
+        "fromPath": "/marketing-strategy", "toPath": "/service/marketing-strategy"
+    },
+    {
+        "fromPath": "/content-marketing", "toPath": "/service/content-marketing-agency"
+    },
+    {
+        "fromPath": "/b2b-marketing", "toPath": "/service/b2b"
+    },
+    {
+        "fromPath": "/search-engine-marketing", "toPath": "/service/sem-ppc"
+    },
+    {
+        "fromPath": "/video-production", "toPath": "/service/video-production"
+    },
+    {
+        "fromPath": "/social-media-marketing", "toPath": "/service/social-media-marketing-agency"
+    },
+    {
+        "fromPath": "/who-we-serve", "toPath": "/agency-overview"
+    },
+    {
+        "fromPath": "/testimonials", "toPath": "/results"
+    },
+    {
+        "fromPath": "/about-us", "toPath": "/agency-overview"
+    },
+    {
+        "fromPath": "/our-team", "toPath": "/agency-overview/our-team"
+    },
+    {
+        "fromPath": "/careers", "toPath": "/agency-overview/careers"
+    },
+    {
+        "fromPath": "/blog-landing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/newsletter-signup", "toPath": "/contact"
+    },
+    {
+        "fromPath": "/ppc-marketing-agency", "toPath": "/service/sem-ppc"
+    },
+    {
+        "fromPath": "/tingley", "toPath": "/project/tingley-rubber"
+    },
+    {
+        "fromPath": "/brother", "toPath": "/project/brother"
+    },
+    {
+        "fromPath": "/ansell", "toPath": "/project/ansell"
+    },
+    {
+        "fromPath": "/journey-girls", "toPath": "/our-work"
+    },
+    {
+        "fromPath": "/blog-landing/p3", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/content-marketing-inspiration", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/lets-talk-design-systems", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/website-post-launch-essentials", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-impact-of-impact", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/marketing-success-stories-switching-gears-covid-coronavirus", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p4", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/year-in-review-what-lies-ahead", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/put-marketing-campaigns-to-ab-test", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/seeing-is-believing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/marketing-lessons-and-activities-for-quarantined-kids", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/designing-covid-19", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/staying-productive-and-sane-while-working-from-home", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/covid-19-and-your-brand-how-strategic-marketing-can-carry-you-through", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/stronger-subject-lines-your-ticket-to-front-row-email-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p5", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/video-production/", "toPath": "/service/video-production"
+    },
+    {
+        "fromPath": "/content-marketing/", "toPath": "/service/content-marketing-agency"
+    },
+    {
+        "fromPath": "/what-is-ux-and-why-you-should-care", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/maximize-your-marketing-videos", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/repurposing-content-doesnt-mean-copy-and-paste", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/bert-google-algorithm-changes", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/3-web-design-tips-for-beginners", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p6", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/takeaways-website-design-smashingconf", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-writers-block-this-template-will-help", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/april-fools-marketing-strategies", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p7", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/cms-must-haves", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/inbound-2018-top-takeaways", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/do-your-google-analytics-lie", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/five-common-seo-mistakes", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p8", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/alt-text-improves-seo", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/q12018-marketing-recap", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/beginners-guide-to-accessible-website-design", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/get-to-know-your-customers-day", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/4-steps-better-tradeshow-pictures", "toPath": "/say-cheese-take-better-tradeshow-pictures-in-4-steps"
+    },
+    {
+        "fromPath": "/content-marketing-agency-tips", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/does-this-footer-make-me-look-fat", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p9", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/win-new-customers-three-techniques", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/digital-marketing-shows-customers-love", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/adopting-design-thinking", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/full-service-marketing-year-review", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/success-stories-content-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p10", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/web-forms-4-tips-to-make-yours-better", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/website-design-and-structure", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/digital-marketing-takeaways-from-segd", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/questions-for-your-next-agency", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/social-media-influencers", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/better-content-creation-services-from-employees", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/switching-off-how-not-designing-can-make-you-a-better-designer", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p11", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/is-your-content-amped", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/instagram-smm-for-brands", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/ridge-marketing-produces-heartfelt-video-for-ansell", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/tradeshow-deliverables-and-strategy", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/strategic-seo-5-things-to-ask", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/smashing-web-design-conference", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/email-marketing-101", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p12", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/three-launch-week", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/four-lessons-teaching-has-taught-me", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/quirky-brother-web-videos", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/storyboarding-makes-perfect-part-1", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/why-zoos-free-content-went-viral", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/wwe-marketing-branding", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/technical-writing-for-non-technical-audience", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p13", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/7-key-ingredients-for-effective-ppc-landing-pages", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/benefits-of-infographics", "toPath": "/the-benefits-of-infographics-for-digital-marketing"
+    },
+    {
+        "fromPath": "/5-reasons-to-update-your-ecommerce-platform-now", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/girls-who-code-visits-ridge", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/introducing-strategic-thinker-meredith-mogensen", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/why-i-hear-designing-with-grids-web-design-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/cost-per-acquisition-and-digital-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p14", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/game-changing-product-launch-for-kyocera", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/are-google-grants-part-of-your-digital-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p15", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/meet-freda-moore--modern-day-renaissance-woman", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/hacked-spam-breakfast-trend-or-google-newest-nemesis", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/finley-joins-web-design-and-marketing-team", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/monitoring-and-esponding-integral-part-of-digital-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/branded-house-vs-house-of-brands", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p16", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/today-its-official-google-gives-preference-to-mobile-friendly-sites", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/why-is-video-essential-to-web-design-and-marketing-in-2015", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/firefox-defaults-to-yahoo", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/analytics-alternatives-for-marketing-agencies", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/is-your-seo-strategy-targeting-google-or-bing-and-yahoo", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/penguin-update-coming-might-be-good", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p17", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/mobile-sites-are-a-must-but-there-are-options", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/call-to-action-that-cant-be-ignored", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-golden-age-of-mobile", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blogging-for-business-6-things-to-remember", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/video-a-powerful-sales-tool", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/google-launches-panda-40", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/what-is-inboung-marketing-anyway", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p18", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/10-things-to-watch-in-web-design-and-marketing-in-2014", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/is-your-ppc-advertising-delivering", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-little-barn-that-could", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/google-launches-hummingbird", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/ridge-marketing-wins-five-american-graphic-design-awards", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p19", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/epic-video-project-was-tiring-but-rewarding", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/with-over-200-million-tweets-a-day-about-tv-shows-twitter-sees-value-in-new-advertising-program", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/how-googles-summer-plans-could-impact-your-seo", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/internet-marketing-solutions-creating-landing-pages-that-convert", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-interest-in-pinterest", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/smells-like-advertising", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p20", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-content-of-your-content-matters-top-5-blog-writing-tips-for-seo-and-branding", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/mobile-solutions-13-key-mobile-statistics-to-know-for-2013", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/sem-seo-ppc-smm-and-smo-confused-yet", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/welcome-to-the-internet-marketing-revolution", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/digital-marketing-and-branding-missteps-with-twitter", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/internet-marketing-solutions-fresh-content", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p21", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/improving-the-view-on-youtube", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/how-the-marketing-pros-improve-email-open-rates", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/5-reasons-pinterest-may-be-right-for-your-business", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/twitter-101", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/how-to-stay-relevant-in-google-penguin", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/dont-let-googles-penguin-leave-your-website-cold", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p22", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/social-media-marketing-get-organized-with-social-media-management-tools", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/retargeting-remarketing-worth-hype", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/ridge-marketing-launches-new-trueleaf-brand", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/organic-vs.-paid-search-and-the-winner-is", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/5-reasons-nj-web-design-co-recommends-web-video", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p23", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/search-results-with-sef", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/jmsorge-internet-marketing", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/ridge-marketing-announces-free-press-release-program", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/how-much-copy-is-too-much-copy", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/range-cart-from-idea-to-golf-course-to-market", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/has-linkedin-reached-the-tipping-point", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/blog-landing/p24", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/everest-guide-hires-ridge-for-rebrand", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/right-size-your-website-for-mobile", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-death-of-ie6", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/the-importance-of-design", "toPath": "/blog"
+    },
+    {
+        "fromPath": "/marketing-lessons-and-activities-for-quarantined-kids", "toPath": "/blog/marketing-lessons-and-activities-for-quarantined-kids"
+    },
+    {
+        "fromPath": "/why-dont-my-colors-match-why-printed-colors-dont-match-up-with-your-screen", "toPath": "/blog/why-dont-my-colors-match-why-printed-colors-dont-match-up-with-your-screen"
+    },
+    {
+        "fromPath": "/ultimate-guide-to-google-analytics-4", "toPath": "/blog/ultimate-guide-to-google-analytics-4"
+    },
+    {
+        "fromPath": "/the-pros-and-cons-of-custom-fonts", "toPath": "/blog/the-pros-and-cons-of-custom-fonts"
+    },
+    {
+        "fromPath": "/is-the-rotating-hero-good-for-web-design", "toPath": "/blog/is-the-rotating-hero-good-for-web-design"
+    },
+    {
+        "fromPath": "/why-isometric-illustrations-continue-to-boom", "toPath": "/blog/why-isometric-illustrations-continue-to-boom"
+    },
+    {
+        "fromPath": "/designing-covid-19", "toPath": "/blog/designing-covid-19"
+    },
+    {
+        "fromPath": "/4-steps-better-tradeshow-pictures", "toPath": "/blog/4-steps-better-tradeshow-pictures"
+    },
+    {
+        "fromPath": "/time-for-email-list-cleaning", "toPath": "/blog/time-for-email-list-cleaning"
+    },
+    {
+        "fromPath": "/benefits-of-infographics", "toPath": "/blog/benefits-of-infographics"
+    },
+    {
+        "fromPath": "/custom-brand-illustrations-an-unexpected-trend", "toPath": "/blog/custom-brand-illustrations-an-unexpected-trend"
+    },
+    {
+        "fromPath": "/get-to-know-your-customers-day", "toPath": "/blog/get-to-know-your-customers-day"
+    },
+    {
+        "fromPath": "/5-reasons-to-update-your-ecommerce-platform-now", "toPath": "/blog/5-reasons-to-update-your-ecommerce-platform-now"
+    },
+    {
+        "fromPath": "/the-impact-of-impact", "toPath": "/blog/the-impact-of-impact"
+    },
+    {
+        "fromPath": "/logo-crimes-and-misdemeanors", "toPath": "/blog/logo-crimes-and-misdemeanors"
+    },
+    {
+        "fromPath": "/why-i-hear-designing-with-grids-web-design-marketing", "toPath": "/blog/why-i-hear-designing-with-grids-web-design-marketing"
+    },
+    {
+        "fromPath": "/the-importance-of-knowing-your-audience", "toPath": "/blog/the-importance-of-knowing-your-audience"
+    },
+    {
+        "fromPath": "/how-much-copy-is-too-much-copy", "toPath": "/blog/how-much-copy-is-too-much-copy"
+    },
+    {
+        "fromPath": "/branded-house-vs-house-of-brands", "toPath": "/blog/branded-house-vs-house-of-brands"
+    },
+    {
+        "fromPath": "/april-fools-marketing-strategies", "toPath": "/blog/april-fools-marketing-strategies"
+    },
+    {
+        "fromPath": "/seeing-is-believing", "toPath": "/blog/seeing-is-believing"
+    },
+    {
+        "fromPath": "/why-qr-codes-are-making-a-comeback", "toPath": "/blog/why-qr-codes-are-making-a-comeback"
+    },
+    {
+        "fromPath": "/repurposing-content-doesnt-mean-copy-and-paste", "toPath": "/blog/repurposing-content-doesnt-mean-copy-and-paste"
+    },
+    {
+        "fromPath": "/success-stories-content-marketing", "toPath": "/blog/success-stories-content-marketing"
+    },
+    {
+        "fromPath": "/website-post-launch-essentials", "toPath": "/blog/website-post-launch-essentials"
+    },
+    {
+        "fromPath": "/beginners-guide-to-accessible-website-design", "toPath": "/blog/beginners-guide-to-accessible-website-design"
+    },
+    {
+        "fromPath": "/staying-productive-and-sane-while-working-from-home", "toPath": "/blog/staying-productive-and-sane-while-working-from-home"
+    },
+    {
+        "fromPath": "/color-ideas-in-web-and-graphic-design", "toPath": "/blog/color-ideas-in-web-and-graphic-design"
+    },
+    {
+        "fromPath": "/email-list-cleaning-part-2-see-the-sparkling-results", "toPath": "/blog/email-list-cleaning-part-2-see-the-sparkling-results"
+    },
+    {
+        "fromPath": "/technical-writing-for-non-technical-audience", "toPath": "/blog/technical-writing-for-non-technical-audience"
+    },
+    {
+        "fromPath": "/lets-talk-design-systems", "toPath": "/blog/lets-talk-design-systems"
+    },
+    {
+        "fromPath": "/how-apples-ios-15-update-will-change-email-marketing", "toPath": "/blog/how-apples-ios-15-update-will-change-email-marketing"
+    },
+    {
+        "fromPath": "/smells-like-advertising", "toPath": "/blog/smells-like-advertising"
+    },
+    {
+        "fromPath": "/wwe-marketing-branding", "toPath": "/blog/wwe-marketing-branding"
+    },
+    {
+        "fromPath": "/content-marketing-strategy-guide", "toPath": "/blog/content-marketing-strategy-guide"
+    },
+    {
+        "fromPath": "/marketing-value-misconceptions-is-your-strategy-a-tragedy", "toPath": "/blog/marketing-value-misconceptions-is-your-strategy-a-tragedy"
+    },
+    {
+        "fromPath": "/social-media-influencers", "toPath": "/blog/social-media-influencers"
+    },
+    {
+        "fromPath": "/should-you-be-using-a-pre-made-website-template-the-pros-and-cons", "toPath": "/blog/should-you-be-using-a-pre-made-website-template-the-pros-and-cons"
+    },
+    {
+        "fromPath": "/how-pantone-mastered-the-science-and-business-of-color", "toPath": "/blog/how-pantone-mastered-the-science-and-business-of-color"
+    },
+    {
+        "fromPath": "/shopify-ga4-integration-explained", "toPath": "/blog/shopify-ga4-integration-explained"
+    },
+    {
+        "fromPath": "/3-key-metrics-for-tracking-successful-meta-ad-campaigns", "toPath": "/blog/3-key-metrics-for-tracking-successful-meta-ad-campaigns"
+    },
+    {
+        "fromPath": "/5-ways-to-make-a-big-impact-at-your-next-trade-show", "toPath": "/blog/5-ways-to-make-a-big-impact-at-your-next-trade-show"
+    },
+    {
+        "fromPath": "/5-things-adobe-photoshop-ai-can-do-and-2-that-it-cant", "toPath": "/blog/5-things-adobe-photoshop-ai-can-do-and-2-that-it-cant"
+    },
+    {
+        "fromPath": "/adjusting-focus-the-effects-of-social-media-on-photography-art", "toPath": "/blog/adjusting-focus-the-effects-of-social-media-on-photography-art"
+    },
+    {
+        "fromPath": "/your-marketing-dream-team/", "toPath": "/lander/your-marketing-dream-team/"
+    },
+    {
+        "fromPath": "/audit/", "toPath": "/lander/audit/"
+    },
+    {
+        "fromPath": "/service/sem-ppc/", "toPath": "/service/digital-advertising/"
+    }
+]

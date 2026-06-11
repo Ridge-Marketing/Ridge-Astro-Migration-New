@@ -1,0 +1,56 @@
+---
+/**
+ * PPC Project Slider layout — Astro wrapper resolving WP images for the
+ * PpcProjectSlider React island, plus heading and button group.
+ * Replaces Gatsby's PpcProjectSliderLayout.js (always rendered with cmo={true})
+ */
+import Buttons from '@/components/global/Buttons.astro';
+import PpcProjectSlider from './PpcProjectSlider';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+
+const heading = content.heading ? parser(content.heading) : '';
+const buttons = content.componentButtonGroup || [];
+
+const slides = (
+  await Promise.all(
+    (content.images || []).map(async (item: any) => {
+      const resolved = await resolveImage(item.image);
+      return resolved?.source_url
+        ? { imageUrl: resolved.source_url, imageAlt: resolved.alt_text || '' }
+        : null;
+    })
+  )
+).filter(Boolean);
+---
+
+<div id="ppcSlider" class="overflow-hidden will-change-transform py-20 bg-rm-carbon text-white lg:pt-40">
+  {heading && (
+    <h2
+      set:html={heading}
+      class="font-stratos uppercase font-bold text-[40px] leading-[44px] text-center text-white mb-20 max-w-[330px] md:max-w-full mx-auto"
+    />
+  )}
+
+  {slides.length > 0 && <PpcProjectSlider client:visible slides={slides} />}
+
+  {buttons.length > 0 && (
+    <div class="w-max mt-10 mx-auto flex gap-4 text-white">
+      {buttons.map((button: any) => (
+        button?.componentButton?.link?.url && (
+          <Buttons content={button.componentButton} sectionBackground="white" />
+        )
+      ))}
+    </div>
+  )}
+</div>

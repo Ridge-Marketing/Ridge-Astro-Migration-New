@@ -1,0 +1,91 @@
+---
+/**
+ * ButtonRow layout — row of CTA buttons
+ * Replaces Gatsby's ButtonRow.js (CSS animation instead of Framer Motion)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div>
+      {content.topHeading && (
+        <h3 class={`${theme.text.H5} text-center mb-4 xl:mb-0`}>
+          {content.topHeading}
+        </h3>
+      )}
+      <div class="flex justify-center gap-x-8 lg:gap-x-1 xl:gap-0 flex-wrap button-row-stagger">
+        {content.buttons && content.buttons.map((button: any, index: number) => (
+          <div
+            class="w-full md:w-[240px] lg:w-1/3 xl:w-1/4 my-4 lg:mt-8 lg:mb-5 text-center button-row-item"
+            style={`animation-delay: ${index * 0.15}s`}
+          >
+            <div class="xl:pt-10">
+              <Buttons
+                content={button.componentButton}
+                sectionBackground={settings.backgroundColor}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </Container>
+</Section>
+
+<style>
+  @keyframes buttonRowSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .button-row-item {
+    opacity: 0;
+    animation: buttonRowSlideUp 0.5s ease-out forwards;
+    animation-play-state: paused;
+  }
+
+  .button-row-stagger {
+    &:global(.in-view) .button-row-item {
+      animation-play-state: running;
+    }
+  }
+</style>
+
+<script>
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  document.querySelectorAll('.button-row-stagger').forEach((el) => {
+    observer.observe(el);
+  });
+</script>

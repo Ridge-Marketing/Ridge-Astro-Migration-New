@@ -1,0 +1,103 @@
+---
+/**
+ * Branding Cards layout — grid of brand logo/image cards
+ * Each card has per-card top/bottom image padding from ACF.
+ *
+ * ACF fields (layout__content):
+ *   heading            – section heading
+ *   cards[]            – { image (WP media ID), image_padding_top, image_padding_bottom }
+ *   bottom_heading     – optional heading below the grid
+ *   component__button  – optional CTA button
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const cards = content.cards || [];
+
+// Resolve all card images in parallel
+const resolvedImages = await Promise.all(
+  cards.map((c: any) => resolveImage(c.image))
+);
+
+// Map ACF padding strings to px values for inline styles
+const pxMap: Record<string, string> = {
+  '16_pixels': '16px',
+  '24_pixels': '24px',
+  '32_pixels': '32px',
+  '48_pixels': '48px',
+  '64_pixels': '64px',
+};
+
+function toPx(val: string | undefined): string {
+  return pxMap[val || ''] || '48px';
+}
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+
+    {content.heading && (
+      <h2
+        class={`${theme.text.H2} text-center mb-12`}
+        set:html={parser(content.heading)}
+      />
+    )}
+
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      {cards.map((card: any, idx: number) => {
+        const img = resolvedImages[idx];
+        const src = img?.source_url || '';
+        const alt = img?.alt_text || '';
+        const pt  = toPx(card.imagePaddingTop  || card.image_padding_top);
+        const pb  = toPx(card.imagePaddingBottom || card.image_padding_bottom);
+
+        return (
+          <div class="bg-rm-pale-grey flex items-center justify-center px-8">
+            <div style={`padding-top: ${pt}; padding-bottom: ${pb};`} class="w-full">
+              {src && (
+                <img
+                  src={src}
+                  alt={alt}
+                  class="w-full h-auto object-contain"
+                  loading="lazy"
+                />
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    {content.bottomHeading && (
+      <h3
+        class={`${theme.text.H2} text-center mt-12`}
+        set:html={parser(content.bottomHeading)}
+      />
+    )}
+
+    {content.componentButton?.link && (
+      <div class="text-center mt-10">
+        <Buttons
+          content={content.componentButton}
+          sectionBackground={settings.backgroundColor}
+        />
+      </div>
+    )}
+
+  </Container>
+</Section>

@@ -1,0 +1,109 @@
+---
+/**
+ * Frequently Asked Questions layout with accordion + JSON-LD schema
+ * Replaces Gatsby's FrequentlyAskedQuestions.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+// Resolve optional floating image
+const resolvedImage = await resolveImage(content.image);
+const imageUrl = resolvedImage?.source_url || '';
+const imageAlt = resolvedImage?.alt_text || 'FAQ Logo Image';
+
+const faqItems = content.faqItems || [];
+
+// Generate FAQ Schema JSON-LD
+const faqSchema = faqItems.length > 0 ? JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.map((faq: any) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": (faq.answer || '').replace(/<[^>]*>/g, '')
+    }
+  }))
+}) : null;
+---
+
+{faqSchema && (
+  <script type="application/ld+json" set:html={faqSchema} />
+)}
+
+<Section settings={settings}>
+  {imageUrl && (
+    <div class="absolute left-1/2 -translate-x-1/2 -top-32 max-w-3xl z-10 w-72 h-72">
+      <WpImage src={imageUrl} alt={imageAlt} class="w-full h-full" />
+    </div>
+  )}
+
+  <Container container={settings.containerWidth}>
+    {content.title && (
+      <h2 class={`${theme.text.H2} text-center mb-6 ${imageUrl ? 'pt-32' : ''}`}>
+        {content.title}
+      </h2>
+    )}
+
+    {content.text && (
+      <p class={`${theme.text.P_STD} text-center mb-16`}>
+        {content.text}
+      </p>
+    )}
+
+    {faqItems.length > 0 && (
+      <div class="faq-container flex flex-col gap-6">
+        {faqItems.map((faq: any, index: number) => (
+          <div class="relative w-full">
+            <div class="bg-[#262626] rounded-md py-6 pl-6 pr-6">
+              <details class="transition-all cursor-pointer">
+                {faq.question && (
+                  <summary class="faq-summary block">
+                    <h3 class={`${theme.text.P_STD} flex justify-between gap-4 !font-bold`}>
+                      {faq.question}
+                      <span class="faq-indicator font-bold text-3xl text-[#A9CF38]">+</span>
+                    </h3>
+                  </summary>
+                )}
+                {faq.answer && (
+                  <div
+                    class={`${theme.text.P_STD} text-left FAQ-Answer w-full mx-auto mt-4`}
+                    set:html={faq.answer}
+                  />
+                )}
+              </details>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </Container>
+</Section>
+
+<script>
+  document.querySelectorAll('.faq-summary').forEach((summary) => {
+    summary.addEventListener('click', () => {
+      const indicator = summary.querySelector('.faq-indicator');
+      if (indicator) {
+        const details = summary.closest('details');
+        // Toggle: if currently open (about to close), show +; otherwise show -
+        indicator.textContent = details?.open ? '+' : '-';
+      }
+    });
+  });
+</script>

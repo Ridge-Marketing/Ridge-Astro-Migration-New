@@ -1,0 +1,136 @@
+---
+/**
+ * PPC Quotes — CMO variant: dark (carbon) quote slider with counter arrows
+ * and a "Get a Quote" button linking to the main form.
+ * Replaces Gatsby's ppcLander/PpcQuotes.js (rendered with cmo={true});
+ * slider mechanism mirrors layouts/Quotes.astro (script, not an island)
+ */
+import Container from '@/components/global/Container.astro'
+import { theme } from '@/lib/theme'
+import parser from '@/lib/parser'
+import { getReviewById } from '@/lib/wp-client'
+
+interface Props {
+    acf : {
+        quotes : number[]
+    }
+}
+
+const { acf } = Astro.props
+const rawQuotes = acf.quotes || []
+
+const slides = (await Promise.all(
+    rawQuotes.map(async (item: any) => {
+        const id = typeof item === 'number' ? item : item?.id
+        if (!id) return null
+
+        const review = await getReviewById(id)
+        if (!review) return null
+
+        return {
+            title:        review.title?.rendered || '',
+            content:      parser(review.content?.rendered || ''),
+            titleCompany: review.acf?.title_company || '',
+        }
+    })
+)).filter(Boolean)
+
+const hasArrows  = slides.length > 1
+const firstSlide = slides[0] || {}
+
+// Hardcoded in Gatsby too (ACF save issues at the time)
+const cmoButton = { title: 'Get a Quote', url: '#form' }
+---
+
+{slides.length > 0 &&
+    <div class="block pt-10 pb-20 -mt-[1px] relative" data-cmoq>
+        <section class="overflow-hidden bg-transparent max-w-[1600px] mx-auto relative">
+            <Container classes="bg-transparent">
+                <div class="mt-12 flex w-full flex-wrap justify-between relative">
+                    <div class="p-8 lg:p-14 w-full">
+                        <div class="animate-quote text-center text-white lgz:text-rm-aqua">
+                            <div
+                                set:html={firstSlide.content || ''}
+                                class={`${theme.text.Q} block transition-all ease-in-out font-normal`}
+                                data-cmoq-text
+                            />
+                            <p class={`${theme.text.P_BLD} pt-8 pb-2 text-white`} data-cmoq-title>
+                                {firstSlide.title || ''}
+                            </p>
+                            <small class={`${theme.text.FOOTER} text-white`} data-cmoq-company>
+                                {firstSlide.titleCompany || ''}
+                            </small>
+                        </div>
+                    </div>
+                    {hasArrows &&
+                        <div class="flex justify-center items-center bg-transparent lgz:bg-rm-pale-grey mx-auto text-white lgz:text-black [&_path]:fill-current">
+                            <button class="flex-1 px-5 py-3 text-40px cursor-pointer" data-cmoq-prev aria-label="Previous quote">
+                                <svg width="11" height="20" viewBox="0 0 11 20" fill="none"><path d="M9.5 1L1.5 10L9.5 19" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                            </button>
+                            <span class={`${theme.text.FOOTER} flex items-center font-basic-sans !text-white lgz:!text-black`} data-cmoq-counter>
+                                1 / {slides.length}
+                            </span>
+                            <button class="flex-1 px-5 py-3 text-40px cursor-pointer" data-cmoq-next aria-label="Next quote">
+                                <svg width="11" height="20" viewBox="0 0 11 20" fill="none"><path d="M1.5 1L9.5 10L1.5 19" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                            </button>
+                        </div>
+                    }
+                </div>
+                <div class="w-full mx-auto flex justify-center mt-12">
+                    <a
+                        class={`${theme.button.BASE_STYLING} ${theme.button.SOLID_GREEN_HOVER_LIGHT} ${theme.text_links.FWD_BASE} ${theme.text_links.ARW_FWD_BLACK} ${theme.text_links.HOVER_ARW_FWD_BLACK} !inline-flex items-center cursor-pointer min-w-[210px]`}
+                        href={cmoButton.url}
+                    >
+                        {cmoButton.title}
+                    </a>
+                </div>
+                <span aria-hidden="true" class="font-stratos text-3xl uppercase font-bold transition-all ease-out duration-1000 text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[15%] left-[40px] sm:left-[88px] md:left-16 lg:left-18 xl:left-28 md:top-1/4 -z-10">&ldquo;</span>
+                <span aria-hidden="true" class="font-stratos text-3xl uppercase font-bold transition-all ease-out duration-1000 text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-3/4 right-[40px] sm:right-[88px] md:right-16 lg:right-18 xl:right-28 md:top-3/4 -z-10">&rdquo;</span>
+            </Container>
+            <div class="absolute -z-20 w-full h-full bg-rm-carbon top-0 left-0" aria-hidden="true"></div>
+        </section>
+    </div>
+}
+
+<script define:vars={{ slidesData: JSON.stringify(slides) }}>
+    const slides = JSON.parse(slidesData);
+    const root = document.querySelector('[data-cmoq]');
+    if (root && slides.length > 0) {
+        let currentSlide = 0;
+        let userInteracted = false;
+
+        const textEl    = root.querySelector('[data-cmoq-text]');
+        const titleEl   = root.querySelector('[data-cmoq-title]');
+        const companyEl = root.querySelector('[data-cmoq-company]');
+        const counterEl = root.querySelector('[data-cmoq-counter]');
+        const prevBtn   = root.querySelector('[data-cmoq-prev]');
+        const nextBtn   = root.querySelector('[data-cmoq-next]');
+
+        function updateSlide(idx) {
+            currentSlide = idx;
+            const slide = slides[idx];
+            if (textEl) textEl.innerHTML = slide.content || '';
+            if (titleEl) titleEl.textContent = slide.title || '';
+            if (companyEl) companyEl.textContent = slide.titleCompany || '';
+            if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
+        }
+
+        if (prevBtn) prevBtn.addEventListener('click', () => {
+            userInteracted = true;
+            updateSlide((currentSlide - 1 + slides.length) % slides.length);
+        });
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+            userInteracted = true;
+            updateSlide((currentSlide + 1) % slides.length);
+        });
+
+        if (slides.length > 1) {
+            // Only auto-advance while visible
+            let visible = false;
+            new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }).observe(root);
+            setInterval(() => {
+                if (visible && !userInteracted) updateSlide((currentSlide + 1) % slides.length);
+            }, 6000);
+        }
+    }
+</script>

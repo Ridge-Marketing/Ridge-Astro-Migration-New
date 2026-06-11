@@ -1,0 +1,68 @@
+---
+/**
+ * Images + Top-Aligned Text layout — vertical stack of images with optional
+ * heading/body text positioned to the top-right of each image on desktop.
+ * Replaces Gatsby's ImagesTopAlignedText.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const items = await Promise.all(
+  (content.images || []).map(async (item: any) => ({
+    image       : await resolveImage(item.image),
+    text        : item.text,
+    body        : item.body,
+    headingSize : item.headingSize,
+  }))
+);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    {content.heading && (
+      <h2
+        class={`${theme.text.H2} max-w-[1120px] mx-auto`}
+        set:html={parser(content.heading)}
+      />
+    )}
+    {items.length > 0 && (
+      <div class="max-w-[1120px] mx-auto mt-7 flex flex-col gap-20">
+        {items.map((item) => {
+          const headingClass = item.headingSize !== 'heading' ? theme.text.P_BLD : theme.text.H2;
+          return (
+            <div class="relative">
+              {item.image?.source_url && (
+                <WpImage src={item.image.source_url} alt={item.image.alt_text || ''} />
+              )}
+              {(item.text || item.body) && (
+                <section class="mt-6 lg:mt-0 lg:absolute top-0 right-0 lg:max-w-[285px] xl:max-w-[350px]">
+                  {item.text && (
+                    <h3 class={`${headingClass} mb-6`}>{item.text}</h3>
+                  )}
+                  {item.body && (
+                    <p class={theme.text.P_STD}>{item.body}</p>
+                  )}
+                </section>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </Container>
+</Section>

@@ -1,0 +1,90 @@
+---
+/**
+ * WpImage — wrapper around Astro's <Image> for WordPress images
+ * Handles source_url → <Image> with inferSize, responsive widths,
+ * and format negotiation via Netlify CDN.
+ *
+ * When inferSize fails for a remote image, falls back to a plain <img> tag.
+ *
+ * Usage:
+ *   <WpImage src={imageData.source_url} alt={imageData.alt_text} />
+ *   <WpImage src={imageData.source_url} alt="..." width={800} height={600} />
+ *   <WpImage src={imageData.source_url} alt="..." responsive />
+ */
+import { Image } from 'astro:assets';
+
+interface Props {
+  src: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  class?: string;
+  responsive?: boolean;
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  quality?: number | 'low' | 'mid' | 'high' | 'max';
+}
+
+const {
+  src,
+  alt = '',
+  width,
+  height,
+  class: className = '',
+  responsive = false,
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px',
+  loading = 'lazy',
+  quality = 80,
+} = Astro.props;
+
+// Skip if no src provided
+if (!src) return;
+
+// Determine if we should use inferSize (when no explicit dimensions provided)
+const useInferSize = !width || !height;
+
+---
+
+{responsive ? (<>
+  <Image
+    src={src}
+    alt={alt}
+    widths={[400, 800, 1200, 1600]}
+    sizes={sizes}
+    inferSize={useInferSize}
+    width={width}
+    height={height}
+    class={className}
+    loading={loading}
+    quality={quality}
+  />
+</>) : useInferSize ? (<>
+  <div class="relative overflow-hidden">
+    <Image
+      src={src}
+      alt={alt}
+      inferSize
+      class={`${className} blur-lg absolute top-0 left-0 opacity-30`}
+      loading={`lazy`}
+      quality={1}
+    />
+    <Image
+      src={src}
+      alt={alt}
+      inferSize
+      class={`${className} z-10 relative`}
+      loading={loading}
+      quality={quality}
+    />
+  </div>
+</>) : (
+  <Image
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    class={className}
+    loading={loading}
+    quality={quality}
+  />
+)}

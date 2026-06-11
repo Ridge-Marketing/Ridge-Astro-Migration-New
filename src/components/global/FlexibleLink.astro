@@ -1,0 +1,33 @@
+---
+/**
+ * FlexibleLink — renders <a> tag, using target to decide internal vs external
+ * Replaces Gatsby's FlexibleLink.js (which used Gatsby <Link>)
+ *
+ * In Astro, all links are standard <a> tags. No client-side routing needed.
+ */
+import { convertCMSLink } from '@/lib/wp-client';
+
+interface Props {
+  link?: {
+    url: string;
+    title?: string;
+    target?: string;
+  };
+  classes?: string;
+}
+
+const { link, classes = '' } = Astro.props;
+---
+
+{link && (
+  <a
+    class={classes}
+    href={convertCMSLink(link.url)}
+    target={link.target === '_blank' ? '_blank' : undefined}
+    rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}
+  >
+    <slot>
+      {link.title}
+    </slot>
+  </a>
+)}

@@ -1,0 +1,71 @@
+---
+/**
+ * PPC Wrapper B2B page
+ * Section order mirrors Gatsby's ppcLander/PpcLanderWrapperCMO.js.
+ * Sections already ported as flexible layouts (project slider, audit stats,
+ * form) are reused via transformKeys-shaped layoutData props.
+ */
+import PPCHeroCMO from './PPCHeroCMO.astro'
+import PPCHeroCMODesktop from './PPCHeroCMODesktop.astro'
+import PPCTwoColContentCMO from './PPCTwoColContentCMO.astro'
+import PPCQuotesCMO from './PPCQuotesCMO.astro'
+import PPCApproach from './PPCApproach.astro'
+import PPCAudit from './PPCAudit.astro'
+import PPCCaseStudies from './PPCCaseStudies.astro'
+import PpcProjectSlider from '@/components/layouts/PpcProjectSliderWrapper.astro'
+import AuditStats from '@/components/layouts/AuditStats.astro'
+import PpcForm from '@/components/layouts/PpcForm.astro'
+import { transformKeys } from '@/lib/wp-client'
+
+interface Props {
+    acf:any
+}
+
+const { acf } = Astro.props
+
+const asLayoutData = (section: any) => ({
+    layoutContent:  transformKeys(section || {}),
+    layoutSettings: {},
+})
+---
+
+<style is:global>
+    main { overflow : hidden }
+</style>
+
+{acf.hero_cmo && <>
+    <PPCHeroCMO acf={acf.hero_cmo} />
+    <PPCHeroCMODesktop acf={acf.hero_cmo} />
+</>}
+
+{acf.two_column_content_copy &&
+    <PPCTwoColContentCMO acf={acf.two_column_content_copy} />
+}
+
+{acf.project_slider_copy &&
+    <PpcProjectSlider layoutData={asLayoutData(acf.project_slider_copy)} />
+}
+
+{acf.stats_copy2 &&
+    <AuditStats layoutData={asLayoutData(acf.stats_copy2)} />
+}
+
+{acf.quotes_copy &&
+    <PPCQuotesCMO acf={acf.quotes_copy} />
+}
+
+{acf.approach &&
+    <PPCApproach acf={acf.approach} />
+}
+
+{acf.audit &&
+    <PPCAudit acf={acf.audit} />
+}
+
+{acf.case_studies &&
+    <PPCCaseStudies acf={acf.case_studies} />
+}
+
+{acf.form_copy &&
+    <PpcForm layoutData={asLayoutData(acf.form_copy)} />
+}

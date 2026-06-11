@@ -1,0 +1,152 @@
+---
+/**
+ * Video Player layout — main vimeo player with optional thumbnail row.
+ * Replaces Gatsby's VideoPlayer.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const videos = await Promise.all(
+  (content.videos || []).map(async (v: any) => ({
+    source     : v.source || '',
+    caption    : v.caption || '',
+    autoplay   : !!v.autoplay,
+    placeholder: await resolveImage(v.placeholder),
+  }))
+);
+
+function vimeoEmbed(url: string, autoplay = false): string {
+  const m = url?.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  const id = m ? m[1] : '';
+  if (!id) return url;
+  const params: string[] = [];
+  if (autoplay) {
+    params.push('autoplay=1', 'muted=1', 'loop=1', 'controls=0');
+  }
+  return `https://player.vimeo.com/video/${id}${params.length ? `?${params.join('&')}` : ''}`;
+}
+
+const main = videos[0];
+const thumbs = videos.slice(0, 3); // matches "if (index < 3)" cap
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.heading && (
+      <h2 class={`${theme.text.H2} text-center mb-8`}>{content.heading}</h2>
+    )}
+
+    {main && (
+      <div class="video-player" data-videos={JSON.stringify(videos.map((v) => ({
+        source  : v.source,
+        autoplay: v.autoplay,
+        embed   : vimeoEmbed(v.source, v.autoplay),
+      })))}>
+        <div class="relative pt-[56.25%] video-player__stage">
+          {main.placeholder?.source_url && (
+            <img
+              src={main.placeholder.source_url}
+              alt={main.placeholder.alt_text || ''}
+              class="absolute top-0 left-0 w-full h-full object-cover z-10 video-player__thumb"
+              loading="eager"
+            />
+          )}
+          <iframe
+            src={main.autoplay ? vimeoEmbed(main.source, true) : ''}
+            class={`absolute top-0 left-0 w-full h-full ${main.autoplay ? '' : 'hidden'} video-player__iframe`}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowfullscreen
+            title="Video"
+          />
+          {!main.autoplay && (
+            <button
+              type="button"
+              class="absolute top-0 left-0 w-full h-full z-30 flex items-center justify-center text-white video-player__play"
+              aria-label="Play video"
+            >
+              <span class="rounded-full">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+                  <circle cx="40" cy="40" r="40" fill="white" fill-opacity="0.85" />
+                  <path d="M33 26 L57 40 L33 54 Z" fill="black" />
+                </svg>
+              </span>
+            </button>
+          )}
+        </div>
+        {main.caption && (
+          <p class={`mt-2 ${theme.text.P_STD} max-w-[1120px] mx-auto video-player__caption`}>{main.caption}</p>
+        )}
+
+        {videos.length > 1 && (
+          <div class="grid grid-cols-3 mt-4 xl:mt-9 -mx-2 xl:-mx-5">
+            {thumbs.map((v, index) => (
+              <div
+                role="button"
+                tabindex="0"
+                class="relative pt-[56.25%] mx-2 xl:mx-5 cursor-pointer video-player__pick"
+                data-index={index}
+              >
+                {v.placeholder?.source_url && (
+                  <img
+                    src={v.placeholder.source_url}
+                    alt={v.placeholder.alt_text || ''}
+                    class="absolute top-0 left-0 w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+  </Container>
+</Section>
+
+<script>
+  type V = { source: string; autoplay: boolean; embed: string };
+
+  document.querySelectorAll<HTMLElement>('.video-player').forEach((root) => {
+    const raw = root.dataset.videos;
+    if (!raw) return;
+    let videos: V[] = [];
+    try { videos = JSON.parse(raw); } catch { return; }
+
+    const iframe  = root.querySelector<HTMLIFrameElement>('.video-player__iframe');
+    const thumb   = root.querySelector<HTMLImageElement>('.video-player__thumb');
+    const play    = root.querySelector<HTMLButtonElement>('.video-player__play');
+    const picks   = root.querySelectorAll<HTMLElement>('.video-player__pick');
+
+    function loadIndex(i: number) {
+      const v = videos[i];
+      if (!v || !iframe) return;
+      iframe.src = v.embed;
+      iframe.classList.remove('hidden');
+      thumb?.remove();
+      play?.remove();
+    }
+
+    play?.addEventListener('click', () => loadIndex(0));
+    picks.forEach((p) => {
+      const i = Number(p.dataset.index);
+      const handler = () => loadIndex(i);
+      p.addEventListener('click', handler);
+      p.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,73 @@
+---
+/**
+ * Project route template
+ * Replaces Gatsby's templates/project.js
+ */
+import Layout from '@/components/global/Layout.astro';
+import FlexibleLayouts from '@/components/FlexibleLayouts.astro';
+import ProjectHeader from '@/components/layouts/ProjectHeader.astro';
+import PostNav from '@/components/blog/PostNav.astro';
+import { getProjects, getGlobalSettings, extractPath } from '@/lib/wp-client';
+
+export async function getStaticPaths() {
+  const allProjects = await getProjects();
+
+  return allProjects.map((project: any, index: number) => {
+    const path  = extractPath(project.link);
+    const slug  = path.replace(/^\/project\//, '').replace(/^\/|\/$/g, '');
+
+    // Circular prev/next, mirroring the Gatsby gatsby-node behavior
+    const prev = allProjects[(index - 1 + allProjects.length) % allProjects.length];
+    const next = allProjects[(index + 1) % allProjects.length];
+
+    return {
+      params: { slug: slug || undefined },
+      props: {
+        project,
+        prevSlug: extractPath((prev as any).link),
+        nextSlug: extractPath((next as any).link),
+      },
+    };
+  });
+}
+
+const { project, prevSlug, nextSlug } = Astro.props;
+
+const globalSettings  = await getGlobalSettings().catch(() => null);
+const favicon         = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+const seo             = project.yoast_head_json;
+const acf             = project.acf || {};
+
+const projectHeader   = acf.project_header || null;
+const projectInfo     = {
+  logos          : acf.logos,
+  websites       : acf.websites,
+  services       : acf.services,
+  accentColor    : acf.accent_color,
+  secondaryAccent: acf.secondary_accent,
+};
+
+const flexibleLayouts = acf.layouts || [];
+
+const accentColor     = acf.accent_color    || '#A9CF38';
+const secondaryColor  = acf.secondary_accent || '#000000';
+---
+
+<Layout
+  seo={seo}
+  favicon={favicon}
+  headerColor="white"
+  accentColor={accentColor}
+  secondaryColor={secondaryColor}
+>
+  {projectHeader && (
+    <ProjectHeader header={projectHeader} info={projectInfo} />
+  )}
+
+  {flexibleLayouts.length > 0 && (
+    <FlexibleLayouts layouts={flexibleLayouts} />
+  )}
+
+  <PostNav prev={prevSlug} next={nextSlug} postType="project" />
+</Layout>

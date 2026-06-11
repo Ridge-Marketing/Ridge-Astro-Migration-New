@@ -1,0 +1,111 @@
+---
+/**
+ * Catch-all page route for WordPress pages
+ * Replaces Gatsby's page.js template + gatsby-node.js page creation
+ */
+import Layout from '@/components/global/Layout.astro';
+import FlexibleLayouts from '@/components/FlexibleLayouts.astro';
+import PageHeader from '@/components/layouts/PageHeader.astro';
+import PortfolioHeader from '@/components/layouts/PortfolioHeader.astro';
+import Container from '@/components/global/Container.astro';
+import { getPages, getGlobalSettings, extractPath, transformKeys } from '@/lib/wp-client';
+
+export async function getStaticPaths() {
+  const allPages = await getPages();
+
+  return allPages
+    .filter((page: any) => {
+      const path = extractPath(page.link);
+      // Exclude the front page (handled by index.astro)
+      return page.slug !== 'homepage' && path !== '/';
+    })
+    .map((page: any) => {
+      const path = extractPath(page.link);
+      // Remove leading/trailing slashes for the slug
+      const slug = path.replace(/^\/|\/$/g, '');
+      return {
+        params: { slug: slug || undefined },
+        props: { page },
+      };
+    });
+}
+
+const { page } = Astro.props;
+
+const globalSettings  = await getGlobalSettings().catch(() => null);
+const favicon         = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+const seo     = page.yoast_head_json;
+const title   = page.title?.rendered || '';
+const uri     = extractPath(page.link);
+
+// Determine header color
+let headerColor = 'black';
+const whiteHeaderPages = ['/contact/', '/terms-and-conditions/', '/privacy-policy/', '/portfolio/'];
+if (whiteHeaderPages.includes(uri)) {
+  headerColor = 'white';
+}
+if (page.acf?.header_color) {
+  headerColor = page.acf.header_color;
+}
+
+// REST API: page_header is at acf.page_header with layout__content / layout__settings
+const pageHeaderRaw = page.acf?.page_header;
+const pageHeader    = pageHeaderRaw ? {
+  layoutContent: transformKeys(pageHeaderRaw.layout__content || pageHeaderRaw),
+  layoutSettings: transformKeys(pageHeaderRaw.layout__settings || {}),
+} : null;
+const portfolioHeader = page.acf.portfolio_header ?? false
+
+// REST API: flexible layouts array is at acf.layouts
+const flexibleLayouts = page.acf?.layouts || [];
+
+// Blacklisted pages don't get a page header
+const blackList         = ['404', 'Terms and Conditions', 'Portfolio', 'Privacy Policy'];
+const showPageHeader    = pageHeader && !blackList.includes(title);
+const isTermsOrPrivacy  = title === 'Terms and Conditions' || title === 'Privacy Policy';
+const is404             = title === '404';
+
+// Accent colors
+const accentColor     = page.acf?.accent_color || '#A9CF38';
+const secondaryColor  = page.acf?.secondary_color || '#000000';
+
+
+// On the Portfolio page, inject portfolio_header data into the
+// featured_projects_grid_dev layout so the grid can render the header itself.
+if (title === 'Portfolio' && portfolioHeader && Object.keys(portfolioHeader).length > 0) {
+  const gridLayout = flexibleLayouts.find(
+    (layout: any) => layout?.acf_fc_layout === 'featured_projects_grid_dev'
+  );
+  if (gridLayout) {
+    gridLayout.layout__featured_projects_grid_dev.layout__content.portfolio_header = portfolioHeader;
+  }
+}
+
+---
+
+<Layout
+  seo={seo}
+  favicon={favicon}
+  headerColor={headerColor}
+  accentColor={accentColor}
+  secondaryColor={secondaryColor}
+>
+  {showPageHeader && (
+    <PageHeader layoutData={pageHeader} />
+  )}
+
+  {is404 && (
+    <Container>
+      <div class="page404 mx-auto" set:html={page.content?.rendered || ''} />
+    </Container>
+  )}
+
+  {isTermsOrPrivacy && (
+    <div class="terms pb-20 prose max-w-full mx-auto" set:html={page.content?.rendered || ''} />
+  )}
+
+  {flexibleLayouts.length > 0 && (
+    <FlexibleLayouts layouts={flexibleLayouts} />
+  )}
+</Layout>

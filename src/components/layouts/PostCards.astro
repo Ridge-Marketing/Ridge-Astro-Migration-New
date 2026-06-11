@@ -1,0 +1,102 @@
+---
+/**
+ * PostCards layout — displays recent blog posts matching taxonomy
+ * Replaces Gatsby's PostCards.js layout
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import BlogCardHome from '@/components/blog/BlogCardHome.astro';
+import { getPosts, resolveImage, extractPath } from '@/lib/wp-client';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+// Fetch posts and filter out preview mode
+const allPosts = await getPosts();
+const posts = allPosts.filter((p: any) => {
+  const fields = p.acf?.additional_blog_fields || p.acf?.additionalBlogFields || {};
+  return !fields.preview_mode && !fields.previewMode;
+}).slice(0, 3);
+
+// Filter by matching category names from taxonomy array
+const taxonomy = content.taxonomy || [];
+const cards: any[] = [];
+
+for (const tax of taxonomy) {
+  for (const post of posts) {
+    const categories = post._embedded?.['wp:term']?.[0] || [];
+    for (const cat of categories) {
+      if (tax.name === cat.name && cards.length < 3 && !cards.includes(post)) {
+        cards.push(post);
+      }
+    }
+  }
+}
+
+// If no taxonomy match, fall back to first 3 posts
+const displayCards = cards.length > 0 ? cards : posts.slice(0, 3);
+
+// Resolve images for each card
+const resolvedCards = await Promise.all(
+  displayCards.map(async (post: any) => {
+    const blogFields = post.acf?.additional_blog_fields || post.acf?.additionalBlogFields || {};
+    const squareImage = blogFields.square_image || blogFields.squareImage;
+    const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0];
+
+    // Prefer square image, fall back to featured image
+    let resolved = null;
+    if (squareImage) {
+      resolved = await resolveImage(squareImage);
+    }
+    if (!resolved && featuredMedia) {
+      resolved = {
+        source_url: featuredMedia.source_url,
+        alt_text: featuredMedia.alt_text || '',
+      };
+    }
+
+    return {
+      title: post.title?.rendered || '',
+      link: `/blog/${post.slug}/`,
+      imageSrc: resolved?.source_url || '',
+      imageAlt: resolved?.alt_text || '',
+    };
+  })
+);
+---
+
+<Section settings={settings}>
+  <Container classes="xl:max-w-[1224px] px-8">
+    {content.heading && (
+      <h2 class={`${theme.text.H2}text-center`}>
+        {content.heading}
+      </h2>
+    )}
+    {content.body && (
+      <p class={`${theme.text.P_STD}mt-6 text-center`}>
+        {content.body}
+      </p>
+    )}
+    <div>
+      <div class="mt-12 flex w-full flex-col items-center lg:items-stretch justify-between lg:flex-row lg:flex-wrap lg:justify-between">
+        {resolvedCards.map((card) => (
+          <BlogCardHome
+            heading={card.title}
+            link={card.link}
+            imageSrc={card.imageSrc}
+            imageAlt={card.imageAlt}
+          />
+        ))}
+      </div>
+    </div>
+  </Container>
+</Section>

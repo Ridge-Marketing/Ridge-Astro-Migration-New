@@ -1,0 +1,71 @@
+---
+/**
+ * Full Width Image Gallery layout — continuously auto-scrolling image strip.
+ * Replaces Gatsby's FullWidthImageGallery.js (@splidejs auto-scroll) with a
+ * CSS marquee: the track is rendered twice and translated -50% on a loop.
+ * 5 slides per view on xl, stepping down to 2 on small screens.
+ */
+import { resolveImage } from '@/lib/wp-client';
+import WpImage from '@/components/global/WpImage.astro';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+
+const images = (
+  await Promise.all(
+    (content.images || []).map(async (item: any) => {
+      const resolved = await resolveImage(item.image);
+      return resolved?.source_url
+        ? { url: resolved.source_url, alt: resolved.alt_text || '' }
+        : null;
+    })
+  )
+).filter(Boolean) as Array<{ url: string; alt: string }>;
+
+// Splide autoScroll speed 0.25 ≈ 15px/s; ~18s per slide keeps that pace
+const duration = Math.max(images.length * 18, 20);
+---
+
+{images.length > 0 && (
+  <div class="w-full overflow-hidden" aria-label="Image gallery">
+    <div class="gallery-marquee flex w-max" style={`animation-duration: ${duration}s`}>
+      {[0, 1].map((copy) => (
+        <div class="flex shrink-0" aria-hidden={copy === 1 ? 'true' : undefined}>
+          {images.map((img) => (
+            <div class="gallery-marquee__slide shrink-0 w-[50vw] sm:w-[33.34vw] md:w-[25vw] xl:w-[20vw]">
+              <WpImage
+                src={img.url}
+                alt={copy === 0 ? img.alt : ''}
+                class="w-full h-full min-h-[200px] lg:min-h-[460px] object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  @keyframes galleryMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .gallery-marquee {
+    animation: galleryMarquee linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gallery-marquee {
+      animation: none;
+    }
+  }
+</style>

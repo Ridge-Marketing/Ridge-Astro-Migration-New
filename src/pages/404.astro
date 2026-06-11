@@ -1,0 +1,32 @@
+---
+/**
+ * 404 page
+ */
+import Layout from '@/components/global/Layout.astro';
+import Container from '@/components/global/Container.astro';
+import { getGlobalSettings } from '@/lib/wp-client';
+
+const globalSettings = await getGlobalSettings().catch(() => null);
+const favicon = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+---
+
+<Layout
+  seo={{ title: '404 - Page Not Found | Ridge Marketing' }}
+  favicon={favicon}
+  headerColor="white"
+>
+  <Container>
+    <div class="page404">
+      <h1>Page Not Found</h1>
+      <p class="font-basic-sans font-light text-21px leading-28px">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+      <a
+        href="/"
+        class="inline-block text-21px font-stratos uppercase py-3 px-16 text-center font-normal border-2 border-solid transition-all ease-in-out text-rm-black border-rm-green bg-rm-green hover:bg-rm-black hover:text-rm-white hover:border-rm-black mt-8"
+      >
+        Go Home
+      </a>
+    </div>
+  </Container>
+</Layout>

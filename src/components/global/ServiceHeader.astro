@@ -1,0 +1,98 @@
+---
+/**
+ * Service Header — two-color heading, eyebrow, body content, optional floated image
+ * Replaces the inline header from Gatsby's service.js template
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutContent: any;
+  layoutSettings: any;
+}
+
+const { layoutContent: content, layoutSettings: settings } = Astro.props;
+
+// Resolve floated image if present
+const floatedImage    = await resolveImage(content.intextFloatedImage);
+const floatedImageUrl = floatedImage?.source_url || '';
+
+// Separate body content: large items render first, standard items float alongside image
+const bodyContent: any[]  = content.bodyContent || [];
+const floatP: any[]       = [];
+
+if (floatedImageUrl) {
+  for (const item of bodyContent) {
+    if (item.textSize === 'standard') {
+      floatP.push(item);
+    }
+  }
+}
+
+const hasFloat = floatedImageUrl && floatP.length > 0;
+const visibility = hasFloat ? 'inline-block' : 'hidden invisible';
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.eyebrow && (
+      <h1 class={`${theme.text.H4} block mb-4`}>
+        {content.eyebrow}
+      </h1>
+    )}
+
+    {content.heading?.green && content.heading?.black && (
+      <h2 class="font-stratos uppercase font-bold text-50px sm:text-60px lg:text-100px leading-[3rem] lg:leading-[4.75rem] mb-9">
+        <span class="text-rm-green lg:block">
+          {content.heading.green + ' '}
+        </span>
+        <span class="text-rm-black">
+          {content.heading.black}
+        </span>
+      </h2>
+    )}
+
+    {bodyContent.map((item: any) => {
+      if (floatP.length < 1 || item.textSize === 'large') {
+        const textSize = item.textSize === 'large' ? 'H4_LTE' : 'P_STD';
+        return (
+          <p class={`${(theme.text as any)[textSize]} mb-9`} set:html={parser(item.body || '')} />
+        );
+      }
+      return null;
+    })}
+
+    <div class={`${visibility} lg:w-[65%]`}>
+      {floatP.map((item: any) => (
+        <p class={`${theme.text.P_STD} mb-9`}>
+          {item.body}
+        </p>
+      ))}
+      {content.componentButton && (
+        <div class="text-left">
+          <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+        </div>
+      )}
+    </div>
+
+    {content.componentButton && visibility === 'hidden invisible' && (
+      <div class="text-left">
+        <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+      </div>
+    )}
+
+    {floatedImageUrl && (
+      <WpImage
+        src={floatedImageUrl}
+        alt=""
+        class="mb-9 lg:mb-0 lg:w-[30%] lg:ml-[5%] mt-12 lg:mt-0"
+        responsive
+      />
+    )}
+  </Container>
+</Section>

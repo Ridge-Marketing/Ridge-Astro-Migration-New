@@ -1,0 +1,225 @@
+---
+/**
+ * Flexible Project Blocks layout
+ * Replaces Gatsby's FlexibleProjectBlocks.js
+ *
+ * content.type          — 'project' | 'video'
+ * content.overlapEffect — 'top-black' | 'top-pale-grey' | ''
+ * content.heading       — optional H2
+ * content.blocks[]      — array of blocks:
+ *   block.featuredImage   image (ID or object)
+ *   block.heading         link / label text
+ *   block.imageWidth      'full' | '' (3/4 width)
+ *   block.link.url        destination URL (project type)
+ *   block.videoSource     embed URL (video type)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content  = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const textColor    = settings.backgroundColor === 'black' ? 'white' : 'black';
+const type         = content.type || 'project';        // 'project' | 'video'
+const overlapEffect = content.overlapEffect || '';
+const blocks: any[] = content.blocks || [];
+
+// Overlap-effect bar height depends on whether there's a heading
+const overlapPb = content.heading ? 'pb-[14rem]' : 'pb-[10rem]';
+const pt        = settings.padding?.top ? (theme.paddingTop[settings.padding.top] || 'pt-20') : 'pt-20';
+
+// Resolve all block images at build time
+const resolvedBlocks = await Promise.all(
+  blocks.map(async (block: any, i: number) => {
+    const img = await resolveImage(block.featuredImage);
+    const imageUrl = img?.source_url || block.featuredImage?.sourceUrl || block.featuredImage?.source_url || '';
+    const imageAlt = img?.alt_text || block.featuredImage?.altText || block.heading || '';
+    const widthClass = block.imageWidth === 'full' ? 'w-full' : 'w-3/4';
+    const uid = `fpb-${i}-${Math.random().toString(36).slice(2, 6)}`;
+    return { ...block, imageUrl, imageAlt, widthClass, uid };
+  })
+);
+
+const linkClasses = `${theme.text_links.BASE_STYLING}${theme.text_links.STD}${theme.text_links.FWD_BASE}${theme.text_links.ARW_FWD_BLACK}${theme.text_links.HOVER_GREEN}${theme.text_links.HOVER_ARW_FWD_GREEN} mt-3 justify-center`;
+---
+
+<Section settings={settings} transparent>
+  {/* Overlap-effect background bar */}
+  {overlapEffect === 'top-black' && (
+    <div class={`absolute top-0 left-0 w-full bg-black ${pt} ${overlapPb}`}></div>
+  )}
+  {overlapEffect === 'top-pale-grey' && (
+    <div class={`absolute top-0 left-0 w-full bg-rm-pale-grey ${pt} ${overlapPb}`}></div>
+  )}
+
+  <Container>
+    {content.heading && (
+      <h2
+        class={`${theme.text.H2} mb-20 text-center text-${textColor}`}
+        set:html={parser(content.heading)}
+      />
+    )}
+
+    {resolvedBlocks.length > 0 && (
+      <div class="md:grid md:grid-cols-2 xl:grid-cols-3 gap-12">
+        {resolvedBlocks.map((block: any) => (
+          <div class="flex flex-col justify-center items-center max-w-[375px] w-full mx-auto pb-20 md:pb-0">
+
+            {/* ── Project block ── */}
+            {type === 'project' && (
+              <a
+                href={block.link?.url || '#'}
+                class="h-full flex flex-col justify-center items-center w-full"
+              >
+                {block.imageUrl && (
+                  <div class={`${block.widthClass} mx-auto block`}>
+                    <WpImage
+                      src={block.imageUrl}
+                      alt={block.imageAlt}
+                      class="object-contain w-full"
+                    />
+                  </div>
+                )}
+                <div class="flex-1 flex flex-col justify-end">
+                  <span class={linkClasses}>{block.heading}</span>
+                </div>
+              </a>
+            )}
+
+            {/* ── Video block ── */}
+            {type === 'video' && (
+              <>
+                <button
+                  type="button"
+                  class="w-full text-left"
+                  data-lightbox-open={block.uid}
+                  aria-haspopup="dialog"
+                >
+                  {block.imageUrl && (
+                    <div class="mx-auto block">
+                      <WpImage
+                        src={block.imageUrl}
+                        alt={block.imageAlt}
+                        class="object-contain w-full"
+                      />
+                    </div>
+                  )}
+                  <div class="flex-1 flex flex-col justify-end">
+                    <span class={`${linkClasses} min-h-16`}>{block.heading}</span>
+                  </div>
+                </button>
+
+                {/* Lightbox overlay */}
+                <div
+                  id={block.uid}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={block.heading}
+                  class="fixed inset-0 z-50 hidden"
+                >
+                  {/* Backdrop */}
+                  <div
+                    class="absolute inset-0 bg-rm-black opacity-30"
+                    data-lightbox-close={block.uid}
+                    aria-hidden="true"
+                  ></div>
+
+                  {/* Panel */}
+                  <div class="relative z-10 w-full h-full flex flex-col items-center justify-center">
+                    <div class="w-[95%] md:w-3/4 lg:w-[40%] h-max relative flex flex-col justify-center items-center">
+
+                      {/* Close button */}
+                      <button
+                        type="button"
+                        class="absolute z-50 text-rm-white p-2 -top-[50px] right-0"
+                        aria-label="Close video"
+                        data-lightbox-close={block.uid}
+                      >
+                        <svg width="26" height="24" viewBox="0 0 26 24" fill="none" aria-hidden="true">
+                          <path d="M2 2L23.1852 22" stroke="#F1F5F5" stroke-width="3" stroke-linecap="round"/>
+                          <path d="M24 2L2.81482 22" stroke="#F1F5F5" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                      </button>
+
+                      {/* 16:9 iframe */}
+                      <div class="pt-[56.25%] w-full relative">
+                        <iframe
+                          data-src={`${block.videoSource}?autoplay=1&muted=1`}
+                          class="absolute top-0 left-0 w-full h-full object-cover"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowfullscreen
+                          title={block.heading}
+                        ></iframe>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+          </div>
+        ))}
+      </div>
+    )}
+  </Container>
+</Section>
+
+{/* Lightbox JS — runs once, delegates via data attributes */}
+{type === 'video' && (
+  <script>
+    function openLightbox(id: string) {
+      const box = document.getElementById(id);
+      if (!box) return;
+      // Load iframe src on first open
+      const iframe = box.querySelector('iframe[data-src]') as HTMLIFrameElement | null;
+      if (iframe && iframe.dataset.src) {
+        iframe.src = iframe.dataset.src;
+        delete iframe.dataset.src;
+      }
+      box.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeLightbox(id: string) {
+      const box = document.getElementById(id);
+      if (!box) return;
+      box.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      // Pause video by clearing src
+      const iframe = box.querySelector('iframe') as HTMLIFrameElement | null;
+      if (iframe) {
+        iframe.dataset.src = iframe.src;
+        iframe.src = '';
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const opener = target.closest('[data-lightbox-open]') as HTMLElement | null;
+      const closer = target.closest('[data-lightbox-close]') as HTMLElement | null;
+      if (opener) openLightbox(opener.dataset.lightboxOpen!);
+      if (closer) closeLightbox(closer.dataset.lightboxClose!);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('[role="dialog"]:not(.hidden)').forEach((el) => {
+          closeLightbox((el as HTMLElement).id);
+        });
+      }
+    });
+  </script>
+)}

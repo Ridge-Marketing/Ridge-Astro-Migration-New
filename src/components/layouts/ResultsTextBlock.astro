@@ -1,0 +1,142 @@
+---
+/**
+ * Results Text Block layout — case study card with stats
+ * A colored card containing: heading, body, services tags, CTA button (left)
+ * and a stat grid (right).
+ *
+ * ACF fields (layout__content):
+ *   background_color   – card background: "pale-teal" | "white"
+ *   heading            – case study title
+ *   body               – short description
+ *   services[]         – { service (ID), title_override }
+ *   component__button  – CTA button
+ *   columns            – "3" (number of stat columns)
+ *   results[]          – { stat, description, company }
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { getServiceById, convertCMSLink } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+interface ServiceObj {
+  service       : string,
+  titleOverride : string
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent || {};
+const settings        = layoutData.layoutSettings || {};
+
+const services        = content.services || [];
+const results         = content.results  || [];
+
+// Card background from content (not section settings)
+const bgMap: Record<string, string> = {
+  'pale-teal': 'bg-rm-pale-teal',
+  'white':     'bg-white',
+  'black':     'bg-black text-white',
+};
+const cardBg      = bgMap[content.backgroundColor] || 'bg-white';
+const isCardDark  = content.backgroundColor === 'black';
+const cardText    = isCardDark ? 'text-white' : 'text-black';
+
+
+const servicesLinks: Array<[string, string]> = await Promise.all(
+  services.map(async (s: ServiceObj): Promise<[string, string]> => {
+    const svc = await getServiceById(Number(s.service));
+    return [s.titleOverride, svc?.link ? convertCMSLink(svc.link) : ''];
+  })
+);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class={`${cardBg} container xl:max-w-[1224px]  px-8 py-10 sm:py-12 lg:px-16 lg:py-16`}>
+
+      <!-- Row 1: title/body/button | services -->
+      <div class="lg:flex">
+
+        <!-- Col 1: heading, body, button -->
+        <div class="lg:w-3/4 xl:pr-24">
+          {content.heading && (
+            <h2
+              class={`${theme.text.H2} mb-6`}
+              set:html={parser(content.heading)}
+            />
+          )}
+          {content.body && (
+            <p
+              class={`${theme.text.H4_LTE} mt-8`}
+              set:html={parser(content.body)}
+            />
+          )}
+          {content.componentButton?.link && (
+            <div class="mt-8">
+              <Buttons
+                content={content.componentButton}
+                sectionBackground={content.backgroundColor || settings.backgroundColor}
+              />
+            </div>
+          )}
+        </div>
+
+        <!-- Col 2: services -->
+        <div class={`mt-12 lg:mt-0 lg:pl-10 lg:w-auto`}>
+          <p class={`${theme.text.H4} mb-3`}>Services Provided</p>
+          {services.length > 0 && (
+            <ul class="flex flex-col gap-2 mt-10 lg:mt-0 lg:pt-3">
+              {services.map((s: any) => {
+                const title = s.titleOverride || s.title_override;
+                const href  = servicesLinks.find(([t]) => t === title)?.[1] || '#';
+                return (
+                  <li class="mb-1">
+                    <a href={href} class={`${theme.text.LINK} ${theme.text_links.HOVER_GREEN}`}>
+                      {title}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+      </div>
+
+      <!-- Row 2: stats full width -->
+      {results.length > 0 && (
+        <div class="grid grid-cols-3 gap-6 lg:gap-12 pt-10">
+          {results.map((result: any) => (
+            <div class="text-center lg:text-left">
+              {result.stat && (
+                <span class={`accent-text block font-stratos font-semibold text-80px lg:text-[120px] leading-none`}>
+                  {result.stat}
+                </span>
+              )}
+              {result.description && (
+                <p
+                  class={`${theme.text.H5} font-basic-sans uppercase mt-2 ${cardText}`}
+                  set:html={parser(result.description)}
+                />
+              )}
+              {result.company && (
+                <p class={`${theme.text.P_STD} mt-2 ${cardText}`}>
+                  {result.company}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  </Container>
+</Section>

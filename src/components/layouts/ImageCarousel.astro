@@ -1,0 +1,126 @@
+---
+/**
+ * Image Carousel layout — horizontally scrolling slides with prev/next arrows.
+ * Replaces Gatsby's ImageCarousel.js (which used @splidejs/react-splide).
+ * Uses native scroll-snap + a small script for the arrow buttons.
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const slides = await Promise.all(
+  (content.slides || []).map(async (s: any) => ({
+    image: await resolveImage(s.image),
+    url  : s.url || '',
+  }))
+);
+
+const buttons     = content.componentButtonGroup || [];
+const arrowStyle  = content.arrowstyle || '';
+const arrowFill   = arrowStyle === 'teal' ? '#24B6BF' : '#474848';
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.heading && (
+      <h2 class={`${theme.text.H2} text-center`} set:html={parser(content.heading)} />
+    )}
+    {content.body && (
+      <p class={`${theme.text.P_STD} text-center my-4`} set:html={content.body} />
+    )}
+
+    <div class="mt-10 px-6 lg:px-10 image-carousel" data-carousel>
+      <div class="relative">
+        <button
+          type="button"
+          class="image-carousel__arrow image-carousel__arrow--prev absolute top-1/2 -translate-y-1/2 -left-6 lg:-left-20 h-auto w-4 lg:w-14 bg-transparent z-10"
+          aria-label="Previous slide"
+          data-direction="prev"
+        >
+          <svg width="56" height="98" viewBox="0 0 56 98" fill="none" class="rotate-180 h-auto w-full" aria-hidden="true">
+            <path d="M53.9507 44.0569C56.6846 46.7903 56.6846 51.2295 53.9507 53.9629L11.9589 95.9489C9.22508 98.6823 4.78532 98.6823 2.05148 95.9489C-0.682362 93.2154 -0.682362 88.7763 2.05148 86.0428L39.1005 48.999L2.07116 11.9551C-0.662678 9.22167 -0.662678 4.78471 2.07116 2.05125C4.805 -0.682205 9.24476 -0.682205 11.9786 2.05125L53.9704 44.0372L53.9485 44.0591L53.9507 44.0569Z" fill={arrowFill} />
+          </svg>
+        </button>
+
+        <div
+          class="image-carousel__track flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2"
+          data-track
+          style="scrollbar-width: none;"
+        >
+          {slides.map((slide) => (
+            <div class="image-carousel__slide flex-none snap-start w-full sm:w-1/3 lg:w-1/4">
+              {slide.url ? (
+                <a href={slide.url}>
+                  {slide.image?.source_url && (
+                    <WpImage src={slide.image.source_url} alt={slide.image.alt_text || ''} class="w-full object-contain" />
+                  )}
+                </a>
+              ) : (
+                slide.image?.source_url && (
+                  <WpImage src={slide.image.source_url} alt={slide.image.alt_text || ''} class="w-full object-contain" />
+                )
+              )}
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          class="image-carousel__arrow image-carousel__arrow--next absolute top-1/2 -translate-y-1/2 -right-6 lg:-right-20 h-auto w-4 lg:w-14 bg-transparent z-10"
+          aria-label="Next slide"
+          data-direction="next"
+        >
+          <svg width="56" height="98" viewBox="0 0 56 98" fill="none" class="h-auto w-full" aria-hidden="true">
+            <path d="M53.9507 44.0569C56.6846 46.7903 56.6846 51.2295 53.9507 53.9629L11.9589 95.9489C9.22508 98.6823 4.78532 98.6823 2.05148 95.9489C-0.682362 93.2154 -0.682362 88.7763 2.05148 86.0428L39.1005 48.999L2.07116 11.9551C-0.662678 9.22167 -0.662678 4.78471 2.07116 2.05125C4.805 -0.682205 9.24476 -0.682205 11.9786 2.05125L53.9704 44.0372L53.9485 44.0591L53.9507 44.0569Z" fill={arrowFill} />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {buttons.length > 0 && (
+      <div class="flex flex-wrap justify-center gap-4 my-12">
+        {buttons.map((b: any) => (
+          b.componentButton?.link && (
+            <Buttons content={b.componentButton} sectionBackground={settings.backgroundColor} />
+          )
+        ))}
+      </div>
+    )}
+  </Container>
+</Section>
+
+<style>
+  .image-carousel__track::-webkit-scrollbar { display: none; }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-track]');
+    if (!track) return;
+    const step = () => {
+      const slide = track.querySelector<HTMLElement>('.image-carousel__slide');
+      return slide ? slide.getBoundingClientRect().width + 24 : track.clientWidth;
+    };
+    root.querySelectorAll<HTMLButtonElement>('[data-direction]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const delta = btn.dataset.direction === 'next' ? step() : -step();
+        track.scrollBy({ left: delta, behavior: 'smooth' });
+      });
+    });
+  });
+</script>

@@ -1,0 +1,292 @@
+---
+/**
+ * Individual blog post pages
+ * Replaces Gatsby's post.js template + gatsby-node blog page creation
+ */
+import Layout from '@/components/global/Layout.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import PostNav from '@/components/blog/PostNav.astro';
+import SeoPopup from '@/components/blog/SeoPopup.tsx';
+import { getPosts, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from '@/lib/wp-client';
+import { parser } from '@/lib/parser';
+import { theme } from '@/lib/theme';
+
+export async function getStaticPaths() {
+  const allPosts = await getPosts();
+
+  const isPreviewPost = (p: any) => {
+    const fields = p.acf?.additional_blog_fields || p.acf?.additionalBlogFields || {};
+    return !!(fields.preview_mode || fields.previewMode);
+  };
+
+  // Preview posts still get a page (shareable URL, noindex, no SEO head),
+  // but prev/next navigation only cycles through public posts
+  const publicPosts = allPosts.filter((p: any) => !isPreviewPost(p));
+
+  return allPosts.map((post: any) => {
+    const publicIndex = publicPosts.findIndex((p: any) => p.id === post.id);
+    const index       = publicIndex === -1 ? 0 : publicIndex;
+    const prevPost    = publicPosts[(index - 1 + publicPosts.length) % publicPosts.length];
+    const nextPost    = publicPosts[(index + 1) % publicPosts.length];
+
+    return {
+      params: { slug: post.slug },
+      props: {
+        post,
+        prevSlug: `/blog/${prevPost.slug}/`,
+        nextSlug: `/blog/${nextPost.slug}/`,
+      },
+    };
+  });
+}
+
+const { post, prevSlug, nextSlug } = Astro.props;
+
+const globalSettings      = await getGlobalSettings().catch(() => null);
+const favicon             = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+
+const seo                 = post.yoast_head_json;
+const blogFields          = post.acf?.additional_blog_fields || post.acf?.additionalBlogFields || {};
+const isPreview           = blogFields.preview_mode || blogFields.previewMode || false;
+
+// Author info
+const author              = post._embedded?.author?.[0];
+const authorName          = author?.name || '';
+const authorAvatarField   = author?.acf?.avatar;
+const resolvedAvatar      = await resolveImage(authorAvatarField);
+const avatarUrl           = resolvedAvatar?.source_url || author?.avatar_urls?.['96'] || '';
+
+// Featured image
+const featuredMedia       = post._embedded?.['wp:featuredmedia']?.[0];
+const featuredImageUrl    = featuredMedia?.source_url || '';
+const featuredImageAlt    = featuredMedia?.alt_text || 'featured image';
+const featuredImageWidth  = featuredMedia?.media_details?.width;
+const featuredImageHeight = featuredMedia?.media_details?.height;
+
+// Date formatting
+const formattedDate = new Date(post.date).toLocaleDateString('default', {
+  month: 'long',
+  year: 'numeric',
+  day: 'numeric',
+});
+
+// Parse content
+const content = parser(post.content?.rendered || '', 'blog');
+
+// Check if this is the SEO popup post
+const isSeoPost = post.slug === 'seo-vs-aeo-vs-geo';
+---
+
+<Layout
+  seo={seo}
+  favicon={favicon}
+  headerColor="white"
+  noindex={isPreview}
+>
+  <hgroup class="container pt-20 mx-auto">
+    <h1 class={`${theme.text.H1_STD} mb-9`} set:html={post.title?.rendered}/>
+    <div class="flex items-center">
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt={authorName}
+          class="w-[70px] h-[70px] mr-5 rounded-full object-center object-cover"
+          loading="lazy"
+        />
+      )}
+      <span class={`${theme.text.P_STD}inline`}>
+        By <address class={`${theme.text.P_BLD}inline not-italic`}>{authorName}</address> on
+        <time datetime={post.date} class="inline not-italic">{formattedDate}</time>
+      </span>
+    </div>
+    {featuredImageUrl && (
+      <WpImage
+        src={featuredImageUrl}
+        alt={featuredImageAlt}
+        width={featuredImageWidth}
+        height={featuredImageHeight}
+        class="w-full mt-9"
+      />
+    )}
+  </hgroup>
+
+  <article class="container blog-container my-9 font-basic-sans mx-auto">
+    <div set:html={content} />
+  </article>
+
+  <nav class="container mx-auto mb-20">
+    <div class="pre-footer-navigation w-full font-stratos block border-t border-[#c5c5c5] border-solid mt-8 mb-8">
+      <div class="w-full flex justify-between mt-8 text-rm-green">
+        {prevSlug && (
+          <a
+            href={prevSlug}
+            class={`${theme.text_links.BASE_STYLING}${theme.text_links.STD}${theme.text_links.BACK_BASE}${theme.text_links.ARW_BACK_GREEN}`}
+          >
+            PREVIOUS ARTICLE
+          </a>
+        )}
+        {nextSlug && (
+          <a
+            href={nextSlug}
+            class={`${theme.text_links.BASE_STYLING}${theme.text_links.STD}${theme.text_links.FWD_BASE}${theme.text_links.ARW_FWD_GREEN}`}
+          >
+            NEXT ARTICLE
+          </a>
+        )}
+      </div>
+    </div>
+  </nav>
+
+  <style>
+    .showMobile, .showDesktop {
+      display: none;
+    }
+    @media screen and (max-width: 768px) {
+      .showMobile {
+        display: block;
+      }
+    }
+    @media screen and (min-width: 768px) {
+      .showDesktop {
+        display: block;
+      }
+    }
+  </style>
+
+  {isSeoPost && (
+    <>
+      <SeoPopup client:idle />
+      <style>
+        .blog-container .large img {
+          max-width: 100%;
+        }
+        @media screen and (max-width: 1024px) {
+          .wp-block-media-text.is-stacked-on-mobile {
+            display: flex;
+            flex-direction: column-reverse;
+          }
+        }
+        @media screen and (min-width: 1024px) {
+          figure.wp-block-media-text__media {
+            float: right;
+            width: 600px;
+            margin-left: 70px;
+          }
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 2px solid black;
+          overflow: scroll;
+        }
+        .wp-block-table {
+          width: 100%;
+          overflow: scroll;
+          margin-bottom: 60px;
+        }
+        @media screen and (min-width: 640px) {
+          .wp-block-table, table {
+            overflow: hidden;
+          }
+        }
+        thead {
+          text-align: left;
+          background-color: #1f9da5;
+        }
+        thead th {
+          color: white;
+          font-weight: 700;
+          font-size: 21px;
+          line-height: 28px;
+          padding: 10px 12px;
+          border: 1px solid black;
+        }
+        tbody td {
+          font-size: 21px;
+          line-height: 28px;
+          padding: 10px 12px;
+          border: 1px solid black;
+          font-weight: 300;
+        }
+        .sideheader table {
+          border: 2px solid black;
+          font-weight: 300;
+          max-width: 658px;
+        }
+        .sideheader td:first-child {
+          background-color: #1f9da5;
+          color: white;
+          font-weight: 600;
+          font-size: 26px;
+          line-height: 30px;
+          text-align: center;
+          padding: 20px 12px;
+          border: 2px solid black;
+        }
+        @media screen and (min-width: 768px) {
+          .sideheader td:first-child {
+            width: 220px;
+          }
+        }
+        .sideheader td:first-child strong {
+          font-weight: 600;
+        }
+        .sideheader td:last-child {
+          background-color: white;
+          color: black;
+          font-size: 21px;
+          line-height: 28px;
+          text-align: center;
+          padding: 20px 12px;
+          border: 2px solid black;
+        }
+        hr {
+          margin-bottom: 2.5rem;
+        }
+        .faq-section {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .faq-section details {
+          background-color: #f1f5f5;
+          border-radius: 5px;
+          padding: 24px;
+        }
+        .faq-section summary {
+          font-weight: 700;
+          font-size: 21px;
+          line-height: 28px;
+          color: black;
+          cursor: pointer;
+          list-style: none;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .faq-section summary::-webkit-details-marker {
+          display: none;
+        }
+        .faq-section summary::after {
+          content: '+';
+          font-size: 24px;
+          font-weight: 400;
+          color: #A9CF38;
+          margin-left: 16px;
+        }
+        .faq-section details[open] summary::after {
+          content: '\2212';
+        }
+        .faq-section details p {
+          font-weight: 300;
+          font-size: 21px;
+          line-height: 28px;
+          color: black;
+          margin-top: 16px;
+          margin-bottom: 0;
+        }
+      </style>
+    </>
+  )}
+</Layout>

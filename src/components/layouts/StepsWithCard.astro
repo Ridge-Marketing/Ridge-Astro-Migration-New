@@ -1,0 +1,99 @@
+---
+/**
+ * Steps With Card layout — numbered two-col steps grid plus a teal CTA card
+ * with text and image.
+ * Replaces Gatsby's StepsWithCard.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+const settings       = layoutData.layoutSettings;
+
+const steps = content.steps || [];
+const card  = content.card || {};
+
+const textColor = settings.backgroundColor === 'black' ? 'text-rm-white' : 'text-rm-black';
+
+const cardBody = card.body ? parser(card.body) : '';
+
+const resolvedImage       = await resolveImage(card.image);
+const resolvedImageMobile = await resolveImage(card.imageMobile);
+const imageUrl            = resolvedImage?.source_url || '';
+const imageAlt            = resolvedImage?.alt_text || '';
+const imageMobileUrl      = resolvedImageMobile?.source_url || '';
+const imageMobileAlt      = resolvedImageMobile?.alt_text || '';
+
+const hasCard = !!(card.heading || cardBody || imageUrl || imageMobileUrl);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="flex flex-col gap-12 lg:gap-[50px] items-center">
+
+      {steps.length > 0 && (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-[31px] w-full">
+          {steps.map((step: any, idx: number) => (
+            <div class="flex flex-col gap-[18px] items-start">
+              <span class={`${theme.text.CIRCLE_NUM} w-[55px] h-[55px] text-rm-green border-rm-green`}>
+                {idx + 1}
+              </span>
+              {step.heading && (
+                <h3 class={`font-basic-sans font-bold text-[21px] leading-[28px] ${textColor}`}>
+                  {step.heading}
+                </h3>
+              )}
+              {step.body && (
+                <div
+                  set:html={parser(step.body)}
+                  class={`font-basic-sans font-light text-[21px] leading-[28px] ${textColor} [&_a]:underline`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasCard && (
+        <div class="bg-[#1F9DA5] rounded-[20px] overflow-hidden w-full grid grid-cols-1 lg:grid-cols-[1fr_302px] items-stretch max-w-[750px] lg:max-w-full mx-auto">
+          <div class="flex flex-col gap-1.5 p-8 lg:pl-[58px] lg:pr-12 lg:py-12 text-rm-white">
+            {card.heading && (
+              <h3 class="font-basic-sans font-semibold text-[28px] md:text-[34px] leading-tight">
+                {card.heading}
+              </h3>
+            )}
+            {cardBody && (
+              <div
+                set:html={cardBody}
+                class="font-basic-sans font-light text-[21px] leading-[28px] [&_p]:mb-4 [&_a]:underline [&_strong]:font-bold max-w-[750px]"
+              />
+            )}
+          </div>
+          {imageMobileUrl && (
+            <div class="lg:hidden">
+              <WpImage src={imageMobileUrl} alt={imageMobileAlt} class="w-full h-full min-h-[260px] object-cover" />
+            </div>
+          )}
+          {imageUrl && (
+            <div class={imageMobileUrl ? 'hidden lg:block' : ''}>
+              <WpImage src={imageUrl} alt={imageAlt} class="w-full h-full min-h-[260px] lg:min-h-full object-cover" />
+            </div>
+          )}
+        </div>
+      )}
+
+    </div>
+  </Container>
+</Section>

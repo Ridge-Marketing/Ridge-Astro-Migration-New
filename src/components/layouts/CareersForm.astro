@@ -1,0 +1,55 @@
+---
+/**
+ * Careers Form layout — heading + body + careers application form
+ * Replaces Gatsby's CareersForm.js
+ *
+ * ACF fields (layout__content):
+ *   heading  — optional H2 above the form
+ *   body     — optional paragraph below the heading
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FormCareers from '@/components/global/FormCareers.tsx';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content  = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const isWhiteBg = settings.backgroundColor === 'white';
+const textColor = isWhiteBg ? 'text-rm-black' : 'text-rm-white';
+const formTextColor = isWhiteBg ? 'black' : 'white';
+
+const body = content.body ? parser(content.body) : '';
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.heading && (
+      <h2 class={`${theme.text.H2} ${textColor} text-center`}>
+        {content.heading}
+      </h2>
+    )}
+    {body && (
+      <p
+        class={`${theme.text.P_STD} ${textColor} text-center mt-6`}
+        set:html={body}
+      />
+    )}
+    <div class="mt-10">
+      <FormCareers
+        client:visible
+        submitLabel="Submit"
+        textColor={formTextColor}
+      />
+    </div>
+  </Container>
+</Section>

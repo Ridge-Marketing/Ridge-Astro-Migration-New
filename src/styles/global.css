@@ -1,0 +1,503 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* ============================================
+   Theme Configuration (migrated from tailwind.config.js)
+   ============================================ */
+@theme {
+  /* Custom fonts */
+  --font-basic-sans: "basic-sans", sans-serif;
+  --font-stratos: "stratos", sans-serif;
+  --font-stratos-lights: "stratos-lights", sans-serif;
+
+  /* Brand colors */
+  --color-rm-green: #A9CF38;
+  --color-rm-aqua: #24B6BF;
+  --color-rm-black: #000000;
+  --color-rm-white: #FFFFFF;
+  --color-rm-carbon: #1F1F1F;
+  --color-rm-grey: #474848;
+  --color-rm-pale-grey: #F1F5F5;
+  --color-rm-pale-teal: #F3F9F9;
+  --color-rm-blog-blue: #1f9da5;
+  --color-rm-dark-grey: #1C1C1C;
+  --color-rm-ocean-teal: #209DA5;
+
+  /* Breakpoints
+     Note: sm (640), md (768), lg (1024), xl (1280), 2xl (1536) are Tailwind defaults.
+     We override 2xl and add custom ones. */
+  --breakpoint-xs: 400px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-lgz: 1025px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-xlz: 1366px;
+  --breakpoint-2xl: 1920px;
+  --breakpoint-3xl: 2150px;
+  --breakpoint-4xl: 2475px;
+
+  /* Custom font sizes */
+  --text-18px: 1.125rem;
+  --text-21px: 1.3125rem;
+  --text-26px: 1.625rem;
+  --text-30px: 1.875rem;
+  --text-40px: 2.5rem;
+  --text-45px: 2.8125rem;
+  --text-50px: 2.9rem;
+  --text-55px: 3.4375rem;
+  --text-60px: 3.75rem;
+  --text-80px: 4.25rem;
+  --text-100px: 5.2rem;
+  --text-120px: 7.5rem;
+  --text-160px: 10rem;
+
+  /* Custom line heights */
+  --leading-26px: 1.625rem;
+  --leading-28px: 2rem;
+  --leading-30px: 1.875rem;
+  --leading-32px: 2rem;
+  --leading-36px: 2.25rem;
+  --leading-44px: 2.75rem;
+  --leading-H2-H3: 3.10rem;
+  --leading-PULL-Q: 3.42rem;
+  --leading-H1-m: 3.73rem;
+  --leading-H1: 4.75rem;
+  --leading-120px: 7.5rem;
+  --leading-160px: 10rem;
+
+  /* Custom shadows */
+  --shadow-block: 0px 0px 20px rgba(0, 0, 0, 0.2);
+  --shadow-lightbox: 0 4px 4px rgba(0, 0, 0, 0.25);
+  --shadow-brandcard: 0 4px 4px rgba(0, 0, 0, 0.25);
+  --shadow-cmocard: 0 0 12px 0 rgba(0, 0, 0, 0.25);
+
+  /* Custom animations */
+  --animate-quote: quoteSlide 0.75s ease-out forwards;
+  --animate-textFadeIn: cycleIn 1s ease-out forwards;
+  --animate-textFadeOut: cycleOut 1s ease-out forwards;
+}
+
+/* Max-width breakpoint variants (replaces extend.screens.-lg and -xl) */
+@custom-variant max-lg (@media (max-width: 1023px));
+@custom-variant max-xl (@media (max-width: 1279px));
+
+/* ============================================
+   Keyframes
+   ============================================ */
+@keyframes quoteSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-25px);
+  }
+  25% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0px);
+  }
+}
+
+@keyframes cycleOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+    display: none;
+  }
+}
+
+@keyframes cycleIn {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+    display: block;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes cloudAnimation-Top-Keyframes {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  100% {
+    transform: translate(0px, -20px) rotate(-0.75deg);
+  }
+}
+
+@keyframes cloudAnimation-Bottom-Keyframes {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  100% {
+    transform: translate(0px, 20px) rotate(0.75deg);
+  }
+}
+
+/* ============================================
+   Safelist for dynamic CMS-driven classes
+   (migrated from tailwind.config.js safelist)
+   ============================================ */
+@source inline("bg-rm-green bg-rm-pale-grey bg-black bg-white bg-rm-pale-teal bg-rm-ocean-teal bg-rm-dark-grey bg-rm-black bg-rm-white text-rm-green text-rm-white text-rm-black text-white text-black text-center text-left text-right pt-0 pt-5 pt-6 pt-7 pt-8 pt-12 pt-16 pt-20 pt-24 pt-44 pb-0 pb-12 pb-16 pb-20 pb-24 pb-40 pb-60 md:pt-0 md:pt-20 md:pt-36 lg:pt-0 lg:pt-20 xl:pt-0 xl:pt-20 xl:pt-40 xl:pt-44 xl:p-24 xl:ml-24 -mb-12 md:-mb-32 overflow-hidden sm:p-1 sm:p-2 sm:p-3 sm:p-4 sm:p-5 sm:p-6 sm:p-8 sm:p-10 sm:p-12 md:p-1 md:p-2 md:p-3 md:p-4 md:p-5 md:p-6 md:p-8 md:p-10 md:p-12 lg:p-1 lg:p-2 lg:p-3 lg:p-4 lg:p-5 lg:p-6 lg:p-8 lg:p-10 lg:p-12 xl:p-1 xl:p-2 xl:p-3 xl:p-4 xl:p-5 xl:p-6 xl:p-8 xl:p-10 xl:p-12 p-1 p-2 p-3 p-4 p-5 p-6 p-8 p-10 p-12 pt-[56.25%] pt-[100%] hover:bg-rm-green hover:bg-rm-white hover:bg-rm-black hover:bg-white hover:bg-black hover:text-rm-green hover:text-rm-white hover:text-rm-black hover:text-white hover:text-black hover:border-rm-green hover:border-rm-white hover:border-rm-black hover:border-white hover:border-black border-rm-green border-rm-white border-rm-black border-white border-black bg-transparent font-stratos font-basic-sans font-stratos-lights font-bold font-semibold font-light font-normal uppercase inline-block inline block flex items-center justify-center text-21px text-18px text-26px text-30px text-40px text-45px text-50px text-55px text-60px text-80px text-100px text-120px text-160px leading-26px leading-28px leading-30px leading-32px leading-36px leading-44px leading-H2-H3 leading-PULL-Q leading-H1-m leading-H1 leading-120px leading-160px max-lg:after:transition-all max-lg:after:ease-out max-lg:after:inline-block max-lg:after:bg-contain max-lg:after:bg-center max-lg:after:bg-no-repeat max-lg:after:w-[20px] max-lg:after:h-[20px] max-lg:after:ml-2 max-lg:hover:after:translate-x-2 max-lg:before:hidden");
+
+/* ============================================
+   Base styles
+   ============================================ */
+@layer base {
+  :focus-visible {
+    @apply outline-rm-green;
+  }
+  textarea {
+    @apply overflow-hidden;
+  }
+  sup {
+    top: -0.25em;
+  }
+  q:before {
+    @apply content-['"'] -ml-3 lg:-ml-6 absolute;
+  }
+  q:after {
+    @apply content-['"'];
+  }
+  strong {
+    @apply font-bold;
+  }
+  main {
+    @apply outline-none;
+  }
+}
+
+@layer components {
+  .h-inherit {
+    height: inherit;
+  }
+}
+
+/* ============================================
+   Custom container (replaces Tailwind container config)
+   Astro/TW4: we handle container widths manually
+   ============================================ */
+
+/* ============================================
+   Component Styles (migrated from src/css/styles.css)
+   ============================================ */
+
+.container{
+  @apply xl:!pl-12 xl:!pr-12 xl:max-w-[1280px] mx-auto
+}
+
+/* Mobile Menu Height */
+@media screen and (max-width: 1024px) {
+  .moblileMenuHeight {
+    height: 85vh;
+  }
+}
+
+/* Home Hero */
+.homeHero {
+  @apply w-full h-[40vh] xl:h-[80vh];
+}
+
+.belowHomeHero {
+  @apply !pt-10 lg:!pt-16;
+}
+
+/* Lottie player */
+.lf-player-container {
+  @apply w-full h-full;
+}
+
+/* ============================================
+   Form Styling
+   ============================================ */
+.form-one-col .form-group {
+  @apply w-full;
+}
+
+input[type="file"] {
+  @apply !border-b-0;
+}
+
+input:-internal-autofill-selected,
+input:-internal-autofill:active,
+input:-internal-autofill {
+  background-color: rgba(0, 0, 0, 0) !important;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  background-color: rgba(0, 0, 0, 0) !important;
+  @apply text-21px px-3 py-2;
+}
+
+.form-group input[type="file"] {
+  background-color: rgba(255, 255, 255, 1) !important;
+  @apply text-rm-black p-3 mt-2 !h-min;
+}
+
+/* Form label transitions */
+.translate-form .form-group input:focus + label,
+.translate-form .form-group input:valid + label,
+.translate-form .form-group input:not(:placeholder-shown) + label {
+  @apply -translate-y-20 text-18px;
+}
+
+.translate-form textarea:focus + label,
+.translate-form .form-group textarea:not(:placeholder-shown) + label {
+  @apply -translate-y-20 text-18px;
+}
+
+.translate-form .form-group select + label {
+  @apply -translate-y-20 text-18px;
+}
+
+.translate-form .fileLabel {
+  @apply -translate-y-0;
+}
+
+.translate-form-global {
+  @apply -mt-6;
+}
+
+.pristine-error {
+  @apply -translate-y-4 text-[#EA0000] font-basic-sans text-18px;
+}
+
+.translate-form .has-danger input,
+.translate-form .has-danger textarea {
+  @apply border-[#ea0000];
+}
+
+/* ============================================
+   Page-specific styles
+   ============================================ */
+.page404 h1,
+.terms h1 {
+  @apply font-stratos uppercase font-bold text-60px lg:text-100px leading-H1-m lg:leading-H1 mt-10 mb-14;
+}
+
+.page404,
+.terms {
+  @apply container mt-20;
+  max-width: 1120px;
+}
+
+.page404 h4,
+.terms h4 {
+  @apply font-basic-sans font-semibold text-26px leading-30px;
+}
+
+.terms h6 {
+  @apply font-basic-sans font-light text-21px leading-28px mb-16;
+}
+
+.terms h4 {
+  @apply mb-6 mt-14;
+}
+
+.terms p {
+  @apply font-basic-sans font-light text-21px leading-28px mb-5;
+}
+
+.terms a {
+  @apply underline font-basic-sans font-light mb-16;
+}
+
+/* ============================================
+   Blog styles
+   ============================================ */
+.blog-float-right {
+  @apply float-right mt-0 mr-0 mb-6 ml-0 md:ml-6 lg:ml-20;
+}
+
+.blog-container h2 {
+  @apply font-stratos uppercase font-bold text-40px leading-44px mt-10 mb-6;
+}
+
+.blog-container h3 {
+  @apply font-basic-sans font-semibold text-26px leading-30px mb-6;
+}
+
+.blog-container h6 {
+  @apply font-basic-sans text-[1.625rem] leading-[1.875rem] font-bold mb-3;
+}
+
+.blog-container p,
+.blog-container li {
+  @apply font-basic-sans font-light text-21px leading-28px;
+}
+
+.blog-container p {
+  @apply mb-10;
+}
+
+.blog-container a {
+  @apply underline text-rm-blog-blue font-semibold hover:underline hover:text-rm-green;
+}
+
+.blog-container ul {
+  @apply list-disc pl-5 mb-10;
+}
+
+.blog-container ol {
+  @apply list-decimal pl-5 mb-10;
+}
+
+.blog-container img {
+  @apply mb-10 w-full max-w-[850px] mx-auto;
+}
+
+.blog-container .wp-block-columns img {
+  @apply max-w-[350px];
+}
+
+.blog-container .wp-block-column figure.max-w-full img {
+  @apply max-w-[850px];
+}
+
+.blog-container figure.alignright {
+  @apply md:float-right md:ml-6 md:max-w-[40%] w-max;
+}
+
+.blog-container figure.alignleft {
+  @apply md:float-left md:mr-6 md:max-w-[40%] w-max;
+}
+
+.blog-container .has-text-align-center {
+  @apply text-center;
+}
+
+.blog-container figure.alignright::after,
+.blog-container figure.alignleft::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.blog-container figcaption {
+  @apply text-center text-[0.9rem] italic mt-[10px] opacity-60 font-light max-w-[800px] mx-auto;
+}
+
+.blog-container .blog-dotted {
+  @apply list-disc pl-[20px] my-4 mx-0;
+}
+
+.blog-container .blog-dotted li,
+.blog-container .blog-decimal li {
+  @apply py-2;
+}
+
+.blog-container .blog-decimal {
+  @apply list-decimal pl-[14px] my-4;
+}
+
+.blog-container .wp-block-columns {
+  @apply block md:flex justify-between;
+}
+
+.blog-container .wp-block-column {
+  @apply w-full md:w-[48%];
+}
+
+/* ============================================
+   Misc utility styles
+   ============================================ */
+.max-960px {
+  @apply max-w-[960px];
+}
+
+.bg-allshifts {
+  @apply !bg-[#f3faff];
+}
+
+.add-shadow-to-blocks .media-video {
+  @apply shadow-[0_0_20px_0_rgba(0,0,0,0.2)];
+}
+
+.dark-play-buttons .media-video {
+  @apply !text-black;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.two-col-text-form-body p > span {
+  @apply !text-21px !leading-[1.385];
+}
+
+.barn-floated--text p {
+  @apply xl:max-w-screen-sm;
+}
+
+.barn-floated--text .quarterContent {
+  @apply items-center;
+}
+
+.bg-F1F6F8 {
+  @apply bg-[#F1F6F8];
+}
+
+/* Frosted glass effect */
+.frosted-glass {
+  @apply drop-shadow-lg;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(200%) blur(1px);
+  -webkit-backdrop-filter: saturate(150%) blur(1px);
+}
+
+@supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
+  .frosted-glass {
+    @apply drop-shadow-lg;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(200%) blur(1px);
+    -webkit-backdrop-filter: saturate(150%) blur(1px);
+  }
+}
+
+/* Cloud animations */
+.cloudAnimation-Top,
+.cloudAnimation-Bottom {
+  animation-timing-function: ease-in-out;
+  animation-duration: 3000ms;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-direction: alternate-reverse;
+}
+
+.cloudAnimation-Top {
+  animation-name: cloudAnimation-Top-Keyframes;
+}
+
+.cloudAnimation-Bottom {
+  animation-name: cloudAnimation-Bottom-Keyframes;
+}
+
+/* PPC Lander slider */
+.ppcProjectSlider [data-astro-image] {
+  @apply scale-90 transition-all duration-300 ease-out;
+}
+
+/* Accent/secondary color classes (set dynamically via CSS custom properties) */
+.accent-text {
+  color: var(--accentColor, #A9CF38);
+}
+
+.secondary-text {
+  color: var(--secondaryColor, #000000);
+}

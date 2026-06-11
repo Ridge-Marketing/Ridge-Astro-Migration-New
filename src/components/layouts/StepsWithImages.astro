@@ -1,0 +1,201 @@
+---
+/**
+ * Steps With Images layout — optional overlap card, heading/intro, then
+ * alternating image + numbered-steps rows (numbering continues across rows).
+ * Replaces Gatsby's StepsWithImages.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+const settings       = layoutData.layoutSettings;
+
+const heading            = content.heading || '';
+const intro              = content.intro ? parser(content.intro) : '';
+const stepRows           = content.stepRows || [];
+const backgroundGradient = content.backgroundGradient ?? false;
+const card               = content.card || null;
+
+// Overlap card
+const cardBody            = card?.body ? parser(card.body) : '';
+const cardButton          = card?.componentButton || null;
+const cardImagePosition   = card?.imagePosition || 'left';
+const cardResolved        = await resolveImage(card?.image);
+const cardImageUrl        = cardResolved?.source_url || '';
+const cardImageAlt        = cardResolved?.alt_text || '';
+const cardImageIsSvg      = cardImageUrl.endsWith('.svg');
+const hasCard             = !!(cardBody || cardImageUrl || cardButton?.link?.url);
+
+const halfBackground         = card?.halfBackground ?? false;
+const halfBackgroundColor    = card?.halfBackgroundColor || 'rm-pale-grey';
+const halfBackgroundPosition = card?.halfBackgroundPosition || 'top';
+const halfBackgroundPad      = settings?.padding?.top ? (theme.paddingTop[settings.padding.top] || '') : '';
+
+// Pre-resolve row images
+const rows = await Promise.all(
+  stepRows.map(async (row: any) => {
+    const resolved = await resolveImage(row.image);
+    return {
+      steps:    row.steps || [],
+      imageUrl: resolved?.source_url || '',
+      imageAlt: resolved?.alt_text || '',
+      isSvg:    (resolved?.source_url || '').endsWith('.svg'),
+    };
+  })
+);
+
+// Continuous step numbering across rows
+let stepCounter = 0;
+const numberedRows = rows.map((row) => ({
+  ...row,
+  steps: row.steps.map((step: any) => ({ ...step, number: ++stepCounter })),
+}));
+---
+
+<Section settings={settings}>
+  {backgroundGradient && (
+    <>
+      <div aria-hidden="true" class="absolute inset-0 pointer-events-none bg-[#f3f1ee]"></div>
+      <div
+        aria-hidden="true"
+        class="absolute inset-0 pointer-events-none -scale-y-100"
+        style="background-image: linear-gradient(120.76deg, rgba(0,171,182,0) 74.15%, rgba(0,171,182,0.6) 163.32%)"
+      >
+      </div>
+      <div
+        aria-hidden="true"
+        class="absolute inset-0 pointer-events-none -scale-y-100"
+        style="background-image: linear-gradient(321deg, rgba(0,171,182,0) 74.15%, rgba(0,171,182,0.6) 163.32%)"
+      >
+      </div>
+    </>
+  )}
+
+  {hasCard && (
+    <>
+      {halfBackground && (
+        <div
+          aria-hidden="true"
+          class={`${halfBackgroundPad} absolute left-0 w-full pointer-events-none bg-${halfBackgroundColor} ${halfBackgroundPosition === 'bottom' ? 'bottom-0' : 'top-0'}`}
+        >
+        </div>
+      )}
+      <div class="relative">
+        {halfBackground && (
+          <div
+            aria-hidden="true"
+            class={`absolute left-0 w-full h-1/2 pointer-events-none bg-${halfBackgroundColor} ${halfBackgroundPosition === 'bottom' ? 'bottom-0' : 'top-0'}`}
+          >
+          </div>
+        )}
+        <Container container={settings.containerWidth}>
+          <div class="relative bg-rm-white rounded-[20px] shadow-[0_0_5px_0_rgba(0,0,0,0.1)] flex flex-col xl:flex-row gap-8 xl:gap-[26px] items-center p-8 md:p-12 xl:p-[80px] mb-12 lg:mb-[59px] max-w-[750px] xl:max-w-full mx-auto">
+            {cardImageUrl && (
+              <div class={`w-full xl:w-1/2 xl:max-w-[465px] aspect-[465/343] overflow-hidden ${cardImagePosition === 'right' ? 'xl:order-2' : ''}`}>
+                {cardImageIsSvg ? (
+                  <img src={cardImageUrl} alt={cardImageAlt} class="w-full h-full object-cover" />
+                ) : (
+                  <WpImage src={cardImageUrl} alt={cardImageAlt} class="w-full h-full object-cover" />
+                )}
+              </div>
+            )}
+            <div class={`flex flex-col gap-8 w-full xl:w-1/2 xl:max-w-[466px] ${cardImagePosition === 'right' ? 'xl:order-1' : ''}`}>
+              {cardBody && (
+                <div
+                  set:html={cardBody}
+                  class="font-basic-sans font-light text-[21px] leading-[28px] text-black [&_p]:mb-4 [&_strong]:font-bold [&_a]:underline"
+                />
+              )}
+              {cardButton?.link?.url && (
+                <div>
+                  <Buttons content={cardButton} sectionBackground="white" />
+                </div>
+              )}
+            </div>
+          </div>
+        </Container>
+      </div>
+    </>
+  )}
+
+  <Container container={settings.containerWidth}>
+    <div class="relative flex flex-col gap-12 lg:gap-[59px]">
+
+      {(heading || intro) && (
+        <div class="flex flex-col gap-6 lg:gap-[34px]">
+          {heading && (
+            <h2 class="font-stratos font-semibold uppercase text-[40px] md:text-[50px] leading-[0.995] text-black">
+              {heading}
+            </h2>
+          )}
+          {intro && (
+            <p set:html={intro} class="font-basic-sans font-light text-[21px] leading-[28px] text-black" />
+          )}
+        </div>
+      )}
+
+      {numberedRows.length > 0 && (
+        <div class="flex flex-col gap-12 lg:gap-[59px]">
+          {numberedRows.map((row, rowIdx) => {
+            const imageOnLeft = rowIdx % 2 === 1;
+            return (
+              <div class="flex flex-col lg:flex-row gap-8 lg:gap-[26px] items-start">
+                {row.imageUrl && (
+                  <div class={`w-full lg:min-w-[485px] sm:max-w-[485px] overflow-hidden rounded-[20px] lg:self-center ${imageOnLeft ? 'lg:order-1' : 'lg:order-2'}`}>
+                    {row.isSvg ? (
+                      <img src={row.imageUrl} alt={row.imageAlt} class="w-full h-full object-contain rounded-[20px]" />
+                    ) : (
+                      <WpImage src={row.imageUrl} alt={row.imageAlt} class="w-full h-full object-contain rounded-[20px]" />
+                    )}
+                  </div>
+                )}
+
+                <div class={`flex flex-col gap-8 lg:gap-[31px] ${imageOnLeft ? 'lg:order-2' : 'lg:order-1'}`}>
+                  {row.steps.map((step: any) => (
+                    <div class="flex flex-col gap-4">
+                      <div class="flex items-center gap-3 lg:gap-[13px]">
+                        <span class={`${theme.text.CIRCLE_NUM} w-[55px] h-[55px] shrink-0 text-rm-green border-rm-green`}>
+                          {step.number}
+                        </span>
+                        {step.heading && (
+                          <h3 class="font-basic-sans font-bold text-[21px] leading-[28px] text-black">
+                            {step.heading}
+                          </h3>
+                        )}
+                      </div>
+                      {step.body && (
+                        <div
+                          set:html={parser(step.body)}
+                          class="font-basic-sans font-light text-[21px] leading-[28px] text-black [&_p]:mb-4 [&_a]:underline [&_strong]:font-bold"
+                        />
+                      )}
+                      {step.componentButton?.link?.url && (
+                        <div class="mt-2">
+                          <Buttons content={step.componentButton} sectionBackground={settings.backgroundColor || 'white'} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+    </div>
+  </Container>
+</Section>

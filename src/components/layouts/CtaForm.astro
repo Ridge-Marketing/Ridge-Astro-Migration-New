@@ -1,0 +1,54 @@
+---
+/**
+ * CTA Form layout — heading + body + inline CTA form
+ * Replaces Gatsby's CtaForm.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FormCTALayout from '@/components/global/FormCTALayout.tsx';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent;
+const settings = layoutData.layoutSettings;
+
+let textColor = 'rm-white';
+let btnStyle = 'SOLID_GREEN_HOVER_LIGHT';
+
+if (settings.backgroundColor === 'white') {
+  textColor = 'black';
+  btnStyle = 'SOLID_GREEN_HOVER_DARK';
+}
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.heading && (
+      <h2 class={`${theme.text.H2} text-${textColor} text-center`}>
+        {content.heading}
+      </h2>
+    )}
+    {content.body && (
+      <p class={`${theme.text.P_STD} text-${textColor} text-center mt-6`}>
+        {content.body}
+      </p>
+    )}
+    <div class="mt-10">
+      <FormCTALayout
+        client:visible
+        classes="md:grid md:grid-cols-2 gap-4"
+        submitLabel="Submit"
+        btnStyle={btnStyle}
+        textColor={textColor}
+        bgColor={settings.backgroundColor}
+      />
+    </div>
+  </Container>
+</Section>

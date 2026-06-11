@@ -1,0 +1,76 @@
+---
+/**
+ * Two Col Text + Quote Card layout — text column beside a carbon quote card.
+ * Replaces Gatsby's TwoColTextQuoteCard.js
+ * (its framer-motion wrappers animated x:0 → x:0, a no-op, so plain divs here)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent;
+const settings       = layoutData.layoutSettings;
+
+const text        = content.textContent || {};
+const quoteCard   = content.quoteContent || {};
+const quoteOnLeft = content.quotePosition === 'left';
+
+const intro = text.intro ? parser(text.intro) : '';
+const body  = text.body  ? parser(text.body)  : '';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="flex flex-col xl:grid xl:grid-cols-[1fr_408px] gap-12 xl:gap-[59px] items-center">
+      <div class={`flex flex-col gap-6 xl:gap-[34px] ${quoteOnLeft ? 'xl:order-2' : ''}`}>
+        {text.heading && (
+          <h2 class="font-stratos font-semibold uppercase text-[40px] md:text-[50px] leading-[0.995] text-rm-white">
+            {text.heading}
+          </h2>
+        )}
+        {intro && (
+          <p
+            set:html={intro}
+            class="font-basic-sans font-light text-[26px] md:text-[34px] leading-[1.15] text-rm-white"
+          />
+        )}
+        {body && (
+          <p
+            set:html={body}
+            class="font-basic-sans font-light text-[21px] leading-[28px] text-rm-white"
+          />
+        )}
+      </div>
+
+      <div class={`w-full xl:w-[408px] ${quoteOnLeft ? 'xl:order-1' : ''}`}>
+        {quoteCard.quote && (
+          <div class="bg-rm-carbon rounded-[20px] py-5 px-6 flex flex-col items-center justify-center xl:min-h-[469px]">
+            <div class="flex flex-col gap-4 items-center justify-center xl:max-w-[357px]">
+              <p class="font-basic-sans font-semibold italic text-[32px] md:text-[43px] leading-[1.2] text-rm-white">
+                {quoteCard.quote}
+              </p>
+              {quoteCard.author && (
+                <p class="font-basic-sans font-bold text-[18px] leading-[1.4] text-rm-white mt-4 not-italic">
+                  {quoteCard.author}
+                </p>
+              )}
+              {quoteCard.title && (
+                <small class="font-basic-sans text-[14px] leading-[1.4] text-rm-white not-italic">
+                  {quoteCard.title}
+                </small>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </Container>
+</Section>

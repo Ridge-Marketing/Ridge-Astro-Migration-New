@@ -1,0 +1,103 @@
+---
+/**
+ * Two Column Breakout Image + Heading layout
+ * Replaces Gatsby's TwoColBreakoutImageHeading.js
+ *
+ * The image breaks out of the container to the viewport edge on desktop.
+ * A large H1-style heading sits below and alongside it.
+ *
+ * ACF fields (layout__content):
+ *   heading        — main H1 heading
+ *   image          — WP media ID or object
+ *   imagePosition  — 'left' | 'right' (default 'right')
+ *
+ * ACF fields (layout__settings):
+ *   backgroundColor — fills the lower portion of the section behind the heading
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content  = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const isImageLeft = content.imagePosition === 'left';
+
+const resolved = await resolveImage(content.image);
+const imageUrl = resolved?.source_url || '';
+const imageAlt = resolved?.alt_text || content.image?.altText || '';
+
+const bgColor = settings.backgroundColor || 'white';
+const bgClass = theme.backgroundColor[bgColor] || bgColor;
+
+const textColor = bgColor === 'black' ? 'text-white' : 'text-black'
+
+// Image wrapper — breaks to viewport edge
+// Right image: anchored to left edge of right half of container, extends to right viewport edge
+// Left image:  anchored to right edge of left half of container, extends to left viewport edge
+const imgWrapperCss = isImageLeft
+  ? 'lg:right-[calc(50%+2.25rem)] xl:right-[calc(655px+3.5rem)]'
+  : 'lg:left-[calc(50%+2.25rem)]  xl:left-[calc(655px+3.5rem)]';
+
+// Flex direction for the heading row
+const flexWrapperCss = isImageLeft ? 'lg:flex lg:flex-row-reverse' : 'lg:flex';
+
+// Margin between heading column and center gap
+const headingCss = isImageLeft ? 'lg:ml-9 xl:ml-14' : 'lg:mr-9 xl:mr-14';
+---
+
+<!-- Section is transparent; a background div covers only the lower portion -->
+<Section settings={settings} classes="relative bg-transparent overflow-hidden" transparent>
+  <!-- Lower background — starts at top-32, covers the rest of the section -->
+  <div class={`bg-${bgClass} absolute top-32 left-0 right-0 bottom-0 w-full`}></div>
+
+  <Container container="slim">
+    <div class="relative">
+
+      <!-- Image — absolute on desktop, breaks out to the viewport edge -->
+      <div class={`
+        relative overflow-hidden
+        lg:absolute lg:top-0
+        max-w-[810px]
+        lg:w-[calc(50%+50vw-465px-2.25rem)]
+        xl:w-[calc(100%-655px+3.5rem+50vw-640px)]
+        ${imgWrapperCss}
+      `}>
+        <!-- 54.64% aspect-ratio pad (≈ the original design ratio) -->
+        <div class="pt-[54.64%] w-full h-0 relative">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              class="absolute top-0 left-0 w-full h-full object-cover object-top"
+              loading="lazy"
+            />
+          ) : (
+            <div class="absolute top-0 left-0 w-full h-full bg-gray-200" />
+          )}
+        </div>
+      </div>
+
+      <!-- Heading row — sits below the image on mobile, alongside it on desktop -->
+      <div class={`pt-16 lg:pt-48 2xl:pt-64 ${flexWrapperCss}`}>
+        <div class={`lg:w-1/2 xl:w-[655px] ${headingCss} ${textColor}`}>
+          {content.heading && (
+            <h2 class={theme.text.H1_STD}>{content.heading}</h2>
+          )}
+        </div>
+        <!-- Spacer that occupies the image column on desktop -->
+        <div class="lg:max-w-[50%]"></div>
+      </div>
+
+    </div>
+  </Container>
+</Section>

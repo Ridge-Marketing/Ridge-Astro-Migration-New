@@ -1,0 +1,52 @@
+---
+/**
+ * Media Blocks layout — N-column grid of FlexibleMedia blocks (image/video/lottie)
+ * Replaces Gatsby's MediaBlocks.js
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FlexibleMedia from '@/components/global/FlexibleMedia.astro';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content   = layoutData.layoutContent  || {};
+const settings  = layoutData.layoutSettings || {};
+
+const blocks    = content.blocks || [];
+const columns   = Number(content.columns) || 1;
+const ratio     = content.ratio || '56.25%';
+const textAlign = content.textAlign ? `text-${content.textAlign}` : 'text-center';
+
+// First block must have either an image or a video URL for the grid to render
+const first       = blocks[0]?.componentFlexibleMedia;
+const mediaExists = !!(first?.image || first?.video?.videoUrl);
+
+const gridClass = columns === 1
+  ? 'mt-14 block'
+  : `lg:grid gap-x-6 mt-14 grid-cols-${columns}`;
+---
+
+<Section settings={settings}>
+  <Container>
+    {content.heading && (
+      <h2 class={`${textAlign} ${theme.text.H2}`}>{content.heading}</h2>
+    )}
+
+    {mediaExists && (
+      <div class={gridClass}>
+        {blocks.map((block: any) => (
+          <div class="w-full mb-20">
+            <FlexibleMedia data={block.componentFlexibleMedia} paddingRatio={ratio} />
+          </div>
+        ))}
+      </div>
+    )}
+  </Container>
+</Section>

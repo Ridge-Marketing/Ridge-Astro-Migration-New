@@ -1,0 +1,80 @@
+---
+/**
+ * Team Grid layout
+ *
+ * ACF fields (layout__content):
+ *   heading      – section heading (supports shortcodes)
+ *   team_member  – repeater array of:
+ *     image  – WP media ID
+ *     name   – string
+ *     title  – string
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent || {};
+const settings        = layoutData.layoutSettings || {};
+
+const members   = content.teamMember || [];
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : 'text-black';
+
+// Resolve all member images in parallel
+const resolvedImages = await Promise.all(
+  members.map((m: any) => resolveImage(m.image))
+);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+
+    {content.heading && (
+      <h3
+        class={`${theme.text.H1_STD} mb-20 ${textColor}`}
+        set:html={parser(content.heading)}
+      />
+    )}
+
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12">
+      {members.map((member: any, idx: number) => {
+        const img = resolvedImages[idx];
+        const src = img?.source_url || '';
+        const alt = img?.alt_text || member.name || '';
+
+        return (
+          <div class="flex flex-col items-center text-center">
+            <div class="w-full aspect-3/4 overflow-hidden mb-5">
+              {src ? (
+                <img
+                  src={src}
+                  alt={alt}
+                  class="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+              ) : (
+                <div class="w-full h-full bg-gray-700" />
+              )}
+            </div>
+            <p class={`${theme.text.H5} ${textColor} mb-1`}>
+              {member.name}
+            </p>
+            <p class={`${theme.text.P_STD} text-white mt-1`}>
+              {member.title}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+
+  </Container>
+</Section>

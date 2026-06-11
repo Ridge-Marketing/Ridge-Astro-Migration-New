@@ -1,0 +1,125 @@
+---
+/**
+ * Two Column Image + List layout
+ * Repeater of items — each item is its own 2-col block.
+ * Image side alternates per item via image_orientation.
+ *
+ * ACF fields (layout__content):
+ *   items[] – repeater:
+ *     title             – item heading
+ *     intro_text        – main body paragraph
+ *     side_text         – secondary/highlight text (shortcodes)
+ *     list_title        – optional label above bullet list
+ *     list[]            – { list_item } bullet points
+ *     image             – WP media ID
+ *     image_orientation – "left" | "right"
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content = layoutData.layoutContent || {};
+const settings = layoutData.layoutSettings || {};
+
+const items = content.items || [];
+const textColor = settings.backgroundColor === 'black' ? 'text-white' : '';
+
+// Resolve all item images in parallel
+const resolvedImages = await Promise.all(
+  items.map((item: any) => resolveImage(item.image))
+);
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="space-y-20 lg:space-y-28">
+      {items.map((item: any, idx: number) => {
+        const img = resolvedImages[idx];
+        const src = img?.source_url || '';
+        const alt = img?.alt_text || item.title || '';
+        const isImageLeft = (item.imageOrientation || item.image_orientation || 'left') === 'left';
+        const imageOrder = isImageLeft ? '' : 'lg:order-2';
+        const textOrder  = isImageLeft ? '' : 'lg:order-1';
+        const list = item.list || [];
+
+        return (
+          <div>
+
+            <!-- Row 1: title + intro full width -->
+            {(item.title || item.introText) && (
+              <div class="mb-10">
+                {item.title && (
+                  <h3 class={`${theme.text.H2} ${textColor} mb-6`}>
+                    {item.title}
+                  </h3>
+                )}
+                {item.introText && (
+                  <p
+                    class={`${theme.text.P_STD} ${textColor}`}
+                    set:html={parser(item.introText)}
+                  />
+                )}
+              </div>
+            )}
+
+            <!-- Row 2: image + side text / list -->
+            <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-start">
+
+              <!-- Image column -->
+              <div class={`mb-10 lg:mb-0 ${imageOrder}`}>
+                {src && <WpImage src={src} alt={alt} responsive />}
+              </div>
+
+              <!-- Side text + list column -->
+              <div class={textOrder}>
+                {item.sideText && (
+                  <p
+                    class={`${theme.text.P_STD} ${textColor}`}
+                    set:html={parser(item.sideText)}
+                  />
+                )}
+
+                {(item.listTitle || list.length > 0) && (
+                  <div class="mt-8">
+                    {item.listTitle && (
+                      <p class={`${theme.text.P_BLD} ${textColor} mb-4`}>
+                        {item.listTitle}
+                      </p>
+                    )}
+                    {list.length > 0 && (
+                      <ul class="space-y-2">
+                        {list.map((entry: any) => (
+                          <li class={`${theme.text.P_STD} ${textColor} flex items-start gap-3`}>
+                            <span class="text-rm-green mt-1 shrink-0">
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 8L6.5 11.5L13 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </span>
+                            {entry.listItem || entry.list_item}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+          </div>
+        );
+      })}
+    </div>
+  </Container>
+</Section>

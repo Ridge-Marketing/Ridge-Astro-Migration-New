@@ -1,0 +1,41 @@
+---
+/**
+ * PPC Approach — heading/body plus the interactive overlapping-circles
+ * diagram (Strategy / Creativity / Service / Results popups).
+ * Replaces Gatsby's ppcLander/PpcApproach.js
+ */
+import Container from '@/components/global/Container.astro'
+import parser from '@/lib/parser'
+import { theme } from '@/lib/theme'
+import PpcApproachDiagram from './PpcApproachDiagram'
+
+interface Props {
+    acf : {
+        heading : string,
+        body    : string,
+        image   : number
+    }
+}
+
+const { acf } = Astro.props
+const heading = acf.heading ?? false
+const body    = acf.body ?? false
+---
+
+<section class="pt-20 xl:py-40">
+    <Container container="slim" classes="flex flex-col items-center gap-4 text-center">
+        {heading &&
+            <h2
+                set:html={parser(heading)}
+                class={`${theme.text.H5} text-black`}
+            />
+        }
+        {body &&
+            <p
+                set:html={parser(body)}
+                class={`${theme.text.H4_LTE} !text-[21px] !leading-[28px] md:!text-[26px] md:!leading-[36px] text-rm-grey max-w-[958px] mb-4`}
+            />
+        }
+        <PpcApproachDiagram client:visible />
+    </Container>
+</section>

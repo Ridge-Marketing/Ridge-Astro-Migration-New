@@ -1,0 +1,43 @@
+---
+/**
+ * Post navigation — prev/next links for blog posts
+ * Replaces Gatsby's PostNav.js
+ */
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  prev: string | null;
+  next: string | null;
+  postType: string;
+}
+
+const { prev, next, postType } = Astro.props;
+---
+
+<div>
+  <Container>
+    <div class="md:flex py-8 border-t border-[#c5c5c5] border-solid mt-20 mb-28">
+      <div class="flex-1 text-left">
+        {prev && (
+          <a
+            href={prev}
+            class={`mb-8 md:mb-0 justify-center md:justify-start text-rm-green ${theme.text_links.BASE_STYLING}${theme.text_links.BACK_BASE}${theme.text_links.ARW_BACK_GREEN}`}
+          >
+            Previous {postType}
+          </a>
+        )}
+      </div>
+      <div class="flex-1 text-right">
+        {next && (
+          <a
+            href={next}
+            class={`justify-center md:justify-end text-rm-green ${theme.text_links.BASE_STYLING}${theme.text_links.FWD_BASE}${theme.text_links.ARW_FWD_GREEN}`}
+          >
+            Next {postType}
+          </a>
+        )}
+      </div>
+    </div>
+  </Container>
+</div>

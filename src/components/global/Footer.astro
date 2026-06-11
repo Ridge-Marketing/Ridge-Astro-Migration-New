@@ -1,0 +1,152 @@
+---
+/**
+ * Footer component — static
+ * Replaces Gatsby's Footer.js
+ */
+import { getGlobalSettings, getMenuItems, getMenus, convertCMSLink } from '@/lib/wp-client';
+import { theme } from '@/lib/theme';
+
+interface Props {
+  showCta?: boolean;
+  landerData?: any;
+}
+
+const { showCta = true, landerData } = Astro.props;
+
+// Fetch footer data at build time
+let content: any = {};
+let footerLinks: any[] = [];
+let logo = '';
+let logoAlt = 'Ridge Marketing';
+let socials: any[] = [];
+let address = '';
+
+try {
+  content = await getGlobalSettings();
+  logo        = content.logos?.dark?.source_url || content.logos?.dark?.sourceUrl || '';
+  logoAlt     = content.logos?.dark?.alt_text || 'Ridge Marketing';
+  socials     = content.contact?.socials || [];
+  if (content.contact?.address?.address) {
+    address = content.contact.address.address.replace(/\s*<script>.*?<\/script>\s*/g, ' ');
+  }
+} catch (e) {
+  console.warn('Failed to fetch global settings for footer:', e);
+}
+
+try {
+  const menus       = await getMenus().catch(() => []);
+  const footerMenu  = (menus as any[]).find((m: any) => m.name === 'Footer' || m.slug === 'footer');
+  if (footerMenu) {
+    footerLinks = await getMenuItems(footerMenu.id);
+  }
+} catch (e) {
+  console.warn('Failed to fetch footer menu:', e);
+}
+
+// Split top-level menu items into exactly 3 columns:
+//   Col 1 — Services (everything before "Our Work")
+//   Col 2 — Our Work → Agency → Careers (everything from "Our Work" before "Contact")
+//   Col 3 — Contact, Blog (everything from "Contact" onwards)
+const menuColumns: any[][] = [[], [], []];
+let colIdx = 0;
+for (const item of footerLinks) {
+  const label = (item.title?.rendered || item.title || '').toLowerCase().trim();
+  if (label.includes('our work'))  colIdx = 1;
+  if (label.includes('contact'))   colIdx = 2;
+  menuColumns[colIdx].push(item);
+}
+
+const footerCtaLink = landerData?.landingPages?.showFooter && landerData?.landingPages?.linkType === 'custom'
+  ? landerData?.landingPages?.url
+  : content.footertext?.link?.url;
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="-mt-px text-center lg:text-left bg-rm-black text-rm-white py-12 lg:py-16 flex justify-center">
+  <div class="container xl:max-w-[1224px] relative">
+    {showCta && content.footertext && (
+      <div class="mb-12 lg:mb-28">
+        {content.footertext.cta && (
+          <h2 class={`${theme.text.HERO} lg:w-3/4`}>{content.footertext.cta}</h2>
+        )}
+        {content.footertext.link?.url && content.footertext.link?.title && (
+          <a 
+            href={convertCMSLink(footerCtaLink)}
+            class={`ml-auto mr-auto lg:ml-0 lg:mr-0 text-rm-green mt-12 lg:mt-16 w-max hover:text-rm-white hover:underline ${theme.text_links.BASE_STYLING} ${theme.text_links.FWD_BASE} ${theme.text_links.LARGE} ${theme.text_links.ARW_FWD_GREEN} ${theme.text_links.HOVER_ARW_FWD_WHITE}`}
+            set:html={content.footertext.link.title}
+          >
+          </a>
+        )}
+      </div>
+    )}
+
+    <div class="lg:w-[95%]">
+      <ul class="block lg:flex justify-between">
+        <li class="lg:mt-4">
+          {logo && <img class="block ml-auto mr-auto lg:mr-0 lg:ml-0" alt={logoAlt} src={logo} />}
+          <address class={`${theme.text.FOOTER} flex items-center lg:items-start flex-col my-9 not-italic`}>
+            {address && <span class="mb-9" set:html={address} />}
+            {content.contact?.phone?.phone?.url && content.contact?.phone?.phone?.title && (
+              <a href={convertCMSLink(content.contact.phone.phone.url)} class="text-rm-green w-max" set:html={content.contact.phone.phone.title}/>
+            )}
+            {content.contact?.email?.url && content.contact?.email?.title && (
+              <a href={convertCMSLink(content.contact.email.url)} class="text-rm-green w-max" set:html={content.contact.email.title} />
+            )}
+          </address>
+          {socials.length > 0 && (
+            <ul class="flex mt-9 justify-center lg:justify-start">
+              {socials.map((social: any) => {
+                const iconUrl = social.icon?.source_url || social.icon?.sourceUrl || '';
+                const iconAlt = social.icon?.alt_text || '';
+                return (
+                  <li class="mr-3 last-of-type:mr-0 hover:text-rm-green">
+                    <a href={convertCMSLink(social.link?.url)} target={social.link?.target}>
+                      {iconUrl && <img class="block" alt={iconAlt} src={iconUrl} />}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </li>
+        {menuColumns.length > 0 && (
+          <div class="block mt-16 lg:mt-0 lg:flex">
+            {menuColumns.map((column) => (
+              <div>
+                {column.map((menuItem: any) => {
+                  const label = menuItem.title?.rendered || menuItem.title || '';
+                  const children = menuItem.children || [];
+                  return (
+                    <li class="mt-4 lg:mr-12 list-none">
+                      <a href={convertCMSLink(menuItem.url)} class={`${theme.text.P_BLD} uppercase hover:text-rm-green hover:underline`} set:html={label} />
+                      {children.length > 0 && (
+                        <ul>
+                          {children.map((sub: any) => {
+                            const subLabel = sub.title?.rendered || sub.title || '';
+                            return (
+                              <li class={`${theme.text.FOOTER} normal-case mt-2`}>
+                                <a href={convertCMSLink(sub.url)} class="hover:text-rm-green hover:underline" set:html={subLabel}/>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+      </ul>
+    </div>
+
+    {content.copyright && (
+      <div class="block mt-16 lg:mt-32">
+        <small class={`${theme.text.FOOTER} text-[14px] inline`}>&copy; {currentYear}&nbsp;</small>
+        <small class={`${theme.text.FOOTER} text-[14px] inline`} set:html={content.copyright} />
+      </div>
+    )}
+  </div>
+</footer>

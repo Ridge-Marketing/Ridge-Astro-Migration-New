@@ -1,0 +1,62 @@
+---
+/**
+ * PPC CMO Hero — mobile/tablet variant (hidden at lgz+)
+ * Replaces Gatsby's ppcLander/PpcHeroCmo.js
+ * (b2b field group has no background images or carousel, so those are omitted)
+ */
+import parser from '@/lib/parser'
+import { theme } from '@/lib/theme'
+import PpcHeroQuickForm from './PpcHeroQuickForm'
+
+interface Props {
+    acf : {
+        heading             : string,
+        sub_heading         : string,
+        component__button   : any,
+        image               : number,
+        media_type          : string,
+        video               : number,
+        list                : any[],
+        callout             : any
+    }
+}
+
+const { acf } = Astro.props
+const heading           = acf.heading ?? false
+const subHeading        = acf.sub_heading ?? false
+const buttonData        = acf.component__button ?? false
+const callout           = acf.callout ?? false
+---
+
+<section class="relative bg-[#f3f1ee] overflow-hidden mb-20 lgz:hidden">
+    <div class="bg-[linear-gradient(170deg,#F3F1EE_25.61%,#E1DED9_88.95%)] [transform:translate3d(0,0,0)] absolute inset-0 pointer-events-none"></div>
+    <div class="bg-[linear-gradient(125deg,rgba(0,171,182,0.00)_54.21%,rgba(0,171,182,0.60)_112.49%)] [transform:translate3d(0,0,0)] absolute inset-0 pointer-events-none"></div>
+
+    <div class="flex flex-col gap-6 text-center px-6 pt-16 pb-12 md:py-20 z-10 mx-auto w-full max-w-[700px] lg:min-w-[700px] relative">
+        {heading &&
+            <h1
+                set:html={parser(heading)}
+                class="font-stratos uppercase text-[3.75rem] leading-[3.3rem] md:leading-[3.10938rem] text-black text-center"
+            />
+        }
+        {subHeading &&
+            <p
+                set:html={parser(subHeading)}
+                class={`text-[1.5rem] leading-[2rem] font-basic-sans font-light text-[#1F1F1F]`}
+            />
+        }
+    </div>
+
+    <div class="relative rounded-[21px] overflow-hidden py-16 px-8 md:px-20 mb-20 w-[calc(100%-48px)] max-w-[700px] mx-auto">
+        <div class="bg-[#1F9DA5]/15 w-full h-full absolute top-0 left-0"></div>
+
+        <div class="z-10 text-center text-black flex flex-col items-center gap-6 relative">
+            {callout?.heading &&
+                <h2 class={`${theme.text.H4}`}>
+                    Let's Talk
+                </h2>
+            }
+            <PpcHeroQuickForm client:visible buttonLabel={buttonData?.link?.title || 'Get a Quote'} />
+        </div>
+    </div>
+</section>
