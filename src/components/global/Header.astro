@@ -9,22 +9,23 @@ import HeaderIsland from './HeaderIsland';
 interface Props {
   color?: string;
   position?: string;
+  isB2B?: boolean
 }
 
-const { color = 'white', position = 'fixed' } = Astro.props;
+const { color = 'white', position = 'fixed', isB2B = false } = Astro.props;
 
 // Fetch header data at build time
-let logoLight = '';
-let logoDark = '';
-let logoAlt = 'Ridge Marketing';
+let logoLight               = '';
+let logoDark                = '';
+let logoAlt                 = 'Ridge Marketing';
 let desktopMenuItems: any[] = [];
-let mobileMenuItems: any[] = [];
+let mobileMenuItems: any[]  = [];
 
 try {
-  const globalSettings = await getGlobalSettings();
-  logoLight = globalSettings.logos?.light?.source_url || globalSettings.logos?.light?.sourceUrl || '';
-  logoDark = globalSettings.logos?.dark?.source_url || globalSettings.logos?.dark?.sourceUrl || '';
-  logoAlt = globalSettings.logos?.light?.alt_text || 'Ridge Marketing';
+  const globalSettings  = await getGlobalSettings();
+  logoLight             = globalSettings.logos?.light?.source_url || globalSettings.logos?.light?.sourceUrl || '';
+  logoDark              = globalSettings.logos?.dark?.source_url || globalSettings.logos?.dark?.sourceUrl || '';
+  logoAlt               = globalSettings.logos?.light?.alt_text || 'Ridge Marketing';
 } catch (e) {
   console.warn('Failed to fetch global settings for header:', e);
 }
@@ -57,9 +58,12 @@ try {
   console.warn('Failed to fetch menus for header:', e);
 }
 
-const textColor = color === 'black' ? 'text-rm-white' : 'text-rm-black';
-const headerBgClass = color === 'black' ? 'bg-black/70' : 'bg-white';
+const textColor     = color === 'black' ? 'text-rm-white' : 'text-rm-black';
+let headerBgClass   = color === 'black' ? 'bg-black/70' : 'bg-white';
 const headerPadding = color === 'black' ? 'hidden' : 'h-[100px]';
+if (isB2B) {
+  headerBgClass = 'bg-black'
+}
 ---
 
 <header

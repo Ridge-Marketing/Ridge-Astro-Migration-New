@@ -29,7 +29,7 @@ export async function getStaticPaths() {
     });
 }
 
-const { lander } = Astro.props;
+const { lander }        = Astro.props;
 
 const globalSettings    = await getGlobalSettings().catch(() => null);
 const favicon           = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
@@ -39,13 +39,13 @@ const title             = lander.title?.rendered || '';
 const uri               = extractPath(lander.link);
 
 // Determine header color
-let headerColor = 'black';
-const whiteHeaderPages = [''];
+let headerColor         = 'black';
+const whiteHeaderPages  = [''];
 if (whiteHeaderPages.includes(uri)) {
-  headerColor = 'white';
+  headerColor           = 'white';
 }
 if (lander.acf?.header_color) {
-  headerColor = lander.acf.header_color;
+  headerColor           = lander.acf.header_color;
 }
 
 // Accent colors
@@ -53,6 +53,8 @@ const accentColor       = lander.acf?.accent_color || '#A9CF38';
 const secondaryColor    = lander.acf?.secondary_color || '#000000';
 
 const isB2B             = lander.slug === 'b2b-marketing-agency' ? true : false
+const headerPosition    = isB2B ? 'sticky' : 'fixed'
+
 
 ---
 <Layout
@@ -61,6 +63,8 @@ const isB2B             = lander.slug === 'b2b-marketing-agency' ? true : false
     headerColor={headerColor}
     accentColor={accentColor}
     secondaryColor={secondaryColor}
+    headerPosition={headerPosition}
+    b2bHeader={isB2B}
 >
     {isB2B && 
         <PPCLanderWrapperCMO acf={lander.acf} />

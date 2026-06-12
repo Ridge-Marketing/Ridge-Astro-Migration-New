@@ -1,23 +1,30 @@
 ---
 /**
  * PPC CMO Hero — mobile/tablet variant (hidden at lgz+)
+ * Gradient background with responsive background images, heading/subheading,
+ * auto-scrolling logo carousel (CSS marquee, replaces Splide autoScroll),
+ * and the "Let's Talk" quick-form callout.
  * Replaces Gatsby's ppcLander/PpcHeroCmo.js
- * (b2b field group has no background images or carousel, so those are omitted)
  */
 import parser from '@/lib/parser'
 import { theme } from '@/lib/theme'
+import { resolveImage } from '@/lib/wp-client'
 import PpcHeroQuickForm from './PpcHeroQuickForm'
 
 interface Props {
     acf : {
-        heading             : string,
-        sub_heading         : string,
-        component__button   : any,
-        image               : number,
-        media_type          : string,
-        video               : number,
-        list                : any[],
-        callout             : any
+        heading                  : string,
+        sub_heading              : string,
+        component__button        : any,
+        image                    : number,
+        media_type               : string,
+        video                    : number,
+        list                     : any[],
+        callout                  : any,
+        carousel                 : any[],
+        background_image_mobile  : number,
+        background_image_tablet  : number,
+        background_image_desktop : number
     }
 }
 
@@ -26,11 +33,46 @@ const heading           = acf.heading ?? false
 const subHeading        = acf.sub_heading ?? false
 const buttonData        = acf.component__button ?? false
 const callout           = acf.callout ?? false
+
+// Responsive background images (absolute, bleed above the section)
+const bgMobile  = await resolveImage(acf.background_image_mobile)
+const bgTablet  = await resolveImage(acf.background_image_tablet)
+const bgDesktop = await resolveImage(acf.background_image_desktop)
+
+// Logo carousel — Splide autoScroll speed 0.6 ≈ 36px/s; ~7.5s per slide
+const carouselSlides = (
+    await Promise.all(
+        (acf.carousel || []).map(async (slide: any) => {
+            const resolved = await resolveImage(slide.image)
+            return resolved?.source_url
+                ? { url: resolved.source_url, alt: resolved.alt_text || '' }
+                : null
+        })
+    )
+).filter(Boolean) as Array<{ url: string, alt: string }>
+
+const marqueeDuration = Math.max(carouselSlides.length * 7.5, 15)
 ---
 
 <section class="relative bg-[#f3f1ee] overflow-hidden mb-20 lgz:hidden">
     <div class="bg-[linear-gradient(170deg,#F3F1EE_25.61%,#E1DED9_88.95%)] [transform:translate3d(0,0,0)] absolute inset-0 pointer-events-none"></div>
     <div class="bg-[linear-gradient(125deg,rgba(0,171,182,0.00)_54.21%,rgba(0,171,182,0.60)_112.49%)] [transform:translate3d(0,0,0)] absolute inset-0 pointer-events-none"></div>
+
+    {bgMobile?.source_url &&
+        <div class="sm:hidden">
+            <img class="w-full absolute -top-[100px] left-0 object-contain" src={bgMobile.source_url} alt={bgMobile.alt_text || ''} />
+        </div>
+    }
+    {bgTablet?.source_url &&
+        <div class="hidden sm:block md:hidden">
+            <img class="w-full absolute -top-[100px] left-0 object-contain" src={bgTablet.source_url} alt={bgTablet.alt_text || ''} />
+        </div>
+    }
+    {bgDesktop?.source_url &&
+        <div class="hidden md:block">
+            <img class="w-full absolute -top-[100px] left-0 object-contain" src={bgDesktop.source_url} alt={bgDesktop.alt_text || ''} />
+        </div>
+    }
 
     <div class="flex flex-col gap-6 text-center px-6 pt-16 pb-12 md:py-20 z-10 mx-auto w-full max-w-[700px] lg:min-w-[700px] relative">
         {heading &&
@@ -47,6 +89,28 @@ const callout           = acf.callout ?? false
         }
     </div>
 
+    {carouselSlides.length > 0 &&
+        <div class="relative pb-12 md:pb-20 overflow-hidden">
+            <div class="ppc-hero-marquee flex w-max" style={`animation-duration: ${marqueeDuration}s`}>
+                {[0, 1].map((copy) => (
+                    <div class="flex shrink-0" aria-hidden={copy === 1 ? 'true' : undefined}>
+                        {carouselSlides.map((slide) => (
+                            <div class="shrink-0 px-8 w-[50vw] sm:w-[33.34vw] md:w-[25vw] lg:w-[20vw]">
+                                <div class="h-[110px] flex flex-col items-center justify-center">
+                                    <img
+                                        src={slide.url}
+                                        alt={copy === 0 ? slide.alt : ''}
+                                        class="w-full h-full object-contain"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </div>
+    }
+
     <div class="relative rounded-[21px] overflow-hidden py-16 px-8 md:px-20 mb-20 w-[calc(100%-48px)] max-w-[700px] mx-auto">
         <div class="bg-[#1F9DA5]/15 w-full h-full absolute top-0 left-0"></div>
 
@@ -60,3 +124,20 @@ const callout           = acf.callout ?? false
         </div>
     </div>
 </section>
+
+<style>
+    @keyframes ppcHeroMarquee {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-50%); }
+    }
+
+    .ppc-hero-marquee {
+        animation: ppcHeroMarquee linear infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .ppc-hero-marquee {
+            animation: none;
+        }
+    }
+</style>

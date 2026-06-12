@@ -4,8 +4,6 @@
  * Text/list column + autoplaying video, then the half-overlapping callout
  * card with email capture that pre-fills the main lander form.
  * Replaces Gatsby's ppcLander/PpcHeroCmoDesktop.js
- * (heading_desktop/sub_heading_desktop don't exist in the b2b field group, so
- * the left column renders just the list — matches the live Gatsby page)
  */
 import Container from '@/components/global/Container.astro'
 import parser from '@/lib/parser'
@@ -26,7 +24,7 @@ interface Props {
     }
 }
 
-const { acf } = Astro.props
+const { acf }           = Astro.props
 const heading           = (acf as any).heading_desktop ?? false
 const subHeading        = (acf as any).sub_heading_desktop ?? false
 const mediaType         = acf.media_type ?? 'image'
@@ -35,13 +33,17 @@ const callout           = acf.callout ?? false
 const list              = acf.list ?? false
 
 const resolvedVideo     = await resolveImage(acf.video)
+const resolvedFallback  = await resolveImage((acf as any).video_fallback)
 const resolvedImage     = await resolveImage(acf.image)
 const videoUrl          = resolvedVideo?.source_url || ''
 const videoMime         = resolvedVideo?.mime_type || 'video/mp4'
+const fallbackUrl       = resolvedFallback?.source_url || ''
+const fallbackMime      = resolvedFallback?.mime_type || 'video/mp4'
 const imageUrl          = resolvedImage?.source_url || ''
 const imageAlt          = resolvedImage?.alt_text || ''
 
 const uid = `ppchero-${Math.random().toString(36).slice(2, 8)}`
+
 ---
 
 <div class="hidden lgz:block">
@@ -84,6 +86,7 @@ const uid = `ppchero-${Math.random().toString(36).slice(2, 8)}`
                     {mediaType === 'video' && videoUrl
                         ? <video id={uid} muted loop playsinline preload="metadata" class="w-full object-contain">
                             <source src={videoUrl} type={videoMime} />
+                            {fallbackUrl && <source src={fallbackUrl} type={fallbackMime} />}
                           </video>
                         : imageUrl &&
                             <img src={imageUrl} alt={imageAlt} class="w-full object-contain" />

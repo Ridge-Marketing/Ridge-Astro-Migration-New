@@ -18,18 +18,20 @@ interface Props {
   showFooterCta?: boolean;
   landerData?: any;
   noindex?: boolean;
+  b2bHeader?: boolean;
 }
 
 const {
   seo,
   favicon,
-  headerColor = 'white',
-  headerPosition = 'fixed',
+  headerColor     = 'white',
+  headerPosition  = 'fixed',
   accentColor,
-  secondaryColor = '#000000',
-  showFooterCta = true,
+  secondaryColor  = '#000000',
+  showFooterCta   = true,
   landerData,
-  noindex = false,
+  noindex         = false,
+  b2bHeader       = false,
 } = Astro.props;
 
 ---
@@ -69,7 +71,7 @@ const {
       ></iframe>
     </noscript>
 
-    <Header color={headerColor} position={headerPosition} />
+    <Header color={headerColor} position={headerPosition} isB2B={b2bHeader} />
 
     <main id="mainContent" tabindex="0" aria-label="Main Content">
       <slot />
