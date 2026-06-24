@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "devFresh": "astro dev --force",
+    "sync" : "npx astro sync",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",

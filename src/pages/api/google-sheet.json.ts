@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const message = JSON.parse(body.message);
 
-    const WP_SHEET_URL  = getSecret('WP_SHEET_URL') || getSecret('WP_URL');
+    const WP_SHEET_URL  = getSecret('WP_AJAX_URL') || getSecret('WP_AJAX_URL');
     const VERIFY_GATSBY = getSecret('VERIFY_GATSBY');
 
     if (!WP_SHEET_URL || !VERIFY_GATSBY) {

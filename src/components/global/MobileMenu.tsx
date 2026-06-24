@@ -49,8 +49,8 @@ function MenuItem({ navItem, setShowMenu }: MenuItemProps) {
                 href={subItem.url}
                 className="flex hover:text-rm-green hover:underline"
               >
-                {subItem.acf?.icon?.source_url && (
-                  <img src={subItem.acf.icon.source_url} alt="" className="h-[40px] w-[40px] mr-5 block" />
+                {subItem.acf?.icon?.url && (
+                  <img src={subItem.acf.icon.url} alt="" className="h-[40px] w-[40px] mr-5 block" />
                 )}
                 {subItem.title?.rendered || subItem.title}
               </a>

@@ -257,6 +257,7 @@ export async function getOptionsPage(): Promise<any>{
  * Menu IDs/locations need to be discovered via the menus endpoint.
  */
 export async function getMenuItems(menuIdOrSlug: string | number): Promise<WpMenuItem[]> {
+  
   const items = await fetchAllPaginated<any>(
     `${WP_API}/menu-items?menus=${menuIdOrSlug}&_embed`,
     true

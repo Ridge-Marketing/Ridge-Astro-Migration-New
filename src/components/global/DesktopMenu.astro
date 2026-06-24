@@ -38,8 +38,9 @@ const triangleSvg = `<svg width="45" height="17" viewBox="0 0 45 17" fill="none"
             <span class="w-[44px] mx-auto block text-white" set:html={triangleSvg} />
             <div class={`bg-white pt-6 pb-8 px-5 text-rm-black shadow-block ${children.length > 6 ? 'grid grid-cols-2 gap-y-4 gap-x-6' : 'flex flex-col gap-6'}`}>
               {children.map((subItem: any, subIdx: number) => {
+                
                 const subLabel  = subItem.title?.rendered || subItem.title || '';
-                const iconUrl   = subItem.acf?.icon?.source_url || subItem.acf?.icon?.sourceUrl || '';
+                const iconUrl   = subItem.acf?.icon?.url || subItem.acf?.icon?.url || '';
                 return (
                   <a
                     href={convertCMSLink(subItem.url)}
