@@ -10,8 +10,10 @@
  *   <WpImage src={imageData.source_url} alt={imageData.alt_text} />
  *   <WpImage src={imageData.source_url} alt="..." width={800} height={600} />
  *   <WpImage src={imageData.source_url} alt="..." responsive />
+ *   <WpImage src={hero.source_url} alt="..." fetchPriority="high" />  (LCP images; also defaults loading to eager)
  */
 import { Image } from 'astro:assets';
+import { getRemoteSize } from '@/lib/remote-size';
 
 interface Props {
   src: string;
@@ -23,6 +25,9 @@ interface Props {
   sizes?: string;
   loading?: 'lazy' | 'eager';
   quality?: number | 'low' | 'mid' | 'high' | 'max';
+  fetchPriority?: 'high' | 'low' | 'auto';
+  style?: string;
+  divHeight?: string;
 }
 
 const {
@@ -33,9 +38,16 @@ const {
   class: className = '',
   responsive = false,
   sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px',
-  loading = 'lazy',
+  loading: loadingProp,
   quality = 80,
+  fetchPriority,
+  style,
+  divHeight = ''
 } = Astro.props;
+
+// A high-priority image is meant to load right away, so don't lazy-load it
+// unless the caller explicitly asks to
+const loading = loadingProp ?? (fetchPriority === 'high' ? 'eager' : 'lazy');
 
 // Skip if no src provided
 if (!src) return;
@@ -43,38 +55,60 @@ if (!src) return;
 // Determine if we should use inferSize (when no explicit dimensions provided)
 const useInferSize = !width || !height;
 
+// Everything else is served as WebP. SVGs (vector) and GIFs (may be animated)
+// would be rasterized/flattened by that, so they render as-is.
+const passThrough = /\.(svg|gif)(\?|$)/i.test(src);
+
+// Measure remote images ourselves (cached + retried) instead of letting
+// <Image inferSize> do it — one rate-limited fetch there fails the whole build.
+// If measuring still fails, fall back to a plain <img>.
+const size      = useInferSize && !passThrough ? await getRemoteSize(src) : { width, height };
+const imgWidth  = size?.width;
+const imgHeight = size?.height;
+const sized     = !passThrough && !!(imgWidth && imgHeight);
+
 ---
 
-{responsive ? (<>
+{!sized ? (
+  <img src={src} alt={alt} class={className} style={style} loading={loading} fetchpriority={fetchPriority} />
+) : responsive ? (<>
   <Image
     src={src}
     alt={alt}
     widths={[400, 800, 1200, 1600]}
     sizes={sizes}
-    inferSize={useInferSize}
-    width={width}
-    height={height}
+    width={imgWidth}
+    height={imgHeight}
     class={className}
     loading={loading}
+    fetchpriority={fetchPriority}
+    style={style}
     quality={quality}
+    format="webp"
   />
 </>) : useInferSize ? (<>
-  <div class="relative overflow-hidden">
+  <div class={`relative overflow-hidden ${divHeight}`}>
     <Image
       src={src}
       alt={alt}
-      inferSize
+      width={imgWidth}
+      height={imgHeight}
       class={`${className} blur-lg absolute top-0 left-0 opacity-30`}
       loading={`lazy`}
       quality={1}
+      format="webp"
     />
     <Image
       src={src}
       alt={alt}
-      inferSize
+      width={imgWidth}
+      height={imgHeight}
       class={`${className} z-10 relative`}
       loading={loading}
+      fetchpriority={fetchPriority}
+      style={style}
       quality={quality}
+      format="webp"
     />
   </div>
 </>) : (
@@ -85,6 +119,9 @@ const useInferSize = !width || !height;
     height={height}
     class={className}
     loading={loading}
+    fetchpriority={fetchPriority}
+    style={style}
     quality={quality}
+    format="webp"
   />
 )}

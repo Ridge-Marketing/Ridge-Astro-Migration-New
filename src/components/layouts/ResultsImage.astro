@@ -90,7 +90,7 @@ const hasButton = !!(button?.link?.title || button?.link?.url);
         <div class={`flex flex-wrap justify-center ${columnsCl}`}>
           {results.map((result: any) => (
             <div class="w-full md:w-[48%]">
-              <ResultCard content={result} columns={String(content.columns || 2)} />
+              <ResultCard content={result} columns={String(content.columns || 2)} noCounter statFontSize="text-[100px] lg:text-[80px] xl:text-[120px]" />
             </div>
           ))}
         </div>

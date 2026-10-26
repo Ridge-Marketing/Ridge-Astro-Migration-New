@@ -70,6 +70,14 @@ export const layoutNameMap: Record<string, string> = {
   full_width_image_gallery: 'FullWidthImageGallery',
   expandable_icon_boxes: 'ExpandableIconBoxes',
   bullets_with_image: 'BulletsWithImage',
+  two_col_text_text: 'TwoColTextText',
+  two_col_text_list: 'TwoColTextList',
+  full_width_video_text: 'FullWidthVideoText',
+  case_studies: 'CaseStudies',
+  featured_campaigns: 'FeaturedCampaigns',
+  barn_of_brands: 'BarnOfBrands',
+  logo_carousel: 'LogoCarousel',
+  quotes_ppc: 'QuotesPpc',
 
   // PascalCase names (from GraphQL fieldGroupName parsing) — same keys as layoutIndex.js
   TwoColImageText: 'TwoColImageText',
@@ -129,6 +137,14 @@ export const layoutNameMap: Record<string, string> = {
   FullWidthImageGallery: 'FullWidthImageGallery',
   ExpandableIconBoxes: 'ExpandableIconBoxes',
   BulletsWithImage: 'BulletsWithImage',
+  TwoColTextText: 'TwoColTextText',
+  TwoColTextList: 'TwoColTextList',
+  FullWidthVideoText: 'FullWidthVideoText',
+  CaseStudies: 'CaseStudies',
+  FeaturedCampaigns: 'FeaturedCampaigns',
+  BarnOfBrands: 'BarnOfBrands',
+  LogoCarousel: 'LogoCarousel',
+  QuotesPpc: 'QuotesPpc',
 };
 
 /**

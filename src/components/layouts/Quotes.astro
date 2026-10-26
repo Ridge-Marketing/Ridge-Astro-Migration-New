@@ -1,7 +1,10 @@
 ---
 /**
- * Quotes layout — slider with parallax quote marks
- * The slider logic is handled by client-side JS.
+ * Quotes layout — review slider. Two styles:
+ *   default         – frosted-glass card with parallax quote marks behind it
+ *   alternate_style – centered quote between large green quote marks, with the
+ *                     prev/next counter underneath
+ * The slider logic is handled by client-side JS (scoped per instance).
  * Replaces Gatsby's Quotes.js
  */
 import Section from '@/components/global/Section.astro';
@@ -17,9 +20,10 @@ interface Props {
   };
 }
 
-const { layoutData } = Astro.props;
-const content = layoutData.layoutContent;
-const settings = layoutData.layoutSettings;
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent;
+const settings        = layoutData.layoutSettings;
+const alternateStyle  = content.alternateStyle ?? false;
 
 // Resolve review post objects at build time (same pattern as FeaturedProjectsCarouselWrapper)
 const rawQuotes = content.quotes || [];
@@ -33,7 +37,8 @@ const slides = (await Promise.all(
 
     return {
       title: review.title?.rendered || '',
-      content: parser(review.content?.rendered || ''),
+      // Drop line breaks (<br>, <br/>, <br />) — swapped for a space so words don't run together
+      content: parser(review.content?.rendered || '').replace(/\s*<br\s*\/?>\s*/gi, ' ').trim(),
       reviewsFields: {
         titleCompany: review.acf?.title_company || '',
       },
@@ -41,109 +46,214 @@ const slides = (await Promise.all(
   })
 )).filter(Boolean);
 
-const hasArrows = slides.length > 1;
+const hasArrows  = slides.length > 1;
 const firstSlide = slides[0] || {};
+const slidesJson = JSON.stringify(slides);
 ---
 
-<div class="relative overflow-hidden" data-quotes-parallax>
-  <!-- Quote marks sit before Section in DOM so they render behind the content -->
-  <span
-    aria-hidden="true"
-    class={`${theme.text.STATS} text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[50%] lg:top-[75%] left-[30%] lg:left-[20%]`}
-    data-quote-left
-  >
-    &ldquo;
-  </span>
-  <span
-    aria-hidden="true"
-    class={`${theme.text.STATS} text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[75%] lg:top-[125%] right-[30%] lg:right-[20%]`}
-    data-quote-right
-  >
-    &rdquo;
-  </span>
-
-  <Section settings={settings}>
-    <Container container={settings.containerWidth}>
-      {content.heading && (
-        <h2 class={theme.text.H2}>{content.heading}</h2>
-      )}
-      <div class="mt-12 flex w-full flex-wrap justify-between relative" data-quotes-slider>
-        <div class="frosted-glass p-8 lg:p-14 w-full">
+{alternateStyle ? (
+  <div class="block" data-quotes data-slides={slidesJson}>
+    <Section classes="overflow-hidden" settings={settings}>
+      <Container container={settings.containerWidth}>
+        {content.heading && (
+          <h2 class={`${theme.text.H2} text-center`}>{content.heading}</h2>
+        )}
+        <div class="mt-12 max-w-[1122px] mx-auto text-center">
+          <span aria-hidden="true" class="block font-stratos font-semibold text-rm-green text-[70px] md:text-[120px] leading-[0.7] tracking-[-0.16em]">&ldquo;</span>
           <div class="animate-quote" data-quote-content>
-            <q
-              set:html={firstSlide.content.replaceAll('<br>', '') || ''}
-              class={`${theme.text.Q} block transition-all ease-in-out before:hidden after:hidden`}
+            <div
+              set:html={firstSlide.content || ''}
+              class="font-basic-sans italic text-[26px] md:text-[40px] leading-[1.1] text-black [&_strong]:font-semibold"
               data-quote-text
             />
-            <p class={`${theme.text.P_BLD} pt-8 pb-2`} data-quote-title>
-              {firstSlide.title || ''}
-            </p>
-            <small class={theme.text.FOOTER} data-quote-company>
-              {firstSlide.reviewsFields?.titleCompany || firstSlide.reviews_fields?.title_company || ''}
-            </small>
           </div>
+          <span aria-hidden="true" class="block font-stratos font-semibold text-rm-green text-[70px] md:text-[120px] leading-[0.7] tracking-[-0.16em] mt-4">&rdquo;</span>
+          <p class={`${theme.text.P_BLD} mt-2`} data-quote-title>
+            {firstSlide.title || ''}
+          </p>
+          <small class={theme.text.FOOTER} data-quote-company>
+            {firstSlide.reviewsFields?.titleCompany || ''}
+          </small>
+          {hasArrows && (
+            <div class="w-[175px] flex bg-rm-pale-grey mx-auto mt-10">
+              <button type="button" class="flex-1 px-5 py-3 text-40px" data-quote-prev aria-label="Previous quote">
+                <svg width="11" height="20" viewBox="0 0 11 20" fill="none" aria-hidden="true"><path d="M9.5 1L1.5 10L9.5 19" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+              <span class={`${theme.text.FOOTER} flex items-center font-basic-sans`} data-quote-counter>
+                1 / {slides.length}
+              </span>
+              <button type="button" class="flex-1 px-5 py-3 text-40px" data-quote-next aria-label="Next quote">
+                <svg width="11" height="20" viewBox="0 0 11 20" fill="none" aria-hidden="true"><path d="M1.5 1L9.5 10L1.5 19" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+            </div>
+          )}
         </div>
-        {hasArrows && (
-          <div class="w-[175px] flex bg-rm-pale-grey lg:ml-10">
-            <button class="flex-1 px-5 py-3 text-40px" data-quote-prev aria-label="Previous quote">
-              <svg width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2020/svg"><path d="M9.5 1L1.5 10L9.5 19" stroke="currentColor" stroke-width="2"/></svg>
-            </button>
-            <span class={`${theme.text.FOOTER} flex items-center font-basic-sans`} data-quote-counter>
-              1 / {slides.length}
-            </span>
-            <button class="flex-1 px-5 py-3 text-40px" data-quote-next aria-label="Next quote">
-              <svg width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2020/svg"><path d="M1.5 1L9.5 10L1.5 19" stroke="currentColor" stroke-width="2"/></svg>
-            </button>
-          </div>
+      </Container>
+    </Section>
+  </div>
+) : (
+  <div class="relative overflow-hidden" data-quotes data-slides={slidesJson} data-quotes-parallax>
+    <!-- Quote marks sit before Section in DOM so they render behind the content -->
+    <span
+      aria-hidden="true"
+      class={`${theme.text.STATS} transition-all ease-out duration-1000 text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[50%] lg:top-[75%] left-[30%] lg:left-[20%]`}
+      data-quote-left
+    >
+      &ldquo;
+    </span>
+    <span
+      aria-hidden="true"
+      class={`${theme.text.STATS} transition-all ease-out duration-1000 text-rm-green opacity-20 absolute scale-[7] lg:scale-[10] top-[75%] lg:top-[125%] right-[30%] lg:right-[20%]`}
+      data-quote-right
+    >
+      &rdquo;
+    </span>
+
+    <Section settings={settings}>
+      <Container container={settings.containerWidth}>
+        {content.heading && (
+          <h2 class={theme.text.H2}>{content.heading}</h2>
         )}
-      </div>
-    </Container>
-  </Section>
-</div>
+        <div class="mt-12 flex w-full flex-wrap justify-between relative" data-quotes-slider>
+          <div class="frosted-glass p-8 lg:p-14 w-full">
+            <div class="animate-quote" data-quote-content>
+              <q
+                set:html={firstSlide.content || ''}
+                class={`${theme.text.Q} block transition-all ease-in-out before:hidden after:hidden`}
+                data-quote-text
+              />
+              <p class={`${theme.text.P_BLD} pt-8 pb-2`} data-quote-title>
+                {firstSlide.title || ''}
+              </p>
+              <small class={theme.text.FOOTER} data-quote-company>
+                {firstSlide.reviewsFields?.titleCompany || ''}
+              </small>
+            </div>
+          </div>
+          {hasArrows && (
+            <div class="w-[175px] flex bg-rm-pale-grey lg:ml-10">
+              <button type="button" class="flex-1 px-5 py-3 text-40px" data-quote-prev aria-label="Previous quote">
+                <svg width="11" height="20" viewBox="0 0 11 20" fill="none" aria-hidden="true"><path d="M9.5 1L1.5 10L9.5 19" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+              <span class={`${theme.text.FOOTER} flex items-center font-basic-sans`} data-quote-counter>
+                1 / {slides.length}
+              </span>
+              <button type="button" class="flex-1 px-5 py-3 text-40px" data-quote-next aria-label="Next quote">
+                <svg width="11" height="20" viewBox="0 0 11 20" fill="none" aria-hidden="true"><path d="M1.5 1L9.5 10L1.5 19" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </Container>
+    </Section>
+  </div>
+)}
 
-<script define:vars={{ slidesData: JSON.stringify(slides) }}>
-  // Quotes slider logic
-  const slides = JSON.parse(slidesData);
-  if (slides.length > 0) {
-    let currentSlide = 0;
+<script>
+  // Quotes slider logic — one controller per layout instance
+  document.querySelectorAll<HTMLElement>('[data-quotes]').forEach((root) => {
+    const slides = JSON.parse(root.dataset.slides || '[]');
+    if (slides.length === 0) return;
+
+    let currentSlide   = 0;
     let userInteracted = false;
+    let isVisible      = false;
 
-    const textEl = document.querySelector('[data-quote-text]');
-    const titleEl = document.querySelector('[data-quote-title]');
-    const companyEl = document.querySelector('[data-quote-company]');
-    const counterEl = document.querySelector('[data-quote-counter]');
-    const prevBtn = document.querySelector('[data-quote-prev]');
-    const nextBtn = document.querySelector('[data-quote-next]');
+    const contentEl = root.querySelector<HTMLElement>('[data-quote-content]');
+    const textEl    = root.querySelector<HTMLElement>('[data-quote-text]');
+    const titleEl   = root.querySelector<HTMLElement>('[data-quote-title]');
+    const companyEl = root.querySelector<HTMLElement>('[data-quote-company]');
+    const counterEl = root.querySelector<HTMLElement>('[data-quote-counter]');
 
-    function updateSlide(idx) {
+    const updateSlide = (idx: number) => {
       currentSlide = idx;
-      const slide = slides[idx];
+      const slide  = slides[idx];
       if (textEl) textEl.innerHTML = slide.content || '';
       if (titleEl) titleEl.textContent = slide.title || '';
-      if (companyEl) companyEl.textContent = slide.reviewsFields?.titleCompany || slide.reviews_fields?.title_company || '';
+      if (companyEl) companyEl.textContent = slide.reviewsFields?.titleCompany || '';
       if (counterEl) counterEl.textContent = `${idx + 1} / ${slides.length}`;
-    }
+      // Restart the entrance animation for the new quote
+      if (contentEl) {
+        contentEl.classList.remove('animate-quote');
+        void contentEl.offsetWidth;
+        contentEl.classList.add('animate-quote');
+      }
+    };
 
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        userInteracted = true;
-        updateSlide((currentSlide - 1 + slides.length) % slides.length);
-      });
-    }
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        userInteracted = true;
-        updateSlide((currentSlide + 1) % slides.length);
-      });
-    }
+    root.querySelector('[data-quote-prev]')?.addEventListener('click', () => {
+      userInteracted = true;
+      updateSlide((currentSlide - 1 + slides.length) % slides.length);
+    });
+    root.querySelector('[data-quote-next]')?.addEventListener('click', () => {
+      userInteracted = true;
+      updateSlide((currentSlide + 1) % slides.length);
+    });
 
-    // Auto-advance
+    // Auto-advance while in view, until the user takes over
     if (slides.length > 1) {
+      new IntersectionObserver(([entry]) => {
+        isVisible = entry.isIntersecting;
+      }).observe(root);
+
       setInterval(() => {
-        if (!userInteracted) {
+        if (isVisible && !userInteracted) {
           updateSlide((currentSlide + 1) % slides.length);
         }
       }, 6000);
     }
-  }
+  });
+
+  // Quote-mark parallax (default style only) — Gatsby parity. While the
+  // section is in view, every scroll event nudges the marks apart (scrolling
+  // down) or together (scrolling up); the duration-1000 transition smooths the
+  // steps. Positions reset to the Tailwind defaults when it leaves the view.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('[data-quotes-parallax]').forEach((root) => {
+    const quoteLeft  = root.querySelector<HTMLElement>('[data-quote-left]');
+    const quoteRight = root.querySelector<HTMLElement>('[data-quote-right]');
+    if (!quoteLeft || !quoteRight || reduceMotion) return;
+
+    // Starting tops (%) and per-scroll-event step, matching the lg: breakpoint
+    const defaults = () => window.innerWidth < 1024
+      ? { left: 50, right: 75, step: 0.35 }
+      : { left: 75, right: 125, step: 0.65 };
+
+    let { left: topLeft, right: topRight, step } = defaults();
+    let prevScrollY = window.scrollY;
+
+    const apply = () => {
+      quoteLeft.style.top  = `${topLeft}%`;
+      quoteRight.style.top = `${topRight}%`;
+    };
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > prevScrollY) {
+        topLeft  -= step;
+        topRight += step;
+        apply();
+      } else if (y < prevScrollY) {
+        topLeft  += step;
+        topRight -= step;
+        apply();
+      }
+      prevScrollY = y;
+    };
+
+    const reset = () => {
+      ({ left: topLeft, right: topRight, step } = defaults());
+      apply();
+    };
+
+    new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        prevScrollY = window.scrollY;
+        window.addEventListener('scroll', onScroll, { passive: true });
+      } else {
+        window.removeEventListener('scroll', onScroll);
+        reset();
+      }
+    }).observe(root);
+  });
 </script>

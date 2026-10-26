@@ -4,27 +4,37 @@
  */
 import Layout from '@/components/global/Layout.astro';
 import HomeHero from '@/components/layouts/HomeHero.astro';
+import HomeHero2026 from '@/components/layouts/HomeHero2026.astro';
 import FlexibleLayouts from '@/components/FlexibleLayouts.astro';
 import AuditCard from '@/components/layouts/AuditCard.astro';
 import { getPages, getGlobalSettings, extractPath, transformKeys } from '@/lib/wp-client';
 
-// Find the front page
+// Find the front page (its link resolves to "/"). The old "homepage" slug is
+// kept as a fallback for when it was the front page.
 const allPages = await getPages();
-const frontPage = allPages.find((p: any) =>
-  p.slug === 'homepage' ||
-  p.acf?.isFrontPage ||
-  p.template === 'front-page' ||
-  extractPath(p.link) === '/'
-) || allPages[0];
+const frontPage = allPages.find((p: any) => extractPath(p.link) === '/') ||
+  allPages.find((p: any) =>
+    p.slug === 'homepage' ||
+    p.acf?.isFrontPage ||
+    p.template === 'front-page'
+  ) || allPages[0];
 
 const globalSettings = await getGlobalSettings().catch(() => null);
 const favicon = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
 
 const seo = frontPage?.yoast_head_json;
 
-// REST API: home hero data is at acf.layout__home_hero
+// REST API: the Home Hero 2026 group sits at the top level of acf as
+// layout__content / layout__settings. Fall back to the old cycling hero at
+// acf.layout__home_hero when the 2026 group has no heading.
+const homeHero2026Raw = frontPage?.acf?.layout__content;
+const homeHero2026 = homeHero2026Raw?.heading ? {
+  layoutContent: transformKeys(homeHero2026Raw),
+  layoutSettings: transformKeys(frontPage?.acf?.layout__settings || {}),
+} : null;
+
 const homeHeroRaw = frontPage?.acf?.layout__home_hero;
-const homeHero = homeHeroRaw ? {
+const homeHero = !homeHero2026 && homeHeroRaw ? {
   layoutContent: transformKeys(homeHeroRaw.layout__content || homeHeroRaw),
   layoutSettings: transformKeys(homeHeroRaw.layout__settings || {}),
 } : null;
@@ -45,6 +55,10 @@ const flexibleLayouts = frontPage?.acf?.layouts || [];
   favicon={favicon}
   headerColor="black"
 >
+  {homeHero2026 && (
+    <HomeHero2026 layoutData={homeHero2026} />
+  )}
+
   {homeHero && (
     <HomeHero layoutData={homeHero} />
   )}

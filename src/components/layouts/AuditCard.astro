@@ -1,9 +1,19 @@
 ---
 /**
- * Audit Card layout — two-column card with text left, image right
- * Card background: #F3F1EE with rounded corners
- * Section background: black on top half, transparent on bottom half
+ * Audit Card layout — rounded #F3F1EE card: heading, subheading, body,
+ * arrow list and button on the left, image on the right. Optionally paints
+ * the top half of the section a solid color so the card straddles two bands.
+ * Replaces Gatsby's AuditCard.js
+ *
+ * ACF fields (layout__content):
+ *   heading, sub_heading, body – text (parser tags allowed)
+ *   list                       – repeater of { item }
+ *   component__button          – button clone
+ *   image                      – media ID
+ *   half_background            – bool: paint the top half of the section
+ *   half_background_color      – color for that top half (e.g. "black")
  */
+import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import Buttons from '@/components/global/Buttons.astro';
 import WpImage from '@/components/global/WpImage.astro';
@@ -18,85 +28,82 @@ interface Props {
   };
 }
 
-const { layoutData }  = Astro.props;
-const content         = layoutData.layoutContent;
-const settings        = layoutData.layoutSettings;
+const { layoutData }        = Astro.props;
+const content               = layoutData.layoutContent || {};
+const settings              = layoutData.layoutSettings || {};
 
-const body            = content.body ? parser(content.body) : '';
+const heading               = content.heading ?? false;
+const subHeading            = content.subHeading ?? false;
+const body                  = content.body ?? false;
+const list: any[]           = content.list || [];
+const componentButton       = content.componentButton ?? false;
+const halfBackground        = content.halfBackground ?? false;
+const halfBackgroundColor   = content.halfBackgroundColor ?? false;
 
-const bullets: any[]  = content.bullets || content.bulletPoints || content.listItems || [];
-
-const mediaImage      = content.componentFlexibleMedia?.image || content.image;
-const resolved        = await resolveImage(mediaImage);
-const imageUrl        = resolved?.source_url || '';
-const imageAlt        = resolved?.alt_text || content.componentFlexibleMedia?.imageAlt || content.imageAlt || '';
+const image                 = await resolveImage(content.image);
+const imageUrl              = image?.source_url || '';
+const imageAlt              = image?.alt_text || '';
+const isSvg                 = imageUrl.endsWith('.svg');
 ---
 
-<!-- Section with black top-half / transparent bottom-half split background -->
-<section class="relative pb-12 lg:pb-16">
-  <!-- Black covers only the top 50% of this section's height -->
-  <div class="absolute inset-x-0 top-0 h-1/2 bg-black pointer-events-none"></div>
+<Section settings={settings}>
+  {halfBackground && halfBackgroundColor && (
+    <div class={`absolute top-0 left-0 h-1/2 w-full bg-${halfBackgroundColor}`}></div>
+  )}
+  <Container container="default">
+    <div class="bg-[#F3F1EE] rounded-[21px] overflow-hidden flex flex-col lg:flex-row gap-8 xl:gap-12 p-8 md:p-12 xl:p-16 mx-2 relative">
 
-  <Container container={settings?.containerWidth || 'slim'}>
-    <!-- Card sits above the split background -->
-    <div class="relative rounded-2xl overflow-hidden p-12 lg:p-16" style="background-color: #F3F1EE;">
-      <div class="grid grid-cols-1 lg:grid-cols-2 min-h-[480px] gap-8 xl:gap-12">
-
-        <!-- Left col: text content -->
-        <div class="flex items-center">
-          <div class="w-full">
-            {content.eyebrow && (
-              <p class="font-stratos uppercase text-sm font-bold tracking-widest mb-4 text-rm-green">
-                {content.eyebrow}
-              </p>
-            )}
-            {content.heading && (
-              <h2 class={`${theme.text.H2}`}>{content.heading}</h2>
-            )}
-            {body && (
-              <p set:html={body.replaceAll('<br>', '')} class={`${theme.text.P_STD} mt-6`} />
-            )}
-
-            <!-- Bullet points -->
-            {bullets.length > 0 && (
-              <ul class="mt-6 space-y-3">
-                {bullets.map((item: any) => {
-                  const label = item.text || item.bulletPoint || item.bullet || item.item || item.label || '';
-                  return (
-                    <li class={`${theme.text.P_STD} flex items-start gap-3`}>
-                      <span class="mt-[6px] flex-shrink-0 w-[10px] h-[10px] rounded-full bg-rm-green" aria-hidden="true"></span>
-                      <span>{label}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-
-            {content.componentButton?.link && (
-              <div class="mt-8">
-                <Buttons
-                  content={content.componentButton}
-                  sectionBackground="paleGrey"
-                />
-              </div>
-            )}
+      <div class="flex flex-col gap-5 xl:w-1/2">
+        {heading && (
+          <h2 class={`${theme.text.H5} text-black`} set:html={parser(heading)} />
+        )}
+        {subHeading && (
+          <p class={`${theme.text.H4} text-black mb-8`} set:html={parser(subHeading)} />
+        )}
+        {body && (
+          <div
+            class="font-basic-sans font-light text-[1.3125rem] leading-[2rem] text-black max-w-[535px] flex-col flex gap-5"
+          >
+            <div set:html={parser(body)}/>  
           </div>
-        </div>
+        )}
+        {list.length > 0 && (
+          <ul class="flex flex-col gap-4 mt-2">
+            {list.map((item: any) => (
+              <li class="flex items-start md:items-center gap-3 font-basic-sans font-normal text-[1.375rem] leading-[1.4rem]">
+                <svg class="w-[24px] shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="#1F9DA5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="text-black">{item.item}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {componentButton?.link?.url && (
+          <div class="mt-4">
+            <Buttons content={componentButton} sectionBackground="paleTeal" />
+          </div>
+        )}
+      </div>
 
-        <!-- Right col: image -->
-        <div class="relative min-h-[320px] lg:min-h-0">
-          {imageUrl ? (
+      {imageUrl && (
+        <div class="lg:w-1/2 flex items-center justify-center self-center max-w-[500px]">
+          {isSvg || !image?.width ? (
+            <img src={imageUrl} alt={imageAlt} class="w-full rounded-xl object-contain" loading="lazy" />
+          ) : (
             <WpImage
               src={imageUrl}
               alt={imageAlt}
-              class="w-full h-full object-contain absolute inset-0"
+              width={image.width}
+              height={image.height}
+              responsive
+              sizes="(min-width: 1024px) 500px, 100vw"
+              class="w-full h-auto rounded-xl object-contain"
             />
-          ) : (
-            <div class="w-full h-full bg-[#E0DDD9] absolute inset-0" />
           )}
         </div>
+      )}
 
-      </div>
     </div>
   </Container>
-</section>
+</Section>

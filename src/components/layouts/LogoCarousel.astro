@@ -1,0 +1,105 @@
+---
+/**
+ * Logo Carousel layout — heading/body above an auto-scrolling strip of
+ * white logo cards with edge fades.
+ * Replaces Gatsby's LogoCarousel.js (@splidejs auto-scroll) with a CSS
+ * marquee: the track is rendered twice and translated -50% on a loop.
+ *
+ * ACF fields (layout__content):
+ *   heading, body – text (parser tags allowed)
+ *   logos         – repeater of { image } (media IDs)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+
+const logos = (
+  await Promise.all(
+    (content.logos || []).map(async (logo: any) => {
+      const resolved = await resolveImage(logo.image);
+      return resolved?.source_url
+        ? { url: resolved.source_url, alt: resolved.alt_text || '' }
+        : null;
+    })
+  )
+).filter(Boolean) as Array<{ url: string; alt: string }>;
+
+// Each card is 225px + 24px gap. Repeat the set until one track is wider
+// than a large screen so the -50% loop never shows a gap.
+const slideWidth = 249;
+const repeats    = Math.max(1, Math.ceil(2400 / Math.max(logos.length * slideWidth, 1)));
+const track      = Array.from({ length: repeats }, () => logos).flat();
+// Splide autoScroll speed 0.6 ≈ 36px/s
+const duration   = Math.max(Math.round((track.length * slideWidth) / 36), 20);
+---
+
+<Section settings={settings}>
+  <Container container="default">
+    {content.heading && (
+      <h2 class={`${theme.text.H2} text-black text-center`} set:html={parser(content.heading)} />
+    )}
+    {content.body && (
+      <p
+        class={`${theme.text.P_STD} text-black text-center max-w-[1135px] mx-auto mt-5`}
+        set:html={parser(content.body)}
+      />
+    )}
+
+    {logos.length > 0 && (
+      <div class="relative mt-12 overflow-hidden">
+        <div class="logo-carousel-marquee flex w-max" style={`animation-duration: ${duration}s`}>
+          {[0, 1].map((copy) => (
+            <div class="flex shrink-0" aria-hidden={copy === 1 ? 'true' : undefined}>
+              {track.map((logo) => (
+                <div class="py-6 pr-6 shrink-0">
+                  <div class="bg-white rounded-[25px] shadow-[0_0_20px_0_rgba(0,0,0,0.2)] w-[225px] h-[125px] flex items-center justify-center px-8">
+                    <img
+                      src={logo.url}
+                      alt={copy === 0 ? logo.alt : ''}
+                      class="max-h-[70px] w-auto max-w-[160px] object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <!-- Edge fades -->
+        <div aria-hidden="true" class="pointer-events-none absolute left-0 top-0 h-full w-[100px] md:w-[200px] z-10 bg-gradient-to-r from-white to-transparent" />
+        <div aria-hidden="true" class="pointer-events-none absolute right-0 top-0 h-full w-[100px] md:w-[200px] z-10 bg-gradient-to-l from-white to-transparent" />
+      </div>
+    )}
+  </Container>
+</Section>
+
+<style>
+  @keyframes logoCarouselMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .logo-carousel-marquee {
+    animation: logoCarouselMarquee linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo-carousel-marquee {
+      animation: none;
+    }
+  }
+</style>

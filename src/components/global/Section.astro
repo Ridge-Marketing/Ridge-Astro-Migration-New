@@ -21,17 +21,17 @@ interface Props {
 
 const { settings, classes: extraClasses = '', transparent = false, role = '' } = Astro.props;
 
-const pt = settings?.padding?.top ? (theme.paddingTop[settings.padding.top] || '') : 'py-12';
-const pb = settings?.padding?.bottom ? (theme.paddingBottom[settings.padding.bottom] || '') : '';
-const padding = (settings?.padding) ? `${pt} ${pb}` : 'py-12 px-0';
+const pt            = settings?.padding?.top ? (theme.paddingTop[settings.padding.top] || '') : 'py-12';
+const pb            = settings?.padding?.bottom ? (theme.paddingBottom[settings.padding.bottom] || '') : '';
+const padding       = (settings?.padding) ? `${pt} ${pb}` : 'py-12 px-0';
 
-let bg = settings?.backgroundColor || 'white';
+let bg              = settings?.backgroundColor || 'white';
 if (transparent) bg = 'transparent';
-const bgClass = theme.backgroundColor[bg] || bg;
+const bgClass       = theme.backgroundColor[bg] || bg;
 
-const position = settings?.position || 'relative';
-const id = settings?.id || '';
-const anchorId = settings?.anchorId || '';
+const position      = settings?.position || 'relative';
+const id            = settings?.id || '';
+const anchorId      = settings?.anchorId || '';
 const settingsClasses = settings?.classes || '';
 ---
 

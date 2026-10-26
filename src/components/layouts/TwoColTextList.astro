@@ -1,0 +1,72 @@
+---
+/**
+ * Two Column Text + Numbered List layout
+ * Left column: heading, body, small body. Right column: white card with a
+ * two-column grid of numbered items.
+ *
+ * ACF fields (layout__content):
+ *   heading, body, body_small – text (parser tags allowed)
+ *   items                     – repeater of { text }
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+const textColor      = settings.backgroundColor === 'black' ? 'text-rm-white' : 'text-rm-black';
+const items: any[]   = content.items ?? [];
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="xl:grid grid-cols-2 gap-14 items-center">
+      <div class="pb-10 xl:pb-0">
+        {content.heading && (
+          <h2 class={`${theme.text.H2} ${textColor}`} set:html={parser(content.heading)} />
+        )}
+        {content.body && (
+          <div
+            class={`mt-8 ${theme.text.P_STD} ${textColor} [&_p]:mb-5 [&_strong]:font-bold [&_a]:underline`}
+            set:html={parser(content.body)}
+          />
+        )}
+        {content.bodySmall && (
+          <div
+            class={`mt-6 ${theme.text.P_SML} ${textColor} [&_p]:mb-4 [&_strong]:font-bold [&_a]:underline`}
+            set:html={parser(content.bodySmall)}
+          />
+        )}
+      </div>
+
+      {items.length > 0 && (
+        <div class="bg-rm-white rounded-[20px] shadow-[0px_0px_10px_rgba(0,0,0,0.2)] p-8 lg:p-[30px]">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 lg:gap-x-[52px] gap-y-8 lg:gap-y-[25px]">
+            {items.map((item, index) => (
+              <div class="flex flex-col gap-[15px]">
+                <div class={`${theme.text.CIRCLE_NUM} shrink-0 w-[55px] h-[55px] border-rm-green text-rm-green`}>
+                  {index + 1}
+                </div>
+                {item.text && (
+                  <div
+                    class={`${theme.text.P_STD} text-rm-black [&_strong]:font-bold`}
+                    set:html={parser(item.text)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </Container>
+</Section>

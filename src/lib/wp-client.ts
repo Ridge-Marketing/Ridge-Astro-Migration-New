@@ -54,17 +54,27 @@ const authHeader = WP_AUTH
   ? { Authorization: `Basic ${Buffer.from(WP_AUTH).toString('base64')}` }
   : {};
 
-async function fetchJSON<T>(url: string, retries = 3, authenticated = false): Promise<T> {
+// Rate limits and gateway timeouts from WP Engine are transient — retry them
+const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+
+class WpApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
+// 5 attempts = 2s/4s/8s/16s backoff — WP Engine's 429 window outlasts a shorter run
+async function fetchJSON<T>(url: string, retries = 5, authenticated = false): Promise<T> {
   const headers = authenticated ? authHeader : {};
   for (let attempt = 0; attempt < retries; attempt++) {
     const res = await fetch(url, { headers });
     if (res.ok) return res.json() as Promise<T>;
-    if (res.status === 429 && attempt < retries - 1) {
+    if (RETRYABLE_STATUS.has(res.status) && attempt < retries - 1) {
       const delay = Math.pow(2, attempt + 1) * 1000;
       await new Promise((r) => setTimeout(r, delay));
       continue;
     }
-    throw new Error(`WP API error: ${res.status} ${res.statusText} for ${url}`);
+    throw new WpApiError(res.status, `WP API error: ${res.status} ${res.statusText} for ${url}`);
   }
   throw new Error(`WP API: max retries exceeded for ${url}`);
 }
@@ -79,10 +89,10 @@ async function fetchAllPaginated<T>(baseUrl: string, authenticated = false): Pro
   const headers       = authenticated ? authHeader : {};
 
   let firstRes: Response | null = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     firstRes = await fetch(firstPageUrl, { headers });
     if (firstRes.ok) break;
-    if (firstRes.status === 429 && attempt < 2) {
+    if (RETRYABLE_STATUS.has(firstRes.status) && attempt < 4) {
       await new Promise((r) => setTimeout(r, Math.pow(2, attempt + 1) * 1000));
       continue;
     }
@@ -100,7 +110,7 @@ async function fetchAllPaginated<T>(baseUrl: string, authenticated = false): Pro
 
   const remaining = await Promise.all(
     Array.from({ length: totalPages - 1 }, (_, i) =>
-      fetchJSON<T[]>(`${baseUrl}${separator}per_page=50&page=${i + 2}`, 3, authenticated)
+      fetchJSON<T[]>(`${baseUrl}${separator}per_page=50&page=${i + 2}`, 5, authenticated)
     )
   );
 
@@ -146,7 +156,7 @@ export async function getServiceById(id: number): Promise<WpService | null> {
 
   try {
     // Authenticated: unpublished/private services 401 without credentials
-    const service = await fetchJSON<WpService>(`${WP_API}/service/${id}?_embed`, 3, true);
+    const service = await fetchJSON<WpService>(`${WP_API}/service/${id}?_embed`, 5, true);
     serviceCache.set(id, service);
     return service;
   } catch {
@@ -240,11 +250,16 @@ export async function getLanderBySlug(slug: string): Promise<WpLander | null> {
   return items[0] || null;
 }
 
-export async function getOptionsPage(): Promise<any>{
-  const options = await fetchJSON<any []>(
-    `${WP_BASE}/options/all`
-  )
-  return options
+let optionsPromise: Promise<any> | null = null;
+
+export function getOptionsPage(): Promise<any> {
+  if (!optionsPromise) {
+    optionsPromise = fetchJSON<any[]>(`${WP_BASE}/options/all`).catch((err) => {
+      optionsPromise = null;
+      throw err;
+    });
+  }
+  return optionsPromise;
 }
 
 // ============================================
@@ -256,8 +271,22 @@ export async function getOptionsPage(): Promise<any>{
  * Requires WP 5.9+ or the "WP REST API Menus" plugin.
  * Menu IDs/locations need to be discovered via the menus endpoint.
  */
-export async function getMenuItems(menuIdOrSlug: string | number): Promise<WpMenuItem[]> {
-  
+/** Build-time cache for menu trees — the header/footer ask for the same menus on every page */
+const menuCache = new Map<string, Promise<WpMenuItem[]>>();
+
+export function getMenuItems(menuIdOrSlug: string | number): Promise<WpMenuItem[]> {
+  const key = String(menuIdOrSlug);
+  if (!menuCache.has(key)) {
+    // Drop failed fetches so the next page retries instead of reusing the error
+    menuCache.set(key, fetchMenuItems(menuIdOrSlug).catch((err) => {
+      menuCache.delete(key);
+      throw err;
+    }));
+  }
+  return menuCache.get(key)!;
+}
+
+async function fetchMenuItems(menuIdOrSlug: string | number): Promise<WpMenuItem[]> {
   const items = await fetchAllPaginated<any>(
     `${WP_API}/menu-items?menus=${menuIdOrSlug}&_embed`,
     true
@@ -308,8 +337,17 @@ export async function getMenuItems(menuIdOrSlug: string | number): Promise<WpMen
  * Discover available menus (returns list of menu objects with id and name).
  * Requires WP Application Password auth — set WP_AUTH=username:app_password in .env
  */
-export async function getMenus(): Promise<Array<{ id: number; name: string; slug: string }>> {
-  return fetchJSON(`${WP_API}/menus`, 3, true);
+let menusPromise: Promise<Array<{ id: number; name: string; slug: string }>> | null = null;
+
+export function getMenus(): Promise<Array<{ id: number; name: string; slug: string }>> {
+  if (!menusPromise) {
+    menusPromise = fetchJSON<Array<{ id: number; name: string; slug: string }>>(`${WP_API}/menus`, 5, true)
+      .catch((err) => {
+        menusPromise = null;
+        throw err;
+      });
+  }
+  return menusPromise;
 }
 
 // ============================================
@@ -424,9 +462,14 @@ export async function getMediaById(id: number): Promise<any | null> {
   if (mediaCache.has(id)) return mediaCache.get(id)!;
 
   try {
-    const media = await fetchJSON<any>(
-      `${WP_API}/media/${id}?_fields=id,source_url,alt_text,mime_type,media_details`
-    );
+    // Anonymous first so the response can come from WP Engine's cache. WP
+    // hides attachments whose parent post isn't public (e.g. icons uploaded to
+    // the old, now-draft homepage) — those 401 and are retried authenticated.
+    const url   = `${WP_API}/media/${id}?_fields=id,source_url,alt_text,mime_type,media_details`;
+    const media = await fetchJSON<any>(url).catch((err) => {
+      if (err instanceof WpApiError && err.status === 401) return fetchJSON<any>(url, 5, true);
+      throw err;
+    });
     const result = {
       source_url: media.source_url,
       alt_text:   media.alt_text || '',
@@ -436,7 +479,8 @@ export async function getMediaById(id: number): Promise<any | null> {
     };
     mediaCache.set(id, result);
     return result;
-  } catch {
+  } catch (err) {
+    console.warn(`[getMediaById] media ${id} unavailable:`, (err as Error).message);
     return null;
   }
 }

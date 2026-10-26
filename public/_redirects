@@ -1,3 +1,13 @@
+# Serve CMS media from the site's own domain (HTML is rewritten to these paths
+# by src/middleware.ts). Same proxy the Gatsby site used.
+/wp-content/uploads/*  https://cms.ridgemarketing.com/wp-content/uploads/:splat  200
+
+# Partytown runs trackers in a web worker, which needs CORS to fetch scripts.
+# These hosts don't send CORS headers, so serve them same-origin (see
+# resolveUrl in astro.config.mjs).
+/partytown-proxy/connect.facebook.net/*  https://connect.facebook.net/:splat  200
+/partytown-proxy/bzrcdn.openai.com/*  https://bzrcdn.openai.com/:splat  200
+
 # Redirects migrated from Gatsby redirects.json
 /service/seo  /service/ai-and-search-engine-optimization  301
 /work  /our-work  301

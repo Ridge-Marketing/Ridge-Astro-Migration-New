@@ -7,6 +7,7 @@ import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import WpImage from '@/components/global/WpImage.astro';
 import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
 import { resolveImage } from '@/lib/wp-client';
 
 interface Props {
@@ -30,14 +31,15 @@ const mobileAlt       = mobileImg?.alt_text || '';
 const overlap         = content.imageOverlap;
 const overlapBkg      = content.backgroundColor;
 const textAlignment   = settings?.classes?.includes('text-center') ? 'text-center' : 'text-center lg:text-left';
+const imgSize         = settings?.classes?.includes('image-sml') ? 'max-w-[950px]' : '';
 ---
 
 <Section settings={settings}>
   <Container container={settings.containerWidth}>
     {content.heading && (
-      <p class={`${theme.text.H2} px-2 pb-8 ${textAlignment}`}>{content.heading}</p>
+      <p class={`${theme.text.H2} px-2 pb-8 ${textAlignment}`} set:html={parser(content.heading)} />
     )}
-    <div class={`mx-auto ${overlap ? 'z-10 relative' : ''}`}>
+    <div class={`mx-auto ${overlap ? 'z-10 relative' : ''} ${imgSize}`}>
       {mobileImageUrl ? (
         <>
           <div class="md:hidden">

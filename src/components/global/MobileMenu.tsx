@@ -42,19 +42,45 @@ function MenuItem({ navItem, setShowMenu }: MenuItemProps) {
       {children.length > 0 && (
         <div className={`transition-all duration-300 ${subMenuOpen ? 'h-auto' : 'h-0 overflow-hidden'}`}>
           <div className={`bg-white py-2 text-rm-black flex flex-col gap-6 pl-4 border-l border-rm-grey border-opacity-10 ${children.length > 6 ? 'md:grid md:grid-cols-2 gap-y-4 gap-x-6' : ''}`}>
-            {children.map((subItem: any, idx: number) => (
-              <a
-                key={idx}
-                onClick={() => setShowMenu(false)}
-                href={subItem.url}
-                className="flex hover:text-rm-green hover:underline"
-              >
-                {subItem.acf?.icon?.url && (
-                  <img src={subItem.acf.icon.url} alt="" className="h-[40px] w-[40px] mr-5 block" />
-                )}
-                {subItem.title?.rendered || subItem.title}
-              </a>
-            ))}
+            {children.map((subItem: any, idx: number) => {
+              const subLabel     = subItem.title?.rendered || subItem.title || '';
+              const iconUrl      = subItem.acf?.icon?.url || '';
+              const iconHoverUrl = subItem.acf?.icon_hover?.url || '';
+
+              // "AI Search Audit" pill — pale grey, black on hover (Gatsby parity)
+              if (subLabel.toLowerCase() === 'ai search audit') {
+                return (
+                  <a
+                    key={idx}
+                    onClick={() => setShowMenu(false)}
+                    href={subItem.url}
+                    className={`group/link flex text-black hover:text-white focus:text-white bg-rm-pale-grey hover:bg-black focus:bg-black transition-all duration-300 ease-out w-max px-6 ${children.length > 6 ? '-ml-1' : 'md:-ml-1'} py-2 items-center rounded-md`}
+                  >
+                    {iconUrl && (
+                      <img src={iconUrl} alt="" className={`h-[40px] w-[40px] mr-5 block ${iconHoverUrl ? 'group-hover/link:hidden group-focus/link:hidden' : ''}`} />
+                    )}
+                    {iconHoverUrl && (
+                      <img src={iconHoverUrl} alt="" className="h-[40px] w-[40px] mr-5 hidden group-hover/link:block group-focus/link:block" />
+                    )}
+                    {subLabel}
+                  </a>
+                );
+              }
+
+              return (
+                <a
+                  key={idx}
+                  onClick={() => setShowMenu(false)}
+                  href={subItem.url}
+                  className="flex hover:text-rm-green hover:underline"
+                >
+                  {iconUrl && (
+                    <img src={iconUrl} alt="" className="h-[40px] w-[40px] mr-5 block" />
+                  )}
+                  {subLabel}
+                </a>
+              );
+            })}
           </div>
         </div>
       )}

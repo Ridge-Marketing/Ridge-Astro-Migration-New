@@ -34,8 +34,8 @@ if (floatedImageUrl) {
   }
 }
 
-const hasFloat = floatedImageUrl && floatP.length > 0;
-const visibility = hasFloat ? 'inline-block' : 'hidden invisible';
+// Gatsby shows the two-column row whenever an image is set
+const visibility = floatedImageUrl ? 'block' : 'hidden invisible';
 ---
 
 <Section settings={settings}>
@@ -47,13 +47,9 @@ const visibility = hasFloat ? 'inline-block' : 'hidden invisible';
     )}
 
     {content.heading?.green && content.heading?.black && (
-      <h2 class="font-stratos uppercase font-bold text-50px sm:text-60px lg:text-100px leading-[3rem] lg:leading-[4.75rem] mb-9">
-        <span class="text-rm-green lg:block">
-          {content.heading.green + ' '}
-        </span>
-        <span class="text-rm-black">
-          {content.heading.black}
-        </span>
+      <h2 class="font-stratos uppercase font-bold text-50px sm:text-60px lg:text-100px leading-[3.5rem] lg:leading-[4.75rem] mb-9">
+        <span class="text-rm-green lg:block" set:html={parser(content.heading.green)} />
+        <span class="text-rm-black" set:html={parser(content.heading.black)}/>
       </h2>
     )}
 
@@ -67,15 +63,34 @@ const visibility = hasFloat ? 'inline-block' : 'hidden invisible';
       return null;
     })}
 
-    <div class={`${visibility} lg:w-[65%]`}>
-      {floatP.map((item: any) => (
-        <p class={`${theme.text.P_STD} mb-9`}>
-          {item.body}
-        </p>
-      ))}
-      {content.componentButton && (
-        <div class="text-left">
-          <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+    <!-- Text (65%) + image (30%, 5% gap), top-aligned. Gatsby used two
+         inline-blocks; a flex row avoids the whitespace gap that wrapped the
+         image below the text in Astro. -->
+    <div class="lg:flex lg:items-start">
+      <div class={`${visibility} lg:w-[65%]`}>
+        {floatP.map((item: any) => (
+          <p class={`${theme.text.P_STD} mb-9`}>
+            {item.body}
+          </p>
+        ))}
+        {content.componentButton && (
+          <div class="text-left">
+            <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+          </div>
+        )}
+      </div>
+
+      {floatedImageUrl && (
+        <div class="mb-9 max-w-[250px] lg:max-w-full lg:mb-0 lg:w-[30%] lg:ml-[5%] mt-12 lg:mt-0 shrink-0">
+          <WpImage
+            src={floatedImageUrl}
+            alt=""
+            width={floatedImage?.width}
+            height={floatedImage?.height}
+            responsive
+            sizes="(min-width: 1024px) 30vw, 250px"
+            class="w-full h-auto object-contain"
+          />
         </div>
       )}
     </div>
@@ -84,15 +99,6 @@ const visibility = hasFloat ? 'inline-block' : 'hidden invisible';
       <div class="text-left">
         <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
       </div>
-    )}
-
-    {floatedImageUrl && (
-      <WpImage
-        src={floatedImageUrl}
-        alt=""
-        class="mb-9 lg:mb-0 lg:w-[30%] lg:ml-[5%] mt-12 lg:mt-0"
-        responsive
-      />
     )}
   </Container>
 </Section>

@@ -1,7 +1,10 @@
 ---
 /**
  * ResultCard — individual stat card for Results layout
- * Replaces Gatsby's ResultCard.js (static display, no counter animation)
+ * Replaces Gatsby's ResultCard.js + Counter.js: stats above 40 count up when
+ * scrolled into view (same start points and durations as Gatsby). The final
+ * value is in the HTML; the script rewinds it on load, so no-JS visitors and
+ * crawlers still see the real stat.
  */
 import { theme } from '@/lib/theme';
 import { parser } from '@/lib/parser';
@@ -14,9 +17,20 @@ interface Props {
     caseStudy?: string;
   };
   columns?: string;
+  tealStats?: boolean;
+  settings?: string;
+  noCounter?: boolean;
+  statFontSize?: string;
 }
 
-const { content, columns = '3' } = Astro.props;
+const {
+  content,
+  columns      = '3',
+  tealStats    = false,
+  settings     = '',
+  noCounter    = false,
+  statFontSize = 'text-[100px] xl:text-[120px] -mb-4 block',
+} = Astro.props;
 
 const columnsNum = parseInt(columns);
 
@@ -27,27 +41,49 @@ const columnClasses: Record<number, string> = {
   4: 'md:w-[45%] xl:w-[24%] px-4',
 };
 
-let statClass = `accent-text font-semibold font-stratos text-[100px] xl:text-[120px]`;
+const statColorClass = tealStats ? '!text-rm-ocean-teal' : 'accent-text';
+let statClass        = `${statColorClass} font-semibold font-stratos ${statFontSize}`;
 if (columnsNum === 4) {
-  statClass = 'accent-text text-[100px] xl:text-[100px] font-semibold font-stratos';
+  statClass = `${statColorClass} text-[100px] xl:text-[100px] font-semibold font-stratos`;
 }
 if (columnsNum !== 3 && columnsNum !== 4) {
   statClass += ' lg:text-[160px]';
 }
 
 const descriptionClass = columns === '1' ? 'md:max-w-[60%]' : '';
+
+// Split "700+" / "$35M" / "5166%" into prefix, number and suffix
+const statMatch  = (content.stat || '').match(/^([^\d.]*)([\d.]+)(.*)$/);
+const prefix     = statMatch?.[1] ?? '';
+const statNumber = statMatch ? parseFloat(statMatch[2]) : NaN;
+const suffix     = statMatch?.[3] ?? '';
+const animate    = !noCounter && Number.isInteger(statNumber) && statNumber > 40;
+const supSuffix  = columnsNum === 4 && suffix === '%';
+
+// Counter.js timing: start at 0 (<60), half (≥60) or 90% (>2500); 2s under 100, else 4s
+let countStart   = statNumber < 60 ? 0 : Math.round(statNumber / 2);
+if (statNumber > 2500) countStart = Math.round(statNumber * 0.9);
+const countSpeed = statNumber < 100 ? 2 : 4;
+const countMs    = Math.round(((statNumber - countStart) * countSpeed * 1000) / statNumber);
+const centered   = settings.includes('text-center');
 ---
 
-<div class={`text-center md:text-left ${columns !== '1' ? columnClasses[columnsNum] || '' : ''} my-6`}>
-  <div class={`w-fit ml-0 ${columns === '1' ? columnClasses[1] : ''}`}>
-    {content.stat && (
+<div class={`text-center ${centered ? '' : 'md:text-left'} ${columns !== '1' ? columnClasses[columnsNum] || '' : ''} my-6`}>
+  <div class={`w-fit ${centered ? 'mx-auto' : 'ml-0'} ${columns === '1' ? columnClasses[1] : ''}`}>
+    {content.stat && (animate ? (
+      <span class={statClass}>
+        {prefix}<span data-count-to={statNumber} data-count-from={countStart} data-count-ms={countMs}>{statNumber}</span>{supSuffix
+          ? <sup class="text-[60%] -top-6">{suffix}</sup>
+          : <span>{suffix}</span>}
+      </span>
+    ) : (
       <span class={statClass}>{content.stat}</span>
-    )}
+    ))}
     {content.description && (
-      <p set:html={parser(content.description)} class={`${theme.text.H5} font-basic-sans normal-case ${descriptionClass}`} />
+      <p set:html={parser(content.description)} class={`text-26px leading-36px font-bold font-basic-sans normal-case ${descriptionClass}`} />
     )}
     {content.company && (
-      <p class={`${theme.text.P_STD} mt-4`}>{content.company}</p>
+      <p class={`${theme.text.P_STD} mt-2`}>{content.company}</p>
     )}
     {content.caseStudy && (
       <a
@@ -59,3 +95,39 @@ const descriptionClass = columns === '1' ? 'md:max-w-[60%]' : '';
     )}
   </div>
 </div>
+
+<script>
+  // Count stats up once they scroll into view (Gatsby's Counter.js), linear
+  // over the same duration. Rewound to the start value right away so the
+  // count-up is visible; the HTML keeps the final number for no-JS/crawlers.
+  const counters = document.querySelectorAll<HTMLElement>('[data-count-to]');
+  const reduce   = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!reduce && counters.length) {
+    const run = (el: HTMLElement) => {
+      const to       = Number(el.dataset.countTo);
+      const from     = Number(el.dataset.countFrom);
+      const duration = Number(el.dataset.countMs);
+      const started  = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min((now - started) / duration, 1);
+        el.textContent = String(Math.round(from + (to - from) * t));
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        run(entry.target as HTMLElement);
+      }
+    });
+
+    counters.forEach((el) => {
+      el.textContent = el.dataset.countFrom || '0';
+      observer.observe(el);
+    });
+  }
+</script>

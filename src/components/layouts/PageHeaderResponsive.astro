@@ -1,0 +1,115 @@
+---
+/**
+ * Page Header Responsive — full-bleed header with separate large/desktop/
+ * tablet/mobile background images (or a video) and an optional black title
+ * box. On md+ the box overlaps the bottom of the image; on mobile it sits
+ * below the image, pulled up over it.
+ * Replaces Gatsby's PageHeaderResponsive.js. Gatsby's framer-motion parallax
+ * is commented out there too, so nothing is lost.
+ *
+ * Used on pages with the "Page Header Alt" WP template (page-alt.php).
+ *
+ * ACF fields (page_header_responsive.layout__content):
+ *   background_image, background_image_large, background_image_tablet,
+ *   background_image_mobile – media IDs
+ *   background_video        – URL
+ *   object_position         – e.g. "50%"
+ *   eyebrow, heading, subheading, subheading_font_size, max_width,
+ *   reverse_heading, box_alignment ("centered" | default)
+ */
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+
+const [image, imageLarge, imageTablet, imageMobile] = await Promise.all([
+  resolveImage(content.backgroundImage),
+  resolveImage(content.backgroundImageLarge),
+  resolveImage(content.backgroundImageTablet),
+  resolveImage(content.backgroundImageMobile),
+]);
+const video        = content.backgroundVideo || '';
+const objectPos    = `object-position: ${content.objectPosition || '50%'} center;`;
+
+const hasBox       = !!(content.heading || content.subheading || content.eyebrow);
+const noSpace      = hasBox ? '' : 'hidden';
+const isCentered   = content.boxAlignment === 'centered';
+const width        = settings.containerWidth === 'default' ? 'lg:w-4/6' : 'lg:w-4/5';
+const extraClasses = settings.classes || '';
+const topPadding   = isCentered ? 'xl:pt-[27rem]' : 'xl:pt-96';
+
+const boxClasses   = `bg-black text-white py-12 xl:pt-14 ${isCentered ? 'px-2 max-w-[500px] lg:max-w-[855px] xl:p-14' : `px-6 lg:px-12 xl:pl-20 xl:pr-16 xl:pb-12 ${width}`} ${content.maxWidth ? 'xl:w-auto' : ''} ${isCentered ? 'mx-auto' : ''}`;
+const boxStyle     = content.maxWidth ? `max-width: ${content.maxWidth};` : '';
+const headingClass = `block text-[3.75rem] leading-[3.73125rem] ${isCentered ? 'text-center font-stratos uppercase font-bold lg:text-[6.25rem] lg:leading-[6.25rem]' : theme.text.PAGE_HEADER}`;
+const subStyle     = content.subheadingFontSize ? `font-size: ${content.subheadingFontSize};` : '';
+
+const imageClass   = [
+  image?.source_url && (imageMobile?.source_url || imageTablet?.source_url) ? 'hidden md:block' : '',
+  imageTablet?.source_url ? 'md:hidden lg:block' : '',
+  imageLarge?.source_url ? 'xl:hidden' : '',
+].join(' ');
+---
+
+<section class="relative overflow-hidden min-h-[400px] lg:min-h-[580px]">
+  {imageLarge?.source_url && (
+    <img src={imageLarge.source_url} alt="" class="absolute top-0 left-0 w-full h-full object-cover hidden xl:block" style={objectPos} loading="eager" />
+  )}
+  {image?.source_url && (
+    <img src={image.source_url} alt="" class={`absolute -top-[40px] left-0 w-full h-full object-cover ${imageClass}`} style={objectPos} loading="eager" />
+  )}
+  {imageTablet?.source_url && (
+    <img src={imageTablet.source_url} alt="" class="absolute -top-[40px] left-0 w-full h-full object-cover hidden md:block lg:hidden" style={objectPos} loading="eager" />
+  )}
+  {imageMobile?.source_url && (
+    <img src={imageMobile.source_url} alt="" class="absolute -top-[40px] left-0 w-full h-full object-cover md:hidden" style={objectPos} loading="eager" />
+  )}
+  {video && (
+    <video playsinline autoplay muted loop src={video} class="absolute top-0 left-0 object-cover object-center w-full h-full" />
+  )}
+  <div class={`absolute bottom-0 left-0 w-full h-16 bg-white hidden md:block ${noSpace}`} />
+  <div class="hidden md:block">
+    <Container container={settings.containerWidth} classes={`${noSpace} pt-[320px] lg:pt-[500px] ${topPadding} ${extraClasses}`}>
+      {content.heading && (
+        <div class={boxClasses} style={boxStyle}>
+          {content.eyebrow && (
+            <span class={`block mb-8 ${theme.text.H4}`}>{content.eyebrow}</span>
+          )}
+          <h1 class={`flex flex-col ${content.reverseHeading ? 'flex-col-reverse' : ''}`}>
+            <span class={headingClass} set:html={parser(content.heading)} />
+            {content.subheading && (
+              <span class={`block ${theme.text.H1_LTE}`} style={subStyle}>{content.subheading}</span>
+            )}
+          </h1>
+        </div>
+      )}
+    </Container>
+  </div>
+</section>
+<div class="md:hidden">
+  <Container container={settings.containerWidth} classes={`${noSpace} -mt-20 md:mt-0 ${topPadding} ${extraClasses}`}>
+    {content.heading && (
+      <div class={boxClasses} style={boxStyle}>
+        {content.eyebrow && (
+          <span class={`block mb-8 ${theme.text.H4}`}>{content.eyebrow}</span>
+        )}
+        <h1 class={`flex flex-col ${content.reverseHeading ? 'flex-col-reverse' : ''}`}>
+          <span class={headingClass} set:html={parser(content.heading)} />
+          {content.subheading && (
+            <span class={`block ${theme.text.H1_LTE}`} style={subStyle}>{content.subheading}</span>
+          )}
+        </h1>
+      </div>
+    )}
+  </Container>
+</div>

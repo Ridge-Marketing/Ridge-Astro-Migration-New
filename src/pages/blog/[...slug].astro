@@ -10,6 +10,7 @@ import PostNav from '@/components/blog/PostNav.astro';
 import SeoPopup from '@/components/blog/SeoPopup.tsx';
 import { getPosts, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from '@/lib/wp-client';
 import { parser } from '@/lib/parser';
+import { optimizeContentImages } from '@/lib/content-images';
 import { theme } from '@/lib/theme';
 
 export async function getStaticPaths() {
@@ -71,8 +72,8 @@ const formattedDate = new Date(post.date).toLocaleDateString('default', {
   day: 'numeric',
 });
 
-// Parse content
-const content = parser(post.content?.rendered || '', 'blog');
+// Parse content, then route inline CMS images through the image CDN (WebP, srcset)
+const content = await optimizeContentImages(parser(post.content?.rendered || '', 'blog'));
 
 // Check if this is the SEO popup post
 const isSeoPost = post.slug === 'seo-vs-aeo-vs-geo';
@@ -84,7 +85,7 @@ const isSeoPost = post.slug === 'seo-vs-aeo-vs-geo';
   headerColor="white"
   noindex={isPreview}
 >
-  <hgroup class="container pt-20 mx-auto">
+  <hgroup class="container pt-20 mx-auto px-4">
     <h1 class={`${theme.text.H1_STD} mb-9`} set:html={post.title?.rendered}/>
     <div class="flex items-center">
       {avatarUrl && (
@@ -107,11 +108,14 @@ const isSeoPost = post.slug === 'seo-vs-aeo-vs-geo';
         width={featuredImageWidth}
         height={featuredImageHeight}
         class="w-full mt-9"
+        loading='eager'
+        fetchPriority="high"
+        quality={60}
       />
     )}
   </hgroup>
 
-  <article class="container blog-container my-9 font-basic-sans mx-auto">
+  <article class="container blog-container my-9 font-basic-sans mx-auto px-4">
     <div set:html={content} />
   </article>
 

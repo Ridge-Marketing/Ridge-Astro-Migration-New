@@ -49,15 +49,21 @@ const {
         </>
       : <Head seo={seo} favicon={favicon} />
     }
-    <!-- Typekit fonts -->
+    <link rel="preconnect" href="https://use.typekit.net" crossorigin />
+    <link rel="preconnect" href="https://p.typekit.net" crossorigin />
     <link rel="stylesheet" href="https://use.typekit.net/thq8rzi.css" />
-    <!-- Google Tag Manager -->
-    <script is:inline>
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-      })(window,document,'script','dataLayer','GTM-NV9M24V');
+    <!-- Google Tag Manager, in the Partytown worker. GTM loads GA4, Meta Pixel,
+         LinkedIn Insight, the OpenAI pixel and Mouseflow — don't add those
+         separately or they'll double-fire. Skipped for visitors who opted out
+         via "Do Not Sell or Share" (ridge_consent cookie, same as Gatsby). -->
+    <script type="text/partytown">
+      if (document.cookie.indexOf('ridge_consent=opted_out') === -1) {
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-NV9M24V');
+      }
     </script>
   </head>
   <body>

@@ -16,14 +16,15 @@ interface Props {
 const { heading, link, imageSrc, imageAlt } = Astro.props;
 ---
 
-<article class="w-full sm:w-[360px] md:w-[330px] lg:w-[300px] xl:w-[330px] flex flex-col mb-7 lg:mb-0 justify-between">
+<article class="w-full sm:w-[360px] md:w-[330px] lg:w-[285px] xl:w-[330px] flex flex-col mb-7 lg:mb-0 justify-between">
   <a href={link} class="flex flex-col flex-1">
-    <div class="relative pt-[100%] lg:pt-0 lg:h-[300px] xl:h-[330px] mb-4 bg-grey overflow-hidden">
+    <div class="relative pt-[100%] lg:pt-0 lg:h-[330px] xl:h-[330px] mb-4 bg-grey overflow-hidden">
       {imageSrc && (
         <WpImage
           src={imageSrc}
           alt={imageAlt}
           class="absolute top-0 left-0 object-cover h-full w-full"
+          divHeight='h-full'
         />
       )}
     </div>

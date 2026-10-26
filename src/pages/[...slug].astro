@@ -7,6 +7,7 @@ import Layout from '@/components/global/Layout.astro';
 import FlexibleLayouts from '@/components/FlexibleLayouts.astro';
 import PageHeader from '@/components/layouts/PageHeader.astro';
 import PortfolioHeader from '@/components/layouts/PortfolioHeader.astro';
+import PageHeaderResponsive from '@/components/layouts/PageHeaderResponsive.astro';
 import Container from '@/components/global/Container.astro';
 import { getPages, getGlobalSettings, extractPath, transformKeys } from '@/lib/wp-client';
 
@@ -57,12 +58,21 @@ const pageHeader    = pageHeaderRaw ? {
 } : null;
 const portfolioHeader = page.acf.portfolio_header ?? false
 
+// "Page Header Alt" WP template (page-alt.php) swaps the standard page header
+// for the responsive one at acf.page_header_responsive
+const isPageHeaderAlt         = page.template === 'page-alt.php';
+const pageHeaderResponsiveRaw = page.acf?.page_header_responsive;
+const pageHeaderResponsive    = isPageHeaderAlt && pageHeaderResponsiveRaw ? {
+  layoutContent: transformKeys(pageHeaderResponsiveRaw.layout__content || {}),
+  layoutSettings: transformKeys(pageHeaderResponsiveRaw.layout__settings || {}),
+} : null;
+
 // REST API: flexible layouts array is at acf.layouts
 const flexibleLayouts = page.acf?.layouts || [];
 
 // Blacklisted pages don't get a page header
 const blackList         = ['404', 'Terms and Conditions', 'Portfolio', 'Privacy Policy'];
-const showPageHeader    = pageHeader && !blackList.includes(title);
+const showPageHeader    = pageHeader && !blackList.includes(title) && !isPageHeaderAlt;
 const isTermsOrPrivacy  = title === 'Terms and Conditions' || title === 'Privacy Policy';
 const is404             = title === '404';
 
@@ -91,6 +101,10 @@ if (title === 'Portfolio' && portfolioHeader && Object.keys(portfolioHeader).len
   accentColor={accentColor}
   secondaryColor={secondaryColor}
 >
+  {pageHeaderResponsive && (
+    <PageHeaderResponsive layoutData={pageHeaderResponsive} />
+  )}
+
   {showPageHeader && (
     <PageHeader layoutData={pageHeader} />
   )}

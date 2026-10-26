@@ -73,6 +73,15 @@ import FullWidthImageGallery from './layouts/FullWidthImageGallery.astro';
 import ExpandableIconBoxes from './layouts/ExpandableIconBoxes.astro';
 import BulletsWithImage from './layouts/BulletsWithImage.astro';
 
+// Layouts added on Gatsby Jul–Aug 2026 (Home Page 2026 + B2B AI service)
+import TwoColTextText from './layouts/TwoColTextText.astro';
+import TwoColTextList from './layouts/TwoColTextList.astro';
+import FullWidthVideoText from './layouts/FullWidthVideoText.astro';
+import CaseStudies from './layouts/CaseStudies.astro';
+import FeaturedCampaigns from './layouts/FeaturedCampaigns.astro';
+import BarnOfBrands from './layouts/BarnOfBrands.astro';
+import LogoCarousel from './layouts/LogoCarousel.astro';
+
 const layoutComponents: Record<string, any> = {
   TwoColImageText,
   TextBlock,
@@ -128,6 +137,13 @@ const layoutComponents: Record<string, any> = {
   FullWidthImageGallery,
   ExpandableIconBoxes,
   BulletsWithImage,
+  TwoColTextText,
+  TwoColTextList,
+  FullWidthVideoText,
+  CaseStudies,
+  FeaturedCampaigns,
+  BarnOfBrands,
+  LogoCarousel,
 };
 
 interface Props {
@@ -162,19 +178,27 @@ function extractLayoutData(block: any) {
   const normalizedKey   = `layout__${normalizedName}`;
   const nested          = block[nestedKey] || block[normalizedKey];
 
+  // Tag each section with its layout name for styling hooks. Copy rather
+  // than mutate — the WP data is cached and shared across the build.
+  const withLayoutClass = (settings: any) => ({
+    ...settings,
+    classes: [settings.classes, layoutName].filter(Boolean).join(' '),
+  });
+
   if (nested) {
-    const rawContent = nested.layout__content || nested['layout__content'] || {};
+    const rawContent  = nested.layout__content || nested['layout__content'] || {};
     const rawSettings = nested.layout__settings || nested['layout__settings'] || {};
+
     return {
       layoutContent: transformKeys(rawContent),
-      layoutSettings: transformKeys(rawSettings),
+      layoutSettings: transformKeys(withLayoutClass(rawSettings)),
     };
   }
 
   // Fallback: try flat structure (in case data shape differs)
   return {
     layoutContent: transformKeys(block.layout_content || block.layoutContent || block),
-    layoutSettings: transformKeys(block.layout_settings || block.layoutSettings || {}),
+    layoutSettings: transformKeys(withLayoutClass(block.layout_settings || block.layoutSettings || {})),
   };
 }
 ---

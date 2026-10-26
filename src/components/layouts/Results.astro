@@ -21,11 +21,11 @@ const content = layoutData.layoutContent;
 const settings = layoutData.layoutSettings;
 
 const columns = content.columns || '3';
-const columnsJustify = columns === '1' ? '' : 'md:justify-between';
+const columnsJustify = columns === '1' ? '' : 'lg:justify-between';
 ---
 
 <Section settings={settings}>
-  <Container>
+  <Container container={settings.containerWidth}>
     {content.heading && (
       <h2 class="text-center mb-4">
         <span class={theme.text.H2} set:html={parser(content.heading)} />
@@ -38,7 +38,7 @@ const columnsJustify = columns === '1' ? '' : 'md:justify-between';
     )}
     <div class={`flex flex-wrap justify-center ${columnsJustify}`}>
       {content.results && content.results.map((result: any) => (
-        result && <ResultCard content={result} columns={columns} />
+        result && <ResultCard content={result} columns={columns} tealStats={content.tealStats} settings={settings?.classes || ''} />
       ))}
     </div>
   </Container>

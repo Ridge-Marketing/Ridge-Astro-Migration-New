@@ -149,12 +149,12 @@ export default function SeoPopup() {
             </div>
             <div className="flex justify-center md:block">
               <img
-                src="https://cms.ridgemarketing.com/wp-content/uploads/2026/01/Dashboard-Edited-FULL.png"
+                src="/wp-content/uploads/2026/01/Dashboard-Edited-FULL.png"
                 alt=""
                 className="w-72 pb-8 block md:hidden"
               />
               <img
-                src="https://cms.ridgemarketing.com/wp-content/uploads/2026/01/AI-Dashboard-Cropped.webp"
+                src="/wp-content/uploads/2026/01/AI-Dashboard-Cropped.webp"
                 alt=""
                 className="w-72 hidden md:block md:absolute md:bottom-0 md:right-0"
               />

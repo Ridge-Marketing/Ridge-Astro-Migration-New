@@ -126,7 +126,8 @@ const bottomHeadingMargin = isStack ? 'lg:mt-20' : '';
               )}
 
               {!isNumber && iconUrl ? (
-                <img src={iconUrl} alt={iconAlt} class="h-[80px] max-w-[75px] w-auto" />
+                // <img src={iconUrl} alt={iconAlt} class="h-[80px] max-w-[75px] w-auto" />
+                <img src={iconUrl} alt={iconAlt} class="w-[55px] min-w-[55px] min-h-[55px] h-[55px]" />
               ) : null}
 
               {feature === 'icon-number' &&

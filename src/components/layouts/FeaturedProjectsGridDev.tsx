@@ -155,7 +155,7 @@ function TitleOverlay({ title, subtitle, link, type }: { title: string; subtitle
           <div className={"w-[65px] lg:w-[95px] text-center mx-auto xl:pt-7"}>
             <img 
               className="hidden xl:block" 
-              src={'https://cms.ridgemarketing.com/wp-content/uploads/2023/06/circle-play-solid-1.svg'} 
+              src={'/wp-content/uploads/2023/06/circle-play-solid-1.svg'} 
               alt={`play button`} />
           </div>
         }

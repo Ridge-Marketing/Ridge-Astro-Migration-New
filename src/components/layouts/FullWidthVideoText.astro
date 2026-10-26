@@ -1,0 +1,100 @@
+---
+/**
+ * Full Width Video + Text layout — heading, body and a muted looping video
+ * that plays only while at least half of it is in view.
+ * Replaces Gatsby's FullWidthVideoText.js
+ *
+ * ACF fields (layout__content):
+ *   alignment          – "standard" | "overlap" | "overlapBottom"
+ *   heading, intro, body – text (parser tags allowed); intro only shows on "overlap"
+ *   video              – media ID (file field)
+ *   component__button  – button clone
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+const textColor      = settings.backgroundColor === 'black' ? 'text-white' : '';
+const isOverlap      = content.alignment === 'overlap';
+const headerClasses  = isOverlap ? 'z-20 relative' : '';
+const mediaWrapper   = isOverlap ? 'relative bottom-6 z-10' : 'mt-10';
+const alignClass     = settings?.classes?.includes('text-left') ? 'text-left' : 'text-center';
+
+const video          = await resolveImage(content.video);
+const videoUrl       = video?.source_url || '';
+const videoType      = video?.mime_type || 'video/mp4';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class={alignClass}>
+      {content.heading && (
+        <h2
+          class={`${theme.text.H2} ${headerClasses} ${textColor} max-w-[1120px] mx-auto`}
+          set:html={parser(content.heading)}
+        />
+      )}
+
+      {!isOverlap && content.body && (
+        <p class={`mt-6 ${theme.text.P_STD} max-w-[1120px] mx-auto ${textColor}`} set:html={parser(content.body)} />
+      )}
+
+      {videoUrl && (
+        <div class={`mx-auto max-w-[1120px] bg-white shadow-lg rounded-2xl ${content.alignment === 'overlapBottom' ? 'z-20 relative' : ''} ${mediaWrapper}`}>
+          <video class="fwvt-video w-full mx-auto rounded-2xl" muted loop playsinline autoplay>
+            <source src={videoUrl} type={videoType} />
+          </video>
+        </div>
+      )}
+
+      {isOverlap && content.intro && (
+        <p class={`text-left mt-8 ${theme.text.H4_LTE} ${textColor}`} set:html={parser(content.intro)} />
+      )}
+
+      {isOverlap && content.body && (
+        <p class={`text-left mt-8 ${theme.text.P_STD} ${textColor}`} set:html={parser(content.body)} />
+      )}
+
+      {content.componentButton?.link && (
+        <div class="text-center pt-4 mt-10">
+          <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+        </div>
+      )}
+    </div>
+  </Container>
+  {content.alignment === 'overlapBottom' && (
+    <div class="bg-white absolute bottom-0 w-full h-[150px]" />
+  )}
+</Section>
+
+<script>
+  // Play while at least half the video is visible, pause otherwise
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const video = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      }
+    },
+    { threshold: 0.5 }
+  );
+
+  document.querySelectorAll<HTMLVideoElement>('.fwvt-video').forEach((video) => observer.observe(video));
+</script>

@@ -1,7 +1,8 @@
 ---
 /**
- * Logo Cloud layout — grid of logos (carousel type deferred to Phase 3)
- * Replaces Gatsby's LogoCloud.js
+ * Logo Cloud layout — grid or marquee carousel of logos
+ * Replaces Gatsby's LogoCloud.js. Gatsby's framer-motion entrance animation
+ * (and its `disable_animation` toggle) isn't ported — logos render static.
  */
 import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
@@ -41,9 +42,12 @@ const carouselItems = [...logoItems, ...logoItems];
 ---
 
 <Section settings={settings}>
-  <Container>
+  <Container container="default">
     {heading && (
-      <h2 class={`${theme.text.H2} text-center`} set:html={heading} />
+      <h2
+        class={`${isCarousel ? theme.text.H2 : 'text-[28px] leading-[1.925rem] font-stratos uppercase font-bold'} text-center`}
+        set:html={heading}
+      />
     )}
     {body && (
       <p class={`${theme.text.P_STD} text-center my-4`} set:html={body} />
@@ -60,10 +64,10 @@ const carouselItems = [...logoItems, ...logoItems];
         </div>
       </div>
     ) : (
-      <div class="mt-12 flex w-full flex-wrap justify-center items-center lg:justify-around gap-y-6 md:gap-y-8 gap-x-10 sm:gap-x-12 md:gap-x-20 lg:gap-x-6">
+      <div class="mt-12 lg:mt-16 flex w-full flex-wrap justify-center items-center lg:justify-around gap-y-12 lg:gap-y-[70px] gap-x-12 lg:gap-x-[70px]">
         {logoItems.map((logo: any) => (
-          <div class="w-[24%] lg:w-[15%] h-full">
-            <img src={logo.url} alt={logo.alt} class="w-full object-contain" loading="lazy" />
+          <div class="w-[40%] sm:w-[15%] h-full">
+            <img src={logo.url} alt={logo.alt} class="w-full object-contain max-w-[200px] lg:max-w-[175px] mx-auto" loading="lazy" />
           </div>
         ))}
       </div>

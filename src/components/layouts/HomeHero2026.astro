@@ -1,0 +1,103 @@
+---
+/**
+ * Home Hero 2026 — full-bleed video/image under a teal gradient overlay,
+ * single headline, lime eyebrow, optional subheading and button.
+ * Replaces Gatsby's HomeHero2026.js
+ *
+ * Data: the "Home Hero 2026" ACF group (group_homehero2026) on the front
+ * page — its fields sit at the top level of acf as layout__content /
+ * layout__settings (not under layout__home_hero, which is the old hero).
+ *
+ * ACF fields (layout__content):
+ *   video                                     – URL (takes priority over images)
+ *   background_image, tablet_image, mobile_image – media IDs
+ *   eyebrow, heading, subheading              – text
+ *   component__button                         – button clone
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+const video          = content.video || '';
+const button         = content.componentButton;
+
+const [bgImage, tabletImage, mobileImage] = await Promise.all([
+  video ? null : resolveImage(content.backgroundImage),
+  video ? null : resolveImage(content.tabletImage),
+  video ? null : resolveImage(content.mobileImage),
+]);
+const imageUrl       = bgImage?.source_url || '';
+const tabletImageUrl = tabletImage?.source_url || '';
+const mobileImageUrl = mobileImage?.source_url || '';
+
+// Teal gradient overlay from Figma (node 11053:1447). Decimal angle + rgba
+// stops can't be a Tailwind arbitrary value, so it's an inline style.
+const overlay = 'linear-gradient(127deg, rgba(29,64,67,0.85) 24.09%, rgba(28,56,56,0.5) 62.33%, rgba(28,56,56,0.7) 88.78%)';
+---
+
+<Section classes="relative overflow-hidden" settings={settings}>
+  {video ? (
+    <video
+      playsinline
+      autoplay
+      muted
+      loop
+      src={video}
+      class="absolute inset-0 object-cover object-center w-full h-full opacity-70"
+      preload="auto"
+    />
+  ) : imageUrl && (
+    <div class="absolute top-0 left-0 w-full h-full opacity-70">
+      <img src={imageUrl} alt="" class={`${tabletImageUrl ? 'hidden xl:block' : mobileImageUrl ? 'hidden md:block' : 'block'} w-full h-full object-cover`} loading="eager" />
+      {tabletImageUrl && (
+        <img src={tabletImageUrl} alt="" class={`${mobileImageUrl ? 'hidden md:block' : 'block'} xl:hidden w-full h-full object-cover`} loading="eager" />
+      )}
+      {mobileImageUrl && (
+        <img src={mobileImageUrl} alt="" class="md:hidden block w-full h-full object-cover" loading="eager" />
+      )}
+    </div>
+  )}
+  <div class="bg-black w-full h-full absolute top-0 left-0 -z-10" />
+  <!-- Teal gradient overlay sits above the media, below the text -->
+  <div aria-hidden="true" class="absolute inset-0 z-0" style={`background-image: ${overlay}`} />
+
+  <Container container="default" classes="z-10">
+    <div class="flex flex-col justify-center min-h-[520px] md:min-h-[620px] xl:min-h-[794px] py-16 md:py-20">
+      <div class="max-w-[560px] md:max-w-[760px]">
+        {content.heading && (
+          <h1 class="font-stratos font-semibold uppercase text-rm-white text-[42px] md:text-[64px] xl:text-[80px] leading-[0.95]">
+            {content.heading}
+          </h1>
+        )}
+        {content.eyebrow && (
+          <p class="font-stratos font-medium uppercase text-[#CAF844] text-[15px] md:text-[21px] leading-tight tracking-[0.01em] mt-4 md:mt-6">
+            {content.eyebrow}
+          </p>
+        )}
+        {content.subheading && (
+          <span
+            class="block mt-5 font-stratos uppercase font-light text-rm-white text-30px lg:text-40px"
+            set:html={parser(content.subheading)}
+          />
+        )}
+        {button?.link && (
+          <div class="mt-8 md:mt-10 w-max">
+            <Buttons content={button} sectionBackground="default" />
+          </div>
+        )}
+      </div>
+    </div>
+  </Container>
+</Section>

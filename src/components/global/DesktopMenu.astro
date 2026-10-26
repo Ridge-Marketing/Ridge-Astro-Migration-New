@@ -37,20 +37,39 @@ const triangleSvg = `<svg width="45" height="17" viewBox="0 0 45 17" fill="none"
           <div class="hidden group-hover:block absolute top-full min-w-max left-1/2 right-1/2 -translate-x-1/2">
             <span class="w-[44px] mx-auto block text-white" set:html={triangleSvg} />
             <div class={`bg-white pt-6 pb-8 px-5 text-rm-black shadow-block ${children.length > 6 ? 'grid grid-cols-2 gap-y-4 gap-x-6' : 'flex flex-col gap-6'}`}>
-              {children.map((subItem: any, subIdx: number) => {
-                
-                const subLabel  = subItem.title?.rendered || subItem.title || '';
-                const iconUrl   = subItem.acf?.icon?.url || subItem.acf?.icon?.url || '';
+              {children.map((subItem: any) => {
+                const subLabel     = subItem.title?.rendered || subItem.title || '';
+                const iconUrl      = subItem.acf?.icon?.url || '';
+                const iconHoverUrl = subItem.acf?.icon_hover?.url || '';
+
+                // "AI Search Audit" is styled as a pale-grey pill that turns
+                // black on hover, swapping to its hover icon (Gatsby parity)
+                if (subLabel.toLowerCase() === 'ai search audit') {
+                  return (
+                    <a
+                      href={convertCMSLink(subItem.url)}
+                      class="group/link flex text-black hover:text-white focus:text-white bg-rm-pale-grey hover:bg-black focus:bg-black transition-all duration-300 ease-out w-max px-6 -ml-1 py-2 items-center rounded-md -mb-[15px]"
+                    >
+                      {iconUrl && (
+                        <img src={iconUrl} alt="" class={`h-[40px] w-[40px] mr-5 block ${iconHoverUrl ? 'group-hover/link:hidden group-focus/link:hidden' : ''}`} />
+                      )}
+                      {iconHoverUrl && (
+                        <img src={iconHoverUrl} alt="" class="h-[40px] w-[40px] mr-5 hidden group-hover/link:block group-focus/link:block" />
+                      )}
+                      <span set:html={subLabel} />
+                    </a>
+                  );
+                }
+
                 return (
                   <a
                     href={convertCMSLink(subItem.url)}
                     class="flex hover:text-rm-green hover:underline"
-                    set:html={subLabel}
                   >
                     {iconUrl && (
                       <img src={iconUrl} alt="" class="h-[40px] w-[40px] mr-5 block" />
                     )}
-
+                    <span set:html={subLabel} />
                   </a>
                 );
               })}

@@ -23,11 +23,11 @@ const images = (
     (content.images || []).map(async (item: any) => {
       const resolved = await resolveImage(item.image);
       return resolved?.source_url
-        ? { url: resolved.source_url, alt: resolved.alt_text || '' }
+        ? { url: resolved.source_url, alt: resolved.alt_text || '', width: resolved.width, height: resolved.height }
         : null;
     })
   )
-).filter(Boolean) as Array<{ url: string; alt: string }>;
+).filter(Boolean) as Array<{ url: string; alt: string; width?: number; height?: number }>;
 
 // Splide autoScroll speed 0.25 ≈ 15px/s; ~18s per slide keeps that pace
 const duration = Math.max(images.length * 18, 20);
@@ -43,6 +43,10 @@ const duration = Math.max(images.length * 18, 20);
               <WpImage
                 src={img.url}
                 alt={copy === 0 ? img.alt : ''}
+                width={img.width}
+                height={img.height}
+                responsive
+                sizes="(min-width: 1280px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 34vw, 50vw"
                 class="w-full h-full min-h-[200px] lg:min-h-[460px] object-cover"
               />
             </div>

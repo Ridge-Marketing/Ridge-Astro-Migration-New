@@ -1,22 +1,11 @@
 ---
 /**
- * Vertical Slider layout
- * Left column: section intro + numbered slide list (clickable nav)
- * Right column: active slide's Lottie animation
- * Auto-advances every 4s; pauses on user interaction.
- *
- * ACF fields (layout__content):
- *   heading        – section heading
- *   body           – section body paragraph
- *   style_toggle   – boolean (visual variant)
- *   slides[]       – { heading, lottie_json_url, small_text, image }
- *   component__button – optional CTA
+ * Vertical Slider layout — picks the variant, same as Gatsby's VerticalSlider.js:
+ *   style_toggle on  → VerticalSliderStyleToggle (sticky floor-by-floor media)
+ *   style_toggle off → VerticalSliderDefault (numbered list + Lottie)
  */
-import Section from '@/components/global/Section.astro';
-import Container from '@/components/global/Container.astro';
-import Buttons from '@/components/global/Buttons.astro';
-import { theme } from '@/lib/theme';
-import { parser } from '@/lib/parser';
+import VerticalSliderDefault from './VerticalSliderDefault.astro';
+import VerticalSliderStyleToggle from './VerticalSliderStyleToggle.astro';
 
 interface Props {
   layoutData: {
@@ -26,163 +15,9 @@ interface Props {
 }
 
 const { layoutData } = Astro.props;
-const content = layoutData.layoutContent || {};
-const settings = layoutData.layoutSettings || {};
-
-const slides = content.slides || [];
-const isDark  = settings.backgroundColor === 'black';
-const textColor = isDark ? 'text-white' : 'text-black';
-const borderColor = isDark ? 'border-white/20' : 'border-black/20';
-
-// Pad slide index with leading zero
-function padIndex(i: number) {
-  return String(i + 1).padStart(2, '0');
-}
+const styleToggle    = layoutData.layoutContent?.styleToggle ?? false;
 ---
 
-<Section settings={settings}>
-  <Container container={settings.containerWidth}>
-    <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-start" data-vertical-slider>
-
-      <!-- ── Left column: intro + slide nav ── -->
-      <div>
-        {content.heading && (
-          <h2
-            class={`${theme.text.H2} ${textColor} mb-6`}
-            set:html={parser(content.heading)}
-          />
-        )}
-        {content.body && (
-          <p
-            class={`${theme.text.P_STD} ${textColor} mb-10`}
-            set:html={parser(content.body)}
-          />
-        )}
-
-        <!-- Slide list -->
-        <div class={`divide-y ${borderColor}`} data-vs-list>
-          {slides.map((slide: any, i: number) => (
-            <button
-              type="button"
-              class={`vs-item w-full text-left py-5 flex items-start gap-4 group transition-opacity duration-200 ${i !== 0 ? 'opacity-40' : ''}`}
-              data-vs-index={i}
-              data-vs-lottie={slide.lottieJsonUrl || slide.lottie_json_url || ''}
-            >
-              <!-- Number -->
-              <span class={`font-stratos font-bold text-26px leading-none shrink-0 mt-1 transition-colors duration-200 ${i === 0 ? 'text-rm-green' : textColor}`} data-vs-num>
-                {padIndex(i)}
-              </span>
-              <!-- Heading + small text -->
-              <span class="flex flex-col">
-                <span class={`${theme.text.H4} ${textColor} text-left`}>
-                  {slide.heading}
-                </span>
-                {(slide.smallText || slide.small_text) && (
-                  <span class={`${theme.text.P_STD} ${textColor} opacity-60 mt-1`}>
-                    {slide.smallText || slide.small_text}
-                  </span>
-                )}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {content.componentButton?.link && (
-          <div class="mt-10">
-            <Buttons
-              content={content.componentButton}
-              sectionBackground={settings.backgroundColor}
-            />
-          </div>
-        )}
-      </div>
-
-      <!-- ── Right column: Lottie animation ── -->
-      <div class="mt-12 lg:mt-0 lg:sticky lg:top-24 flex items-center justify-center">
-        <div
-          id="vs-lottie-container"
-          class="w-full max-w-[480px] aspect-square"
-          aria-hidden="true"
-        ></div>
-      </div>
-
-    </div>
-  </Container>
-</Section>
-
-<script>
-  import lottie, { type AnimationItem } from 'lottie-web';
-
-  const slider = document.querySelector('[data-vertical-slider]');
-  if (slider) {
-    const items    = Array.from(slider.querySelectorAll<HTMLButtonElement>('.vs-item'));
-    const container = document.getElementById('vs-lottie-container');
-
-    let currentIndex  = 0;
-    let currentAnim: AnimationItem | null = null;
-    let autoTimer: ReturnType<typeof setInterval> | null = null;
-    let userInteracted = false;
-
-    function loadSlide(index: number) {
-      if (!container) return;
-      const item = items[index];
-      if (!item) return;
-
-      const lottieUrl = item.dataset.vsLottie || '';
-
-      // Destroy previous animation
-      if (currentAnim) {
-        currentAnim.destroy();
-        currentAnim = null;
-      }
-
-      // Update nav styles
-      items.forEach((el, i) => {
-        const isActive = i === index;
-        el.classList.toggle('opacity-40', !isActive);
-        el.classList.remove('opacity-100');
-        if (isActive) el.classList.add('opacity-100');
-
-        const numEl = el.querySelector('[data-vs-num]');
-        if (numEl) {
-          numEl.classList.toggle('text-rm-green', isActive);
-        }
-      });
-
-      currentIndex = index;
-
-      // Load Lottie animation
-      if (lottieUrl) {
-        currentAnim = lottie.loadAnimation({
-          container,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: lottieUrl,
-        });
-      }
-    }
-
-    function startAutoAdvance() {
-      if (autoTimer) clearInterval(autoTimer);
-      autoTimer = setInterval(() => {
-        if (!userInteracted) {
-          loadSlide((currentIndex + 1) % items.length);
-        }
-      }, 4000);
-    }
-
-    // Bind click handlers
-    items.forEach((item, i) => {
-      item.addEventListener('click', () => {
-        userInteracted = true;
-        if (autoTimer) clearInterval(autoTimer);
-        loadSlide(i);
-      });
-    });
-
-    // Init
-    loadSlide(0);
-    startAutoAdvance();
-  }
-</script>
+{styleToggle
+  ? <VerticalSliderStyleToggle layoutData={layoutData} />
+  : <VerticalSliderDefault layoutData={layoutData} />}

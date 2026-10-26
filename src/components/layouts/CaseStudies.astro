@@ -1,0 +1,204 @@
+---
+/**
+ * Case Studies layout — heading/body, then a slider of case studies: media
+ * (image or video) bleeding off the left edge, heading/body/tools on the
+ * right, with a "1 / 5" prev/next control. Auto-advances every 6s while in
+ * view until the user clicks an arrow.
+ * Replaces Gatsby's CaseStudies.js
+ *
+ * ACF fields (layout__content):
+ *   heading, body – text
+ *   items         – repeater of { heading, body, tools, media_type ("image" | "video"),
+ *                   image, mobile_image, video } (media IDs)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+const heading        = content.heading ?? false;
+const body           = content.body ?? false;
+
+const items = await Promise.all(
+  (content.items || []).map(async (item: any) => {
+    const isImage = item.mediaType === 'image';
+    const [image, mobileImage, video] = await Promise.all([
+      isImage ? resolveImage(item.image) : null,
+      isImage ? resolveImage(item.mobileImage) : null,
+      isImage ? null : resolveImage(item.video),
+    ]);
+    return { ...item, isImage, image, mobileImage, video };
+  })
+);
+
+const hasImage = (img: any) => !!img?.source_url;
+const canSize  = (img: any) => !!img?.width && !img.source_url.endsWith('.svg');
+---
+
+{items.length > 0 && (
+  <Section settings={settings}>
+    {(heading || body) && (
+      <Container container={settings.containerWidth} classes="mb-12 lg:mb-20 text-center">
+        {heading && <h2 class={`${theme.text.H5} text-black`}>{heading}</h2>}
+        {body && (
+          <div
+            class={`${theme.text.H4_LTE} !text-[21px] !leading-[28px] md:!text-[26px] md:!leading-[36px] text-black mt-4 max-w-[800px] mx-auto`}
+            set:html={parser(body)}
+          />
+        )}
+      </Container>
+    )}
+
+    <div data-case-studies>
+      {items.map((item: any, index: number) => (
+        <div
+          class={`flex flex-col xl:flex-row xl:mr-[calc((100%-1224px)/2)] max-w-[2000px] 3xl:mx-auto items-center justify-start ${index === 0 ? '' : 'hidden'}`}
+          data-slide
+        >
+          <div class="w-full xl:w-[55%] xlz:w-[65%] xlz:max-w-[945px] aspect-video overflow-hidden shrink-0">
+            {item.isImage ? (
+              <>
+                {hasImage(item.mobileImage) && (
+                  canSize(item.mobileImage) ? (
+                    <WpImage
+                      src={item.mobileImage.source_url}
+                      alt={item.mobileImage.alt_text || ''}
+                      width={item.mobileImage.width}
+                      height={item.mobileImage.height}
+                      class="w-full h-full aspect-video object-contain xl:!hidden"
+                    />
+                  ) : (
+                    <img src={item.mobileImage.source_url} alt={item.mobileImage.alt_text || ''} class="w-full h-full aspect-video object-contain xl:!hidden" loading="lazy" />
+                  )
+                )}
+                {hasImage(item.image) && (
+                  canSize(item.image) ? (
+                    <WpImage
+                      src={item.image.source_url}
+                      alt={item.image.alt_text || ''}
+                      width={item.image.width}
+                      height={item.image.height}
+                      class={`w-full h-full aspect-video object-contain ${hasImage(item.mobileImage) ? 'hidden xl:!block' : ''}`}
+                    />
+                  ) : (
+                    <img
+                      src={item.image.source_url}
+                      alt={item.image.alt_text || ''}
+                      class={`w-full h-full object-cover ${hasImage(item.mobileImage) ? 'hidden xl:!block' : ''}`}
+                      loading="lazy"
+                    />
+                  )
+                )}
+              </>
+            ) : item.video?.source_url && (
+              <video class="w-full h-full aspect-video" muted playsinline loop data-video>
+                <source src={item.video.source_url} type={item.video.mime_type || 'video/mp4'} />
+              </video>
+            )}
+          </div>
+
+          <div class="w-full xl:w-[45%] xlz:w-[35%] flex flex-col justify-center gap-10 px-8 md:px-14 xl:pl-20 xl:pr-0 py-12 xl:py-0 text-center md:text-left items-center md:items-start">
+            <div class="flex flex-col gap-6">
+              {item.heading && (
+                <h3 class="font-stratos font-normal text-[34px] leading-[38px] md:text-[2.875rem] md:leading-[1.2] text-black">
+                  {item.heading}
+                </h3>
+              )}
+              {item.body && (
+                <div class={`${theme.text.P_STD} !leading-[2rem] text-black`} set:html={parser(item.body)} />
+              )}
+              {item.tools && (
+                <p class={`${theme.text.FOOTER} text-black`}>
+                  <strong>Tools:</strong> <span>{item.tools}</span>
+                </p>
+              )}
+            </div>
+
+            {items.length > 1 && (
+              <div class="flex items-center bg-rm-pale-grey w-[138px] h-[68px]">
+                <button
+                  type="button"
+                  aria-label="Previous case study"
+                  class="flex items-center justify-center w-[46px] h-full shrink-0 transition-opacity hover:opacity-60"
+                  data-direction="prev"
+                >
+                  <svg width="10" height="18" viewBox="0 0 10 18" fill="none" aria-hidden="true">
+                    <path d="M9 1L1 9L9 17" stroke="#474848" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <span class={`${theme.text.FOOTER} text-black text-center flex-1`}>
+                  {index + 1} / {items.length}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Next case study"
+                  class="flex items-center justify-center w-[46px] h-full shrink-0 transition-opacity hover:opacity-60"
+                  data-direction="next"
+                >
+                  <svg width="10" height="18" viewBox="0 0 10 18" fill="none" aria-hidden="true">
+                    <path d="M1 1L9 9L1 17" stroke="#474848" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </Section>
+)}
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-case-studies]').forEach((root) => {
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+    if (slides.length === 0) return;
+
+    let current     = 0;
+    let isVisible   = false;
+    let interacted  = false;
+
+    const show = (index: number) => {
+      current = (index + slides.length) % slides.length;
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('hidden', i !== current);
+        const video = slide.querySelector<HTMLVideoElement>('[data-video]');
+        if (!video) return;
+        if (i === current) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      });
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-direction]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        interacted = true;
+        show(current + (btn.dataset.direction === 'next' ? 1 : -1));
+      });
+    });
+
+    new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }).observe(root);
+
+    // Auto-advance while in view, until the user takes over
+    setInterval(() => {
+      if (isVisible && !interacted && slides.length > 1) show(current + 1);
+    }, 6000);
+
+    show(0);
+  });
+</script>

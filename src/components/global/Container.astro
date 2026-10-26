@@ -20,6 +20,6 @@ const sizes: Record<string, string> = {
 const containerClass = sizes[container] ?? sizes['slim'];
 ---
 
-<div class={`${containerClass} relative ${classes}`}>
+<div class={`${containerClass} relative ${classes} px-4`}>
   <slot />
 </div>

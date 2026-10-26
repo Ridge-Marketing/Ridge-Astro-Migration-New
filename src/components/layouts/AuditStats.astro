@@ -3,8 +3,11 @@
  * Audit Stats layout — dark (carbon) section with heading/body and a row of
  * large animated stat items.
  * Replaces Gatsby's AuditStatsLayout.js → auditLander/AuditStats.js
- * (rendered with cmo={true} pb={true}; CSS animation instead of Framer Motion)
+ * (rendered with cmo={true}; CSS animation instead of Framer Motion).
+ * Unlike Gatsby (fixed pb-40), padding/anchor/classes come from the CMS
+ * settings via Section. The background stays rm-carbon to match production.
  */
+import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import { theme } from '@/lib/theme';
 import { parser } from '@/lib/parser';
@@ -18,6 +21,9 @@ interface Props {
 
 const { layoutData } = Astro.props;
 const content        = layoutData.layoutContent;
+// Section handles padding/anchor/classes; production's carbon (bg-rm-carbon)
+// replaces the CMS color
+const settings       = { ...(layoutData.layoutSettings || {}), backgroundColor: 'rm-carbon' };
 
 const heading = content.heading ? parser(content.heading) : '';
 const body    = content.body    ? parser(content.body)    : '';
@@ -25,7 +31,7 @@ const subBody = content.subBody ? parser(content.subBody) : '';
 const stats   = content.stats || [];
 ---
 
-<section class="bg-rm-carbon -mt-[1px]">
+<Section settings={settings}>
   <Container container="none" classes="max-w-[1450px] mx-auto px-4">
     <!-- Section Header -->
     <div class="flex flex-col gap-6 text-center mb-16">
@@ -77,7 +83,7 @@ const stats   = content.stats || [];
       </div>
     )}
   </Container>
-</section>
+</Section>
 
 <style>
   @keyframes auditStatScaleIn {
@@ -91,8 +97,34 @@ const stats   = content.stats || [];
     }
   }
 
+  /* Paused until the row scrolls into view (Gatsby: whileInView, once) */
   .audit-stat-item {
     opacity: 0;
-    animation: auditStatScaleIn 0.5s ease-out forwards;
+    animation: auditStatScaleIn 0.5s ease-out forwards paused;
+  }
+
+  .audit-stat-item.is-visible {
+    animation-play-state: running;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .audit-stat-item {
+      opacity: 1;
+      animation: none;
+    }
   }
 </style>
+
+<script>
+  const statItems = document.querySelectorAll<HTMLElement>('.audit-stat-item');
+  if (statItems.length) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+    statItems.forEach((item) => observer.observe(item));
+  }
+</script>

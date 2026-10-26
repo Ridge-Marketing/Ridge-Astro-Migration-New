@@ -1,0 +1,59 @@
+---
+/**
+ * Two Column Text + Text layout
+ * Left column: large heading. Right column: body copy + optional button.
+ *
+ * ACF fields (layout__content):
+ *   heading           – text (parser tags allowed)
+ *   body              – wysiwyg/textarea
+ *   component__button – button clone
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }    = Astro.props;
+const content           = layoutData.layoutContent || {};
+const settings          = layoutData.layoutSettings || {};
+const textColor         = settings.backgroundColor === 'black' ? 'text-rm-white' : 'text-rm-black';
+const componentButton   = content.componentButton ?? false;
+const sectionBackground = settings.backgroundColor || 'white';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="xl:grid grid-cols-2 gap-16">
+      <div class="pb-8 xl:pb-0">
+        {content.heading && (
+          <h2
+            class={`font-stratos font-bold uppercase text-60px leading-[3.73125rem] ${textColor}`}
+            set:html={parser(content.heading)}
+          />
+        )}
+      </div>
+
+      <div class="text-left">
+        {content.body && (
+          <div
+            class={`${theme.text.P_STD} ${textColor} [&_p]:mb-5 [&_strong]:font-bold [&_a]:underline`}
+            set:html={parser(content.body)}
+          />
+        )}
+        {componentButton?.link?.url && (
+          <div class="mt-10">
+            <Buttons content={componentButton} sectionBackground={sectionBackground} />
+          </div>
+        )}
+      </div>
+    </div>
+  </Container>
+</Section>

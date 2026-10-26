@@ -1,0 +1,358 @@
+---
+/**
+ * Vertical Slider — "style toggle" variant (e.g. Barn of Brands floors)
+ * Replaces Gatsby's VerticalSliderStyleToggle.js.
+ *
+ * A 500px stage sticks to the middle of the viewport while invisible 500px
+ * spacers scroll past; each spacer advances one slide. The media layers
+ * (image/video) cross-swap, the caption re-animates, and a vertical progress
+ * bar fills per slide. Bars and "Skip to Next Floor" / "Back to Exterior"
+ * scroll to a slide.
+ *
+ * ACF fields (layout__content):
+ *   heading, body       – intro above the stage
+ *   slides[]            – { heading, small_text, media_type ("image" | "video" | "lottie"),
+ *                           image (media ID), video (media ID), lottie_json_url }
+ *   component__button   – optional CTA under the stage
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData } = Astro.props;
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
+
+const isDark          = settings.backgroundColor === 'black';
+const isWhite         = settings.backgroundColor === 'white';
+const textColor       = isDark ? 'text-rm-white' : 'text-rm-black';
+const backgroundColor = isDark ? 'bg-rm-black' : 'bg-rm-white';
+const progressBg      = isDark ? '#FFFFFF' : '#E5E7EB';
+const slideHeight     = 500;
+
+const slides = await Promise.all(
+  (content.slides || []).map(async (slide: any) => {
+    const isVideo = slide.mediaType === 'video';
+    const isImage = slide.mediaType === 'image';
+    const [image, video] = await Promise.all([
+      isImage ? resolveImage(slide.image) : null,
+      isVideo ? resolveImage(slide.video) : null,
+    ]);
+    return {
+      heading  : slide.heading || '',
+      smallText: slide.smallText || '',
+      image    : image?.source_url ? image : null,
+      video    : video?.source_url ? video : null,
+    };
+  })
+);
+
+const barHeight   = 100 / (slides.length + 1);
+const imageSizes  = '(min-width: 1280px) 720px, (min-width: 640px) 75vw, 95vw';
+const linkBase    = `${theme.text_links.BASE_STYLING} ${theme.text_links.STD} text-rm-green text-center xl:text-left mx-auto xl:mx-0`;
+const first       = slides[0] || { heading: '', smallText: '' };
+
+// Slides data for the script: headings + captions to swap in
+const slidesJson  = JSON.stringify(slides.map((s) => ({ heading: s.heading, smallText: s.smallText })));
+---
+
+{slides.length > 0 && (
+  <>
+    <Section settings={settings}>
+      <Container>
+        {content.heading && (
+          <h2
+            class={`font-stratos uppercase font-light text-40px leading-44px text-center ${textColor}`}
+            set:html={parser(content.heading)}
+          />
+        )}
+        {content.body && (
+          <p class={`${theme.text.H4_LTE} text-center pt-4 pb-16 xl:pb-0 ${textColor}`}>{content.body}</p>
+        )}
+      </Container>
+    </Section>
+
+    <div
+      class={`${backgroundColor} ${textColor} w-full block`}
+      style={`margin-top: -${slideHeight / 1.7}px;`}
+      data-vst
+      data-slide-height={slideHeight}
+      data-progress-bg={progressBg}
+      data-slides={slidesJson}
+    >
+      <div class="block invisible" style={`height: ${slideHeight}px;`} aria-hidden="true"></div>
+
+      <div class="container flex-wrap relative" style="height: inherit;" data-vst-inner>
+        <div
+          class="flex flex-col ml-auto mr-auto w-[95%] xl:flex-row xl:w-full items-center sticky -translate-y-[60%] top-[50%] gap-[50px]"
+          style={`height: ${slideHeight}px;`}
+          data-vst-stage
+        >
+          <div class="w-full h-full xl:h-[80%] flex items-center">
+            <!-- Progress bar -->
+            <div class="hidden sm:block h-1/2 xl:h-[150px]">
+              <div role="progressbar" aria-valuenow="0" aria-labelledby="slides-main" class="block h-full w-[7px]" data-vst-progress>
+                {slides.map((_slide, index) => (
+                  <div
+                    role="button"
+                    tabindex="0"
+                    aria-label={`go to slide ${index + 1}`}
+                    class={`w-[5px] cursor-pointer overflow-hidden border-b-8 last:border-b-0 transition-all ease-out ${isDark ? 'bg-rm-white border-rm-black' : 'bg-[#E5E7EB] border-white'}`}
+                    style={`height: ${barHeight}%;`}
+                    data-vst-bar={index}
+                  >
+                    <div class="w-full h-0 transition-all ease-out"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <!-- Media — desktop -->
+            <div class={`w-full ${isWhite ? '' : 'xl:w-[80%]'} xl:min-w-[720px] h-auto xl:h-[80%] xl:flex items-center justify-center hidden`}>
+              <div class="w-full h-full grid">
+                {slides.map((slide, index) => (
+                  <div
+                    style="grid-area: 1 / 1 / 2 / 2;"
+                    class={`w-full h-full flex items-center justify-center ${index === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    data-vst-layer={index}
+                  >
+                    {slide.video ? (
+                      <video muted loop playsinline autoplay preload={index === 0 ? 'auto' : 'metadata'} class="w-full h-auto rounded-xl">
+                        <source src={slide.video.source_url} type={slide.video.mime_type || 'video/mp4'} />
+                      </video>
+                    ) : slide.image && (
+                      <WpImage
+                        src={slide.image.source_url}
+                        alt={slide.image.alt_text || ''}
+                        width={slide.image.width}
+                        height={slide.image.height}
+                        responsive
+                        sizes={imageSizes}
+                        class="w-full h-auto object-cover"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <!-- Media — mobile -->
+            <div class="w-full sm:w-3/4 lg:w-[55%] mx-auto sm:pt-6 h-auto items-center xl:hidden">
+              <div class="w-full h-full grid">
+                {slides.map((slide, index) => (
+                  <div
+                    style="grid-area: 1 / 1 / 2 / 2;"
+                    class={`w-full h-full ${index === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    data-vst-layer={index}
+                  >
+                    {slide.video ? (
+                      <video muted loop playsinline autoplay preload="metadata" class="w-full h-auto rounded-xl">
+                        <source src={slide.video.source_url} type={slide.video.mime_type || 'video/mp4'} />
+                      </video>
+                    ) : slide.image && (
+                      <WpImage
+                        src={slide.image.source_url}
+                        alt={slide.image.alt_text || ''}
+                        width={slide.image.width}
+                        height={slide.image.height}
+                        responsive
+                        sizes={imageSizes}
+                        class="w-full h-auto object-cover"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Caption -->
+          <div class={`flex flex-col xl:flex-row-reverse items-start xl:items-center ${isWhite ? 'xl:w-[70%]' : 'w-full'}`}>
+            <div class="flex w-full mb-4 xl:mb-0">
+              <div id="slides-main" class="xl:ml-[10%] xl:mr-[10%]" aria-live="polite">
+                <h2
+                  class={`${theme.text.H5} mb-6 text-center xl:text-left font-stratos-lights mt-0 animate-slideUp opacity-0`}
+                  style="animation-delay: 0.22s;"
+                  data-vst-heading
+                >
+                  {first.heading}
+                </h2>
+                <p
+                  class={`mt-0 animate-slideUp opacity-0 ${theme.text.H4_LTE} mb-6 text-center xl:text-left ${first.smallText ? '' : 'hidden'}`}
+                  style="animation-delay: 0.37s;"
+                  data-vst-text
+                >
+                  {first.smallText}
+                </p>
+                <button
+                  type="button"
+                  class={`${linkBase} ${theme.text_links.FWD_BASE} ${theme.text_links.ARW_FWD_GREEN} ${slides.length > 1 ? '' : 'hidden'}`}
+                  data-vst-next
+                >
+                  Skip to Next Floor
+                </button>
+                <button
+                  type="button"
+                  class={`${linkBase} ${theme.text_links.BACK_BASE} ${theme.text_links.ARW_BACK_GREEN} ${slides.length > 1 ? 'hidden' : ''}`}
+                  data-vst-back
+                >
+                  Back to Exterior
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {slides.map(() => (
+          <div class="block invisible" style={`height: ${slideHeight}px;`} aria-hidden="true"></div>
+        ))}
+
+        {content.componentButton?.link && (
+          <div class="w-full flex justify-center pb-28 pt-0 mt-0">
+            <Buttons content={content.componentButton} sectionBackground={settings.backgroundColor} />
+          </div>
+        )}
+      </div>
+    </div>
+    <div id="skipVerticalSlider" class="invisible" aria-hidden="true"></div>
+  </>
+)}
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-vst]').forEach((root) => {
+    const stage   = root.querySelector<HTMLElement>('[data-vst-stage]');
+    const inner   = root.querySelector<HTMLElement>('[data-vst-inner]');
+    const heading = root.querySelector<HTMLElement>('[data-vst-heading]');
+    const text    = root.querySelector<HTMLElement>('[data-vst-text]');
+    const nextBtn = root.querySelector<HTMLElement>('[data-vst-next]');
+    const backBtn = root.querySelector<HTMLElement>('[data-vst-back]');
+    const bars    = Array.from(root.querySelectorAll<HTMLElement>('[data-vst-bar]'));
+    const layers  = Array.from(root.querySelectorAll<HTMLElement>('[data-vst-layer]'));
+    if (!stage || !inner) return;
+
+    const slides      = JSON.parse(root.dataset.slides || '[]') as Array<{ heading: string; smallText: string }>;
+    const slideHeight = Number(root.dataset.slideHeight) || 500;
+    const progressBg  = root.dataset.progressBg || '#E5E7EB';
+    const points      = slides.map((_, i) => i * slideHeight);
+    const totalHeight = slides.length * slideHeight;
+    let current       = 0;
+
+    // Pull the next section up to close the gap left by the sticky stage
+    // (Gatsby: 30% of the viewport, none between 930–1024px wide)
+    const setBottomMargin = () => {
+      const vw = window.innerWidth;
+      if (vw >= 930 && vw <= 1024) {
+        root.style.marginBottom = '0px';
+        return;
+      }
+      const raw = Math.round((slideHeight - window.innerHeight * 0.3) / 2);
+      root.style.marginBottom = `-${Math.max(0, raw)}px`;
+    };
+
+    // Re-run the slide-up entrance on the caption
+    const replay = (el: HTMLElement | null) => {
+      if (!el) return;
+      el.classList.remove('animate-slideUp');
+      void el.offsetWidth;
+      el.classList.add('animate-slideUp');
+    };
+
+    const show = (index: number) => {
+      if (index === current) return;
+      current = index;
+      layers.forEach((layer) => {
+        const active = Number(layer.dataset.vstLayer) === index;
+        layer.classList.toggle('opacity-100', active);
+        layer.classList.toggle('opacity-0', !active);
+        layer.classList.toggle('pointer-events-none', !active);
+      });
+      if (heading) heading.textContent = slides[index]?.heading || '';
+      if (text) {
+        text.textContent = slides[index]?.smallText || '';
+        text.classList.toggle('hidden', !slides[index]?.smallText);
+      }
+      replay(heading);
+      replay(text);
+      const isLast = index + 1 >= slides.length;
+      nextBtn?.classList.toggle('hidden', isLast);
+      backBtn?.classList.toggle('hidden', !isLast);
+    };
+
+    const update = () => {
+      const offset = stage.offsetTop;
+      let active   = current;
+      points.forEach((point, i) => {
+        if (offset > point) active = i;
+      });
+      show(active);
+
+      bars.forEach((bar, i) => {
+        const fill = bar.firstElementChild as HTMLElement | null;
+        if (i === active) {
+          bar.style.height          = `${200 / (slides.length + 1)}%`;
+          bar.style.backgroundColor = progressBg;
+          if (fill) {
+            fill.style.backgroundColor = '#A9CF38';
+            fill.style.height          = `${Math.min(((offset - points[i]) / slideHeight) * 100, 100)}%`;
+          }
+        } else {
+          bar.style.height          = `${100 / (slides.length + 1)}%`;
+          bar.style.backgroundColor = progressBg;
+          if (fill) fill.style.backgroundColor = progressBg;
+        }
+      });
+      bars[0]?.parentElement?.setAttribute('aria-valuenow', String(Math.round((offset / totalHeight) * 100)));
+    };
+
+    // Scroll so the stage sits at the given slide
+    const skipTo = (index: number) => {
+      window.scrollBy(0, points[index] + slideHeight - stage.offsetTop);
+    };
+
+    bars.forEach((bar, i) => {
+      bar.addEventListener('click', () => skipTo(i));
+      bar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          skipTo(i);
+        }
+      });
+    });
+    nextBtn?.addEventListener('click', () => {
+      const next = Math.min(current + 1, slides.length - 1);
+      show(next);
+      skipTo(next);
+    });
+    backBtn?.addEventListener('click', () => {
+      show(0);
+      skipTo(0);
+    });
+
+    // Only track scroll while the slider is near the viewport
+    const onScroll = () => update();
+    new IntersectionObserver(([entry]) => {
+      // Loaded/landed below the slider: show the last floor
+      if (entry.boundingClientRect.top < -totalHeight) show(slides.length - 1);
+      if (entry.isIntersecting) {
+        window.addEventListener('scroll', onScroll, { passive: true });
+        update();
+      } else {
+        window.removeEventListener('scroll', onScroll);
+      }
+    }, { threshold: [0, 0.1, 1] }).observe(inner);
+
+    setBottomMargin();
+    window.addEventListener('resize', setBottomMargin);
+  });
+</script>

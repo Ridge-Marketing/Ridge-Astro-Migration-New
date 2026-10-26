@@ -1,0 +1,171 @@
+---
+/**
+ * Featured Campaigns layout — white card holding a one-at-a-time slider of
+ * campaigns (image or looping video on the left, eyebrow/heading/link on the
+ * right) with prev/next arrows that loop.
+ * Replaces Gatsby's FeaturedCampaigns.js (@splidejs) with a translateX track
+ * and a small script.
+ *
+ * ACF fields (layout__content):
+ *   campaigns             – repeater of { image, use_video, video (URL), eyebrow, heading, link }
+ *   half_background       – bool: paint the top half of the section
+ *   half_background_color – color for that top half
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import FlexibleLink from '@/components/global/FlexibleLink.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }        = Astro.props;
+const content               = layoutData.layoutContent || {};
+const settings              = layoutData.layoutSettings || {};
+const halfBackground        = content.halfBackground ?? false;
+const halfBackgroundColor   = content.halfBackgroundColor ?? false;
+
+const campaigns = await Promise.all(
+  (content.campaigns || []).map(async (c: any) => ({
+    ...c,
+    image: c.useVideo && c.video ? null : await resolveImage(c.image),
+  }))
+);
+const hasMultiple = campaigns.length > 1;
+
+const linkClasses = `${theme.text_links.BASE_STYLING} ${theme.text_links.FWD_BASE} ${theme.text_links.STD} ${theme.text_links.HOVER_GREEN} ${theme.text_links.ARW_FWD_BLACK} ${theme.text_links.HOVER_ARW_FWD_GREEN} text-black`;
+const arrowClass  = 'w-[58px] h-[57px] flex items-center justify-center duration-300 ease-out bg-rm-pale-grey text-black hover:bg-black hover:text-rm-pale-grey focus:bg-black focus:text-rm-pale-grey transition-colors';
+const chevronPath = 'M18.1055 34.5898C17.7148 34.9805 17.168 34.9805 16.7773 34.5898L0.292969 18.1055C-0.0976562 17.7148 -0.0976562 17.168 0.292969 16.7773L16.7773 0.292969C17.168 -0.0976562 17.7148 -0.0976562 18.1055 0.292969L18.6523 0.839844C19.043 1.23047 19.043 1.77734 18.6523 2.16797L3.41797 17.4023L18.6523 32.7148C19.043 33.1055 19.043 33.6523 18.6523 34.043L18.1055 34.5898Z';
+---
+
+<Section settings={settings}>
+  {halfBackground && halfBackgroundColor && (
+    <div class={`absolute top-0 left-0 h-1/2 w-full bg-${halfBackgroundColor}`} />
+  )}
+  <Container container={settings.containerWidth}>
+    {campaigns.length > 0 && (
+      <div class="relative bg-white rounded-[25px] shadow-[0_0_20px_0_rgba(0,0,0,0.2)] p-5 md:p-8 xl:p-[30px]" data-campaigns>
+        <div class="overflow-hidden">
+          <div class="flex transition-transform duration-[600ms] ease-out" data-track>
+            {campaigns.map((campaign: any, index: number) => (
+              <div
+                class="w-full shrink-0"
+                data-slide
+                aria-hidden={index === 0 ? undefined : 'true'}
+                aria-roledescription="slide"
+                aria-label={`${index + 1} of ${campaigns.length}`}
+              >
+                <div class="flex flex-col lg:flex-row gap-8 xl:gap-16 items-stretch">
+                  <div class="lg:w-1/2 shrink-0 rounded-[16px] overflow-hidden aspect-[500/327]">
+                    {campaign.useVideo && campaign.video ? (
+                      <video class="w-full h-full object-cover" src={campaign.video} muted loop playsinline data-video />
+                    ) : campaign.image?.source_url && (
+                      campaign.image.source_url.endsWith('.svg') || !campaign.image.width ? (
+                        <img src={campaign.image.source_url} alt={campaign.image.alt_text || ''} class="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <WpImage
+                          src={campaign.image.source_url}
+                          alt={campaign.image.alt_text || ''}
+                          width={campaign.image.width}
+                          height={campaign.image.height}
+                          class="w-full h-full object-cover"
+                        />
+                      )
+                    )}
+                  </div>
+                  <div class="lg:w-1/2 flex flex-col justify-center pb-20 md:pb-14 lg:pb-0 lg:pr-6">
+                    {campaign.eyebrow && (
+                      <p class={`${theme.text.P_STD} text-black mb-3`}>{campaign.eyebrow}</p>
+                    )}
+                    {campaign.heading && (
+                      <h3 class={`${theme.text.H5} text-black`}>{campaign.heading}</h3>
+                    )}
+                    {campaign.link?.url && (
+                      <div class="mt-8">
+                        <FlexibleLink link={campaign.link} classes={linkClasses} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {hasMultiple && (
+          <div class="absolute bottom-5 right-5 md:bottom-8 md:right-8 xl:bottom-0 xl:right-[30px] flex">
+            <button type="button" class={arrowClass} aria-label="Previous campaign" data-direction="prev">
+              <svg class="min-h-[35px]" width="19" height="35" viewBox="0 0 19 35" fill="none" aria-hidden="true">
+                <path d={chevronPath} fill="currentColor" />
+              </svg>
+            </button>
+            <button type="button" class={arrowClass} aria-label="Next campaign" data-direction="next">
+              <svg class="rotate-180 min-h-[35px]" width="19" height="35" viewBox="0 0 19 35" fill="none" aria-hidden="true">
+                <path d={chevronPath} fill="currentColor" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    )}
+  </Container>
+</Section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-campaigns]').forEach((root) => {
+    const track  = root.querySelector<HTMLElement>('[data-track]');
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+    if (!track || slides.length === 0) return;
+
+    let current   = 0;
+    let inView    = false;
+
+    // Only the active slide's video plays, and only while the slider is visible
+    const syncVideos = () => {
+      slides.forEach((slide, i) => {
+        const video = slide.querySelector<HTMLVideoElement>('[data-video]');
+        if (!video) return;
+        if (i === current && inView) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      });
+    };
+
+    const goTo = (index: number) => {
+      current = (index + slides.length) % slides.length;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      slides.forEach((slide, i) => {
+        if (i === current) {
+          slide.removeAttribute('aria-hidden');
+          slide.removeAttribute('inert');
+        } else {
+          slide.setAttribute('aria-hidden', 'true');
+          slide.setAttribute('inert', '');
+        }
+      });
+      syncVideos();
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-direction]').forEach((btn) => {
+      btn.addEventListener('click', () => goTo(current + (btn.dataset.direction === 'next' ? 1 : -1)));
+    });
+
+    new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting;
+        syncVideos();
+      },
+      { threshold: 0.25 }
+    ).observe(root);
+
+    goTo(0);
+  });
+</script>

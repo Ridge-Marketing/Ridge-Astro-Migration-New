@@ -16,6 +16,7 @@ export const theme = {
     H5: 'font-stratos uppercase font-bold text-40px leading-44px ',
     P_STD: 'font-basic-sans font-light text-21px leading-28px ',
     P_BLD: 'font-basic-sans font-bold text-21px leading-28px ',
+    P_SML: 'font-basic-sans font-light text-16px leading-23px ',
     LINK: 'font-basic-sans font-light underline text-21px leading-28px ',
     FOOTER: 'font-basic-sans font-normal text-18px leading-26px ',
     Q: 'font-basic-sans italic font-normal text-30px lg:text-40px leading-36px lg:leading-44px ',
@@ -25,7 +26,7 @@ export const theme = {
   },
 
   button: {
-    BASE_STYLING: 'inline-block text-21px font-stratos uppercase py-3 px-16 text-center font-normal border-2 border-solid transition-all ease-in-out ',
+    BASE_STYLING: 'inline-block text-21px font-stratos uppercase py-3 px-8 sm:px-16 text-center font-normal border-2 border-solid transition-all ease-in-out ',
 
     GHOST_GREEN_HOVER_DARK: 'GHOST_GREEN_HOVER_DARK text-rm-black border-rm-green bg-white hover:bg-rm-green ',
     GHOST_GREEN_HOVER_LIGHT: 'GHOST_GREEN_HOVER_LIGHT text-rm-white border-rm-green bg-rm-black hover:bg-rm-green hover:text-rm-black ',

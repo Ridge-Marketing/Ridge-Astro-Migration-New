@@ -1,0 +1,90 @@
+---
+/**
+ * Barn of Brands layout — black promo card: heading, body, button and a
+ * corner badge on the left (70%), full-bleed photo on the right (30%).
+ * Replaces Gatsby's BarnOfBrands.js
+ *
+ * ACF fields (layout__content):
+ *   heading, body       – text (parser tags allowed)
+ *   component__button   – button clone
+ *   image               – media ID (right-hand photo)
+ *   badge               – media ID (bottom-right badge, usually SVG)
+ */
+import Section from '@/components/global/Section.astro';
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import WpImage from '@/components/global/WpImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  layoutData: {
+    layoutContent: any;
+    layoutSettings: any;
+  };
+}
+
+const { layoutData }  = Astro.props;
+const content         = layoutData.layoutContent || {};
+const settings        = layoutData.layoutSettings || {};
+// Strip whitespace before a <sup> (e.g. the ™) so it can't wrap onto its own line
+const heading         = content.heading ? parser(content.heading).replace(/\s+(<sup)/gi, '$1') : '';
+const body            = content.body ? parser(content.body) : '';
+const componentButton = content.componentButton ?? false;
+
+const [image, badge]  = await Promise.all([resolveImage(content.image), resolveImage(content.badge)]);
+const isSvg           = (img: any) => (img?.source_url || '').endsWith('.svg');
+const badgeClass      = 'block absolute bottom-[30px] right-[30px] size-[100px] md:w-[146px] md:h-[146px] z-10 object-contain';
+---
+
+<Section settings={settings}>
+  <Container container={settings.containerWidth}>
+    <div class="relative bg-rm-black rounded-[25px] shadow-[0_0_20px_0_rgba(0,0,0,0.2)] overflow-hidden flex flex-col lg:flex-row">
+
+      <div class="lg:w-[70%] flex flex-col justify-center p-8 md:p-12 xl:p-[80px] relative">
+        {heading && (
+          <h2
+            class={`${theme.text.H5} text-rm-white [&_sup]:text-[0.45em] [&_sup]:align-super md:w-[90%]`}
+            set:html={heading}
+          />
+        )}
+        {body && (
+          <div
+            class={`${theme.text.P_STD} text-rm-white mt-6 max-w-[586px] [&_p]:mb-4 [&_a]:underline`}
+            set:html={body}
+          />
+        )}
+        {componentButton?.link?.url && (
+          <div class="mt-8 w-max">
+            <Buttons content={componentButton} sectionBackground="black" />
+          </div>
+        )}
+        {badge?.source_url && (
+          isSvg(badge) || !badge.width ? (
+            <img src={badge.source_url} alt={badge.alt_text || ''} class={badgeClass} loading="lazy" />
+          ) : (
+            <WpImage src={badge.source_url} alt={badge.alt_text || ''} width={badge.width} height={badge.height} class={badgeClass} />
+          )
+        )}
+      </div>
+
+      {image?.source_url && (
+        <div class="relative lg:w-[30%] min-h-[240px] lg:min-h-0">
+          {isSvg(image) || !image.width ? (
+            <img src={image.source_url} alt={image.alt_text || ''} class="w-full h-full absolute inset-0 object-cover" loading="lazy" />
+          ) : (
+            <WpImage
+              src={image.source_url}
+              alt={image.alt_text || ''}
+              width={image.width}
+              height={image.height}
+              class="w-full h-full absolute inset-0 object-cover"
+            />
+          )}
+        </div>
+      )}
+
+    </div>
+  </Container>
+</Section>
