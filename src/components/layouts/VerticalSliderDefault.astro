@@ -1,22 +1,20 @@
 ---
 /**
- * Vertical Slider layout
- * Left column: section intro + numbered slide list (clickable nav)
- * Right column: active slide's Lottie animation
- * Auto-advances every 4s; pauses on user interaction.
+ * Vertical Slider — default variant (e.g. "8 Elements of a Great Website")
+ * Replaces Gatsby's VerticalSliderDefault.js.
+ *
+ * A 550px stage sticks to the middle of the viewport while invisible 550px
+ * spacers scroll past; each spacer advances one slide. Left: progress bar +
+ * "Skip", circled slide number, heading and caption. Right: the slide's
+ * Lottie animation (lottie-web in place of Gatsby's DotLottieReact).
  *
  * ACF fields (layout__content):
- *   heading        – section heading
- *   body           – section body paragraph
- *   style_toggle   – boolean (visual variant)
- *   slides[]       – { heading, lottie_json_url, small_text, image }
- *   component__button – optional CTA
+ *   heading, body – intro above the stage
+ *   slides[]      – { heading, small_text, lottie_json_url }
  */
 import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
-import Buttons from '@/components/global/Buttons.astro';
 import { theme } from '@/lib/theme';
-import { parser } from '@/lib/parser';
 
 interface Props {
   layoutData: {
@@ -26,163 +24,213 @@ interface Props {
 }
 
 const { layoutData } = Astro.props;
-const content = layoutData.layoutContent || {};
-const settings = layoutData.layoutSettings || {};
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
 
-const slides = content.slides || [];
-const isDark  = settings.backgroundColor === 'black';
-const textColor = isDark ? 'text-white' : 'text-black';
-const borderColor = isDark ? 'border-white/20' : 'border-black/20';
+const textColor       = settings.backgroundColor === 'black' ? 'text-rm-white' : 'text-rm-black';
+const backgroundColor = settings.backgroundColor === 'black' ? 'bg-rm-black' : 'bg-rm-white';
+const slideHeight     = 550;
 
-// Pad slide index with leading zero
-function padIndex(i: number) {
-  return String(i + 1).padStart(2, '0');
-}
+const slides: Array<{ heading: string; smallText: string; lottie: string }> = (content.slides || []).map((slide: any) => ({
+  heading  : slide.heading || '',
+  smallText: slide.smallText || '',
+  lottie   : slide.lottieJsonUrl || '',
+}));
+
+const first      = slides[0] || { heading: '', smallText: '', lottie: '' };
+const barHeight  = 100 / (slides.length + 1);
+// Gatsby's class string mixes text_links.BASE_STYLING (font-stratos uppercase)
+// with H4_LTE + capitalize; production renders the latter, so use only those.
+const skipLink   = `${theme.text.H4_LTE} flex items-center ${theme.text_links.FWD_BASE} ${theme.text_links.ARW_FWD_GREY} text-rm-grey hover:text-rm-white capitalize transition-all ease-out`;
+const slidesJson = JSON.stringify(slides);
 ---
 
-<Section settings={settings}>
-  <Container container={settings.containerWidth}>
-    <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-start" data-vertical-slider>
-
-      <!-- ── Left column: intro + slide nav ── -->
-      <div>
+{slides.length > 0 && (
+  <>
+    <Section settings={settings}>
+      <Container>
         {content.heading && (
-          <h2
-            class={`${theme.text.H2} ${textColor} mb-6`}
-            set:html={parser(content.heading)}
-          />
+          <h2 class={`${theme.text.H1_STD} text-center mb-9 ${textColor}`}>{content.heading}</h2>
         )}
         {content.body && (
-          <p
-            class={`${theme.text.P_STD} ${textColor} mb-10`}
-            set:html={parser(content.body)}
-          />
+          <p class={`${theme.text.P_STD} text-center ${textColor}`}>{content.body}</p>
         )}
+      </Container>
+    </Section>
 
-        <!-- Slide list -->
-        <div class={`divide-y ${borderColor}`} data-vs-list>
-          {slides.map((slide: any, i: number) => (
-            <button
-              type="button"
-              class={`vs-item w-full text-left py-5 flex items-start gap-4 group transition-opacity duration-200 ${i !== 0 ? 'opacity-40' : ''}`}
-              data-vs-index={i}
-              data-vs-lottie={slide.lottieJsonUrl || slide.lottie_json_url || ''}
-            >
-              <!-- Number -->
-              <span class={`font-stratos font-bold text-26px leading-none shrink-0 mt-1 transition-colors duration-200 ${i === 0 ? 'text-rm-green' : textColor}`} data-vs-num>
-                {padIndex(i)}
-              </span>
-              <!-- Heading + small text -->
-              <span class="flex flex-col">
-                <span class={`${theme.text.H4} ${textColor} text-left`}>
-                  {slide.heading}
-                </span>
-                {(slide.smallText || slide.small_text) && (
-                  <span class={`${theme.text.P_STD} ${textColor} opacity-60 mt-1`}>
-                    {slide.smallText || slide.small_text}
-                  </span>
-                )}
-              </span>
-            </button>
-          ))}
+    <div
+      class={`${backgroundColor} ${textColor} w-full block`}
+      style={`margin-top: -${slideHeight / 2}px;`}
+      data-vsd
+      data-slide-height={slideHeight}
+      data-slides={slidesJson}
+    >
+      <div class="block invisible" style={`height: ${slideHeight}px;`} aria-hidden="true"></div>
+
+      <div class="container flex-wrap relative" style="height: inherit;" data-vsd-inner>
+        <div
+          class="flex flex-col ml-auto mr-auto w-[95%] md:flex-row md:w-full items-center sticky -translate-y-1/2 top-[50%]"
+          style={`height: ${slideHeight}px;`}
+          data-vsd-stage
+        >
+          <div class="w-full h-full md:w-[50%] md:h-[80%] flex items-center">
+            <div class="h-full md:h-[70%]">
+              <div role="progressbar" aria-valuenow="0" aria-labelledby="slides-main" class="h-full w-[7px]" data-vsd-progress>
+                {slides.map((_slide, index) => (
+                  <div
+                    role="button"
+                    tabindex="0"
+                    aria-label={`go to slide ${index + 1}`}
+                    class="w-[5px] cursor-pointer overflow-hidden border-b-8 last:border-b-0 border-rm-black bg-rm-white transition-all ease-out"
+                    style={`height: ${barHeight}%;`}
+                    data-vsd-bar={index}
+                  >
+                    <div class="w-full h-0 transition-all ease-out"></div>
+                  </div>
+                ))}
+              </div>
+              <a href="#skipVerticalSlider" title="Skip to the next section" class={`hidden md:flex h-[30%] ${skipLink}`}>Skip</a>
+            </div>
+
+            <div id="slides-main" class="ml-[10%] mr-[10%]" aria-live="polite">
+              <p class={`${theme.text.CIRCLE_NUM} w-[55px] h-[55px] text-rm-green border-rm-green animate-quote`} data-vsd-num>1</p>
+              <h2
+                class={`${theme.text.H2} mt-5 mb-5 md:mb-0 md:mt-10 animate-quote opacity-0`}
+                style="animation-delay: 0.22s;"
+                data-vsd-heading
+              >
+                {first.heading}
+              </h2>
+              <p
+                class={`${theme.text.P_STD} mt-6 animate-quote opacity-0 ${first.smallText ? '' : 'hidden'}`}
+                style="animation-delay: 0.37s;"
+                data-vsd-text
+              >
+                {first.smallText}
+              </p>
+            </div>
+          </div>
+
+          <div class="w-full h-[45%] mt-[5%] md:mt-0 md:h-auto md:w-[50%] lg:h-full block" aria-hidden="true">
+            <div class="w-full h-full block" data-vsd-lottie></div>
+          </div>
+
+          <a href="#skipVerticalSlider" title="Skip to the next section" class={`md:hidden flex text-left w-full mt-[5%] h-[3%] ${skipLink}`}>Skip</a>
         </div>
 
-        {content.componentButton?.link && (
-          <div class="mt-10">
-            <Buttons
-              content={content.componentButton}
-              sectionBackground={settings.backgroundColor}
-            />
-          </div>
-        )}
+        {slides.map(() => (
+          <div class="block invisible" style={`height: ${slideHeight}px;`} aria-hidden="true"></div>
+        ))}
       </div>
-
-      <!-- ── Right column: Lottie animation ── -->
-      <div class="mt-12 lg:mt-0 lg:sticky lg:top-24 flex items-center justify-center">
-        <div
-          id="vs-lottie-container"
-          class="w-full max-w-[480px] aspect-square"
-          aria-hidden="true"
-        ></div>
-      </div>
-
     </div>
-  </Container>
-</Section>
+    <div id="skipVerticalSlider" class="invisible" aria-hidden="true"></div>
+  </>
+)}
 
 <script>
   import lottie, { type AnimationItem } from 'lottie-web';
 
-  const slider = document.querySelector('[data-vertical-slider]');
-  if (slider) {
-    const items    = Array.from(slider.querySelectorAll<HTMLButtonElement>('.vs-item'));
-    const container = document.getElementById('vs-lottie-container');
+  document.querySelectorAll<HTMLElement>('[data-vsd]').forEach((root) => {
+    const stage    = root.querySelector<HTMLElement>('[data-vsd-stage]');
+    const inner    = root.querySelector<HTMLElement>('[data-vsd-inner]');
+    const num      = root.querySelector<HTMLElement>('[data-vsd-num]');
+    const heading  = root.querySelector<HTMLElement>('[data-vsd-heading]');
+    const text     = root.querySelector<HTMLElement>('[data-vsd-text]');
+    const lottieEl = root.querySelector<HTMLElement>('[data-vsd-lottie]');
+    const bars     = Array.from(root.querySelectorAll<HTMLElement>('[data-vsd-bar]'));
+    if (!stage || !inner) return;
 
-    let currentIndex  = 0;
-    let currentAnim: AnimationItem | null = null;
-    let autoTimer: ReturnType<typeof setInterval> | null = null;
-    let userInteracted = false;
+    const slides      = JSON.parse(root.dataset.slides || '[]') as Array<{ heading: string; smallText: string; lottie: string }>;
+    const slideHeight = Number(root.dataset.slideHeight) || 550;
+    const points      = slides.map((_, i) => i * slideHeight);
+    const totalHeight = slides.length * slideHeight;
+    let current       = -1;
+    let anim: AnimationItem | null = null;
 
-    function loadSlide(index: number) {
-      if (!container) return;
-      const item = items[index];
-      if (!item) return;
+    // Re-run the entrance animation (Gatsby re-keys these on every change)
+    const replay = (el: HTMLElement | null) => {
+      if (!el) return;
+      el.classList.remove('animate-quote');
+      void el.offsetWidth;
+      el.classList.add('animate-quote');
+    };
 
-      const lottieUrl = item.dataset.vsLottie || '';
+    const loadLottie = (url: string) => {
+      anim?.destroy();
+      anim = null;
+      if (!lottieEl || !url) return;
+      anim = lottie.loadAnimation({ container: lottieEl, renderer: 'svg', loop: true, autoplay: true, path: url });
+    };
 
-      // Destroy previous animation
-      if (currentAnim) {
-        currentAnim.destroy();
-        currentAnim = null;
+    const show = (index: number) => {
+      if (index === current) return;
+      current = index;
+      const slide = slides[index];
+      if (num) num.textContent = String(index + 1);
+      if (heading) heading.textContent = slide?.heading || '';
+      if (text) {
+        text.textContent = slide?.smallText || '';
+        text.classList.toggle('hidden', !slide?.smallText);
       }
+      replay(num);
+      replay(heading);
+      replay(text);
+      loadLottie(slide?.lottie || '');
+    };
 
-      // Update nav styles
-      items.forEach((el, i) => {
-        const isActive = i === index;
-        el.classList.toggle('opacity-40', !isActive);
-        el.classList.remove('opacity-100');
-        if (isActive) el.classList.add('opacity-100');
+    const update = () => {
+      const offset = stage.offsetTop;
+      let active   = Math.max(current, 0);
+      points.forEach((point, i) => {
+        if (offset > point) active = i;
+      });
+      show(active);
 
-        const numEl = el.querySelector('[data-vs-num]');
-        if (numEl) {
-          numEl.classList.toggle('text-rm-green', isActive);
+      bars.forEach((bar, i) => {
+        const fill = bar.firstElementChild as HTMLElement | null;
+        if (i === active) {
+          bar.style.height          = `${200 / (slides.length + 1)}%`;
+          bar.style.backgroundColor = '#FFFFFF';
+          if (fill) {
+            fill.style.backgroundColor = '#A9CF38';
+            fill.style.height          = `${Math.min(((offset - points[i]) / slideHeight) * 100, 100)}%`;
+          }
+        } else {
+          bar.style.height          = `${100 / (slides.length + 1)}%`;
+          bar.style.backgroundColor = '#FFFFFF';
+          if (fill) fill.style.backgroundColor = '#FFFFFF';
         }
       });
+      bars[0]?.parentElement?.setAttribute('aria-valuenow', String(Math.round((offset / totalHeight) * 100)));
+    };
 
-      currentIndex = index;
+    // Scroll so the stage sits at the given slide
+    const skipTo = (index: number) => {
+      window.scrollBy(0, points[index] + slideHeight - stage.offsetTop);
+    };
 
-      // Load Lottie animation
-      if (lottieUrl) {
-        currentAnim = lottie.loadAnimation({
-          container,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: lottieUrl,
-        });
-      }
-    }
-
-    function startAutoAdvance() {
-      if (autoTimer) clearInterval(autoTimer);
-      autoTimer = setInterval(() => {
-        if (!userInteracted) {
-          loadSlide((currentIndex + 1) % items.length);
+    bars.forEach((bar, i) => {
+      bar.addEventListener('click', () => skipTo(i));
+      bar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          skipTo(i);
         }
-      }, 4000);
-    }
-
-    // Bind click handlers
-    items.forEach((item, i) => {
-      item.addEventListener('click', () => {
-        userInteracted = true;
-        if (autoTimer) clearInterval(autoTimer);
-        loadSlide(i);
       });
     });
 
-    // Init
-    loadSlide(0);
-    startAutoAdvance();
-  }
+    // Only track scroll while the slider is near the viewport; load the first
+    // Lottie the first time it comes close
+    const onScroll = () => update();
+    new IntersectionObserver(([entry]) => {
+      if (entry.boundingClientRect.top < -totalHeight) show(slides.length - 1);
+      if (entry.isIntersecting) {
+        if (current === -1) show(0);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        update();
+      } else {
+        window.removeEventListener('scroll', onScroll);
+      }
+    }, { threshold: [0, 0.1, 1] }).observe(inner);
+  });
 </script>

@@ -1,18 +1,16 @@
 ---
 /**
- * Two Column Icon + Text layout
- * Grid of items — 2 columns on desktop — each with icon, title, body, bullet list.
+ * Two Column Icon + Text layout — 2-column grid of items, each with an icon,
+ * H2 title, text, H4 list title and a bulleted list. Centered on mobile,
+ * left-aligned on desktop.
+ * Replaces Gatsby's TwoColIconText.js
  *
  * ACF fields (layout__content):
- *   items[] – repeater:
- *     image       – WP media ID (icon)
- *     title       – item heading
- *     text        – body text (supports shortcodes)
- *     list_title  – optional label above bullet list
- *     list[]      – { list_item } bullet points
+ *   items[] – { image (media ID), title, text, list_title, list[]: { list_item } }
  */
 import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
+import WpImage from '@/components/global/WpImage.astro';
 import { theme } from '@/lib/theme';
 import { parser } from '@/lib/parser';
 import { resolveImage } from '@/lib/wp-client';
@@ -25,85 +23,68 @@ interface Props {
 }
 
 const { layoutData } = Astro.props;
-const content = layoutData.layoutContent || {};
-const settings = layoutData.layoutSettings || {};
+const content        = layoutData.layoutContent || {};
+const settings       = layoutData.layoutSettings || {};
 
-const items = content.items || [];
-const textColor = settings.backgroundColor === 'black' ? 'text-white' : '';
-
-// Resolve all icons in parallel
-const resolvedImages = await Promise.all(
-  items.map((item: any) => resolveImage(item.image))
+const items = await Promise.all(
+  (content.items || []).map(async (item: any) => ({
+    ...item,
+    image: await resolveImage(item.image),
+  }))
 );
 ---
 
 <Section settings={settings}>
   <Container container={settings.containerWidth}>
-    <div class="grid gap-12 lg:grid-cols-2 lg:gap-x-16 lg:gap-y-16">
-      {items.map((item: any, idx: number) => {
-        const img = resolvedImages[idx];
-        const src = img?.source_url || '';
-        const alt = img?.alt_text || item.title || '';
-        const list = item.list || [];
-
-        return (
-          <div class="flex flex-col">
-
-            {/* Icon */}
-            {src && (
-              <div class="mb-6">
-                <img
-                  src={src}
-                  alt={alt}
-                  class="h-16 w-auto object-contain"
-                  loading="lazy"
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-12">
+      {items.map((item: any) => (
+        <div class="flex flex-col">
+          {item.image?.source_url && (
+            <div class="mb-6 relative w-24 h-auto mx-auto lg:mx-0">
+              {item.image.source_url.endsWith('.svg') || !item.image.width ? (
+                <img src={item.image.source_url} alt={item.image.alt_text || ''} class="w-full h-auto object-contain" loading="lazy" />
+              ) : (
+                <WpImage
+                  src={item.image.source_url}
+                  alt={item.image.alt_text || ''}
+                  width={item.image.width}
+                  height={item.image.height}
+                  responsive
+                  sizes="96px"
+                  class="w-full h-auto object-contain"
                 />
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
-            {/* Title */}
-            {item.title && (
-              <h3 class={`${theme.text.H4} ${textColor} mb-4`}>
-                {item.title}
-              </h3>
-            )}
+          {item.title && (
+            <h3 class={`${theme.text.H2} text-center lg:text-left mb-4`}>{item.title}</h3>
+          )}
 
-            {/* Body text */}
-            {item.text && (
-              <p
-                class={`${theme.text.P_STD} ${textColor}`}
-                set:html={parser(item.text)}
-              />
-            )}
+          {item.text && (
+            <p class={`${theme.text.P_STD} text-center lg:text-left mb-6`}>
+              <span set:html={parser(item.text)} />
+            </p>
+          )}
 
-            {/* Bullet list */}
-            {(item.listTitle || list.length > 0) && (
-              <div class="mt-6">
-                {item.listTitle && (
-                  <p class={`${theme.text.P_BLD} ${textColor} mb-3`}>
-                    {item.listTitle}
-                  </p>
-                )}
-                {list.length > 0 && (
-                  <ul class="space-y-2">
-                    {list.map((entry: any) => (
-                      <li class={`${theme.text.P_STD} ${textColor} flex items-start gap-3`}>
-                        <span class="text-rm-green mt-1 shrink-0">
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 8L6.5 11.5L13 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </span>
-                        {entry.listItem || entry.list_item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+          {item.listTitle && (
+            <h4 class={`${theme.text.H4} text-center lg:text-left mb-3`}>{item.listTitle}</h4>
+          )}
 
-          </div>
-        );
-      })}
+          {item.list?.length > 0 && (
+            <div>
+              <ul class="list-disc space-y-3 pt-2">
+                {item.list.map((entry: any) => (
+                  <li class={`${theme.text.P_STD} flex items-start gap-3`}>
+                    <span class="mr-1">•</span>
+                    <span>{entry.listItem}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   </Container>
 </Section>

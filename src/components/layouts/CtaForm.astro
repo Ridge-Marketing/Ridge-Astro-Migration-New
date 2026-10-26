@@ -30,25 +30,25 @@ if (settings.backgroundColor === 'white') {
 
 <Section settings={settings}>
   <Container>
-    {content.heading && (
-      <h2 class={`${theme.text.H2} text-${textColor} text-center`}>
-        {content.heading}
-      </h2>
-    )}
-    {content.body && (
-      <p class={`${theme.text.P_STD} text-${textColor} text-center mt-6`}>
-        {content.body}
-      </p>
-    )}
-    <div class="mt-10">
-      <FormCTALayout
-        client:visible
-        classes="md:grid md:grid-cols-2 gap-4"
-        submitLabel="Submit"
-        btnStyle={btnStyle}
-        textColor={textColor}
-        bgColor={settings.backgroundColor}
-      />
-    </div>
+      {content.heading && (
+        <h2 class={`${theme.text.H2} text-${textColor} text-center`}>
+          {content.heading}
+        </h2>
+      )}
+      {content.body && (
+        <p class={`${theme.text.P_STD} text-${textColor} text-center mt-6`}>
+          {content.body}
+        </p>
+      )}
+      <div class="mt-10">
+        <FormCTALayout
+          client:visible
+          classes="md:grid md:grid-cols-2 gap-4"
+          submitLabel="Submit"
+          btnStyle={btnStyle}
+          textColor={textColor}
+          bgColor={settings.backgroundColor}
+        />
+      </div>
   </Container>
 </Section>

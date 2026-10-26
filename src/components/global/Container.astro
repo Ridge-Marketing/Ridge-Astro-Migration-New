@@ -13,7 +13,9 @@ const { container = 'slim', classes = '' } = Astro.props;
 const sizes: Record<string, string> = {
   default: 'container mx-auto',
   slim: 'container xl:!max-w-[1224px] mx-auto',
-  mini: 'container lg:max-w-[750px] xl:max-w-[930px] mx-auto',
+  // `!` needed: the unlayered .container rule in global.css (xl:max-w-[1280px])
+  // otherwise beats these layered utilities — same reason slim uses it
+  mini: 'container lg:!max-w-[750px] xl:!max-w-[930px] mx-auto',
   none: '',
 };
 
