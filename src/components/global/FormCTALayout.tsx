@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { Input, TextArea } from './FormFields';
 
 interface FormCTALayoutProps {
   classes?: string;
@@ -32,11 +33,7 @@ export default function FormCTALayout({
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const [status, setStatus] = useState<string | false>(false);
 
-  const borderColor = textColor === 'rm-white' || textColor === 'white' ? 'border-white' : 'border-black';
-  const txtColor = textColor === 'rm-white' || textColor === 'white' ? 'text-white' : 'text-black';
-  const placeholderColor = textColor === 'rm-white' || textColor === 'white' ? 'placeholder:text-white' : 'placeholder:text-black';
-
-  const inputClasses = `font-basic-sans border-b border-solid ${borderColor} min-h-[30px] w-full py-2 bg-transparent ${txtColor} text-[21px] font-light leading-[28px] focus:outline-none ${placeholderColor} placeholder:font-light`;
+  const fieldColor = textColor === 'rm-white' || textColor === 'white' ? 'white' : 'black';
 
   const onSubmit = async (data: any) => {
     setStatus('processing');
@@ -108,27 +105,14 @@ export default function FormCTALayout({
         )}
       </div>
 
-      <span className="mb-6 block md:col-span-1">
-        <input {...register('name', { required: true })} type="text" placeholder="Name" className={inputClasses} />
-      </span>
-      <span className="mb-6 block md:col-span-1">
-        <input {...register('company', { required: true })} type="text" placeholder="Company" className={inputClasses} />
-      </span>
-      <span className="mb-6 block md:col-span-1">
-        <input {...register('email', { required: true })} type="email" placeholder="Email" className={inputClasses} />
-      </span>
-      <span className="mb-6 block md:col-span-1">
-        <input {...register('phone', { required: true })} type="tel" placeholder="Phone" className={inputClasses} />
-      </span>
-      <span className="mb-6 block md:col-span-1">
-        <input {...register('companySize', { required: true })} type="text" placeholder="Company Size" className={inputClasses} />
-      </span>
-      <span className="mb-6 block md:col-span-1">
-        <input {...register('timing', { required: true })} type="text" placeholder="Timing for Start" className={inputClasses} />
-      </span>
-      <span className="block md:col-span-2">
-        <textarea {...register('message', { required: true })} placeholder="Tell us about your marketing needs" className={`${inputClasses} min-h-[100px]`} rows={4} />
-      </span>
+      {/* Sliding-label fields (Gatsby FormFields) */}
+      <span className="mb-6 block md:col-span-1"><Input register={register} errors={errors} required type="text" name="name" label="Name" textColor={fieldColor} /></span>
+      <span className="mb-6 block md:col-span-1"><Input register={register} errors={errors} required type="text" name="company" label="Company" textColor={fieldColor} /></span>
+      <span className="mb-6 block md:col-span-1"><Input register={register} errors={errors} required type="email" name="email" label="Email" textColor={fieldColor} /></span>
+      <span className="mb-6 block md:col-span-1"><Input register={register} errors={errors} required type="tel" name="phone" label="Phone" textColor={fieldColor} /></span>
+      <span className="mb-6 block md:col-span-1"><Input register={register} errors={errors} required type="text" name="companySize" label="Company Size" textColor={fieldColor} /></span>
+      <span className="mb-6 block md:col-span-1"><Input register={register} errors={errors} required type="text" name="timing" label="Timing for Start" textColor={fieldColor} /></span>
+      <span className="block md:col-span-2"><TextArea register={register} errors={errors} required name="message" label="Tell us about your marketing needs" textColor={fieldColor} /></span>
 
       <div className={`mt-6 md:col-span-2 text-center`}>
         <button

@@ -153,10 +153,12 @@ function TitleOverlay({ title, subtitle, link, type }: { title: string; subtitle
         )}
         {type === 'video' && 
           <div className={"w-[65px] lg:w-[95px] text-center mx-auto xl:pt-7"}>
-            <img 
-              className="hidden xl:block" 
-              src={'/wp-content/uploads/2023/06/circle-play-solid-1.svg'} 
-              alt={`play button`} />
+            {/* circle-play-solid-1.svg from the CMS, inlined so the icon
+                doesn't depend on the uploads proxy (Font Awesome Pro 6.4.0,
+                https://fontawesome.com/license) */}
+            <svg className="hidden xl:block" viewBox="0 0 512 512" role="img" aria-label="play button">
+              <path d="M0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zM188.3 147.1c-7.6 4.2-12.3 12.3-12.3 20.9V344c0 8.7 4.7 16.7 12.3 20.9s16.8 4.1 24.3-.5l144-88c7.1-4.4 11.5-12.1 11.5-20.5s-4.4-16.1-11.5-20.5l-144-88c-7.4-4.5-16.7-4.7-24.3-.5z" />
+            </svg>
           </div>
         }
       </div>

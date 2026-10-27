@@ -1,0 +1,47 @@
+---
+/**
+ * Renders an ACF image field from the AI Audit group — media ID, ACF image
+ * array or REST media object (all normalized by resolveImage). Raster images
+ * go through WpImage (resized WebP); SVGs or unsized images render as a
+ * plain <img>.
+ */
+import WpImage from '@/components/global/WpImage.astro';
+import { resolveImage } from '@/lib/wp-client';
+
+interface Props {
+  image: any;
+  class?: string;
+  sizes?: string;
+  alt?: string;
+  loading?: 'lazy' | 'eager';
+  fetchPriority?: 'high' | 'low' | 'auto';
+  quality?: number;
+}
+
+const { image, class: className = '', sizes = '100vw', alt, loading, fetchPriority, quality } = Astro.props;
+
+const resolved   = await resolveImage(image);
+const src        = resolved?.source_url || '';
+const width      = resolved?.width;
+const height     = resolved?.height;
+const altTxt     = alt ?? resolved?.alt_text ?? '';
+const plain      = !width || !height || /\.(svg|gif)(\?|$)/i.test(src);
+const imgQuality = quality || 80;
+---
+
+{src && (plain ? (
+  <img src={src} alt={altTxt} class={className} loading={loading ?? (fetchPriority === 'high' ? 'eager' : 'lazy')} fetchpriority={fetchPriority} />
+) : (
+  <WpImage
+    src={src}
+    alt={altTxt}
+    width={width}
+    height={height}
+    responsive
+    sizes={sizes}
+    class={className}
+    loading={loading}
+    fetchPriority={fetchPriority}
+    quality={imgQuality}
+  />
+))}

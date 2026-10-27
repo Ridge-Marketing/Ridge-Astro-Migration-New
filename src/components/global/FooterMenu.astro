@@ -1,0 +1,55 @@
+---
+/**
+ * Footer Menu — the WP "Footer" menu as link columns (used on thank-you
+ * pages). A new column starts after any top-level item whose WP CSS classes
+ * include "menu-break".
+ * Replaces Gatsby's components/global/FooterMenu.js
+ */
+import { theme } from '@/lib/theme';
+import { getMenus, getMenuItems, convertCMSLink } from '@/lib/wp-client';
+
+let columns: any[][] = [];
+try {
+  const menus      = await getMenus();
+  const footerMenu = menus.find((m: any) => m.name === 'Footer' || m.slug === 'footer');
+  const items      = footerMenu ? await getMenuItems(footerMenu.id) : [];
+
+  columns = [[]];
+  for (const item of items) {
+    columns[columns.length - 1].push(item);
+    if ((item.classes || []).includes('menu-break')) columns.push([]);
+  }
+  columns = columns.filter((col) => col.length > 0);
+} catch (e) {
+  console.warn('Failed to fetch footer menu for FooterMenu:', e);
+}
+
+const label = (item: any) => item.title?.rendered || item.title || '';
+---
+
+{columns.length > 0 && (
+  <section class="text-center lg:text-left py-12 lg:py-16">
+    <div class="block mt-16 lg:mt-0 lg:flex">
+      {columns.map((column) => (
+        <div>
+          <ul>
+            {column.map((item: any) => (
+              <li class="mt-4 lg:mr-12">
+                <a href={convertCMSLink(item.url)} class={`${theme.text.P_BLD} uppercase`} set:html={label(item)} />
+                {item.children?.length > 0 && (
+                  <ul>
+                    {item.children.map((child: any) => (
+                      <li class={`${theme.text.FOOTER} normal-case mt-2`}>
+                        <a href={convertCMSLink(child.url)} class="hover:text-rm-green hover:underline" set:html={label(child)} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+)}

@@ -107,6 +107,14 @@ src/
   private posts). `getServiceById` is authenticated and returns `null` on
   failure — a private service post (401) used to kill the `/results` build.
 - **Global settings**: custom endpoint `/wp-json/options/all`.
+- **REST only** — no WPGraphQL. Any ACF group the site renders needs
+  "Show in REST API" on. The "AI Audit" group (`group_6984afb3574b1`: `hero`,
+  `form_text`, `two_column_content`, `steps`, `pricing`, `stats`, `logos`,
+  `callout`) is read from `acf` on lander 8212 (`/lander/audit/`) and page 8682
+  (`/visibility-audit/`) → `components/layouts/auditLander/`; each route only
+  renders it when `acf.hero` is present.
+- `resolveImage()` also accepts ACF image arrays (`{ ID, url, alt, width,
+  height }`), which some fields return over REST (menu icons, AI Audit).
 - **Image resolution**: ACF image fields are integer IDs. Always pass through
   `resolveImage(field)` → `{ source_url, alt_text, width, height } | null`.
   Pre-resolve arrays with `Promise.all()` in frontmatter.
@@ -250,19 +258,29 @@ Per-record accent/secondary colors flow as `Layout` props:
 <Layout accentColor={acf.accent_color} secondaryColor={acf.secondary_accent}>
 ```
 
-`Layout.astro` emits:
+`Layout.astro` sets them as CSS custom properties on `<html>`
+(`style="--accentColor: …; --secondaryColor: …"`), and the global rules in
+`global.css` read them (`.accent-text { color: var(--accentColor, #A9CF38) }`),
+so `accent-text` works in every component on the page (Gatsby's ThemeContext
+did this site-wide). Don't re-declare the vars in a component's scoped
+`<style define:vars>` — scoped rules only reach that component's own elements.
 
-```astro
-<style is:global define:vars={{ accentColor, secondaryColor }}>
-  .accent-text   { color: var(--accentColor)   !important; }
-  .secondary-text{ color: var(--secondaryColor) !important; }
-</style>
-```
+Selectors that target child components need `is:global` or `:global(.cls)` —
+otherwise Astro scopes them with `[data-astro-cid-…]`. This is the #1 cause of
+"my styles don't apply".
 
-`is:global` is **required** — otherwise Astro scopes the rules with
-`[data-astro-cid-…]` and they don't reach child components. Same rule for any
-selector targeting children: use `is:global` or `:global(.cls)`. This is the #1
-cause of "my styles don't apply".
+## Container gotcha
+
+`.container` in `global.css` is **unlayered** CSS (`mx-auto`, `xl:!pl-12`,
+`xl:max-w-[1280px]`), so it beats Tailwind's layered utilities on the same
+element — unlike Gatsby, where `container` was a component class utilities
+overrode. To override it from a layout, use `!` utilities (`lg:!ml-0`,
+`xlz:!px-0`, `xl:!max-w-[…]` — layered `!important` beats unlayered
+`!important`). See `Container.astro` (slim/mini) and `ResultsImage.astro`.
+
+Tailwind's own `container` utility (what `md:container` etc. use) steps its
+max-width at every breakpoint (1366, 1920…). An `@utility container` block in
+`global.css` caps it at 1280px with 3rem gutters from `xl` up, matching Gatsby.
 
 ---
 
@@ -274,6 +292,12 @@ cause of "my styles don't apply".
   @source inline("bg-rm-green bg-rm-pale-grey text-rm-green text-rm-white");
   ```
 - `@custom-variant` names can't start with `-`. Use `max-lg`, not `-lg`.
+- **Classes typed into ACF "classes" fields** (e.g. `bg-[#EFEEEE] mt-24` with
+  background "custom") don't exist in source, so Tailwind won't generate them.
+  They're listed in the second `@source inline()` in `global.css` (Gatsby used
+  `safelist`). When an editor's class doesn't apply, add it there.
+- Don't add breakpoints for one-off prefixes — every `--breakpoint-*` also adds
+  a `.container` max-width step. Use `@custom-variant` (see `600:`).
 - `@utility` blocks may cause parse errors — use plain CSS classes instead.
 - Arbitrary values like `1280px`, `[18px]` trip the `suggestCanonicalClasses`
   lint. Cosmetic.
@@ -339,7 +363,11 @@ landers. Preview landers are excluded from the build entirely.
 Build: 97 pages, zero unrecognized layouts (as of 2026-10-26).
 
 **Routes ported:** `/`, `/[...slug]`, `/blog`, `/blog/[slug]`,
-`/service/[slug]`, `/project/[slug]`, `/lander/[slug]`, `/404`.
+`/service/[slug]`, `/project/[slug]`, `/lander/[slug]`, `/404`, and the four
+thank-you pages (`/thank-you/`, `/thank-you-landers/`,
+`/thank-you-marketing-dream/`, `/thank-you-audit/`) — identical in Gatsby, so
+they all render `components/global/ThankYou.astro` (noindex). The 404 is
+Gatsby's Finley page + `FooterMenu`.
 
 **Layouts ported (~65):** PageHeader, PortfolioHeader, ProjectHeader, HomeHero,
 TextBlock, TwoColImageText, TwoColBreakoutImageText, TwoColBreakoutImageHeading,
@@ -369,12 +397,9 @@ GridDev), WebDesignApproach (empty in Gatsby too), QuotesPpc.
   (`ConsentLoader` / `src/static/consent.js`), adds a Do-Not-Sell link in the
   footer, and dropped Mouseflow. Astro's `Layout.astro` still loads GTM
   unconditionally — must be ported before launch.
-- `/visibility-audit` (AI Audit lander) and `/wrapped_2024` render blank. The
-  "AI Audit" ACF group (`group_6984afb3574b1`) has `show_in_rest` off, so its
-  data isn't in REST yet.
-- Non-CMO landers (audit, full-service-digital-marketing ×2,
-  your-marketing-dream-team) build but render empty — their wrappers aren't
-  ported yet.
+- `/wrapped_2024` renders blank (hardcoded Gatsby component, not ported).
+- Non-CMO landers (full-service-digital-marketing ×2, your-marketing-dream-team)
+  build but render empty — their wrappers aren't ported yet.
 - `TwoColTextForm.astro` reuses `FormCTALayout.tsx`. If lander-specific
   `redirectForm` behavior is needed, port Gatsby's `FormLanders`.
 - `ImageCarousel` was Splide; now native scroll-snap + prev/next buttons (no

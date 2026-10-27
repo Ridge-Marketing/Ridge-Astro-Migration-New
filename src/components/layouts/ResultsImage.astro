@@ -39,7 +39,9 @@ const hasButton = !!(button?.link?.title || button?.link?.url);
 
 <Section settings={settings}>
   <Container container={settings.containerWidth} classes={`bg-rm-${content.backgroundColor || 'white'}`}>
-    <Container classes="px-8 py-16 xl:py-20 w-full mx-auto lg:w-[calc(100%-360px)] xl:w-[calc(100%-520px)] lg:ml-0">
+    <!-- lg:!ml-0 / xlz:!px-0: `!` so they beat the unlayered .container rule in
+         global.css (mx-auto, xl:!pl-12) — in Gatsby utilities won by default -->
+    <Container classes="px-8 py-16 xlz:!px-0 xl:py-20 w-full mx-auto lg:w-[calc(100%-360px)] xl:w-[calc(100%-520px)] lg:!ml-0">
       <div class="lg:flex">
         <div class="lg:w-3/4 lg:max-w-[80%] xl:pr-24">
           {content.heading && (
@@ -109,7 +111,19 @@ const hasButton = !!(button?.link?.title || button?.link?.url);
 
   {image?.source_url && (
     <div class="relative w-full lg:absolute top-0 lg:top-60 right-0 lg:max-w-[450px] xl:max-w-[600px] 2xl:max-w-[700px]">
-      <WpImage src={image.source_url} alt={image.alt_text || ''} />
+      {image.source_url.endsWith('.svg') || !image.width ? (
+        <img src={image.source_url} alt={image.alt_text || ''} class="mx-auto" loading="lazy" />
+      ) : (
+        <WpImage
+          src={image.source_url}
+          alt={image.alt_text || ''}
+          width={image.width}
+          height={image.height}
+          responsive
+          sizes="(min-width: 1920px) 700px, (min-width: 1280px) 600px, (min-width: 1024px) 450px, 100vw"
+          class="w-full h-auto object-contain"
+        />
+      )}
     </div>
   )}
 </Section>

@@ -1,0 +1,48 @@
+---
+/**
+ * AI Audit callout — full-bleed background image behind a centered heading,
+ * sub-heading, body and buttons, which rise in when scrolled into view.
+ * Replaces Gatsby's auditLander/AuditCallout.js
+ */
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import AuditImage from './AuditImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data }             = Astro.props;
+const heading              = data.heading ?? false;
+const subHeading           = data.subHeading ?? false;
+const body                 = data.body ?? false;
+const componentButtonGroup = data.componentButtonGroup ?? [];
+const backgroundImage      = data.backgroundImage ?? false;
+---
+
+<section class="relative py-20 xl:py-28 overflow-hidden">
+  {backgroundImage && (
+    <div class="absolute inset-0 w-full h-full">
+      <AuditImage image={backgroundImage} class="absolute inset-0 w-full h-full object-cover" />
+    </div>
+  )}
+
+  <Container container="slim" classes="relative z-10">
+    <div class="audit-reveal flex flex-col gap-6 items-center text-center max-w-[1286px] mx-auto">
+      {heading && <h2 class={`${theme.text.H2} !leading-[1] text-black`} set:html={parser(heading)} />}
+      {subHeading && <p class={`${theme.text.H4} !leading-[36px] text-black max-w-[1110px]`} set:html={parser(subHeading)} />}
+      {body && <div class={`${theme.text.P_STD} text-black max-w-[1030px]`} set:html={parser(body)} />}
+      {componentButtonGroup.length > 0 && (
+        <div class="flex flex-wrap justify-center gap-4 mt-6">
+          {componentButtonGroup.map((button: any) => (
+            button?.componentButton?.link?.url && (
+              <Buttons content={button.componentButton} sectionBackground="paleTeal" />
+            )
+          ))}
+        </div>
+      )}
+    </div>
+  </Container>
+</section>

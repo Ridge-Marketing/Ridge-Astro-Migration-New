@@ -1,0 +1,37 @@
+---
+/**
+ * Shared thank-you page body (Finley + footer menu). Gatsby had four
+ * identical copies: thank-you, thank-you-landers, thank-you-marketing-dream
+ * and thank-you-audit — each route here is a thin wrapper around this.
+ */
+import Layout from '@/components/global/Layout.astro';
+import Container from '@/components/global/Container.astro';
+import FooterMenu from '@/components/global/FooterMenu.astro';
+import { theme } from '@/lib/theme';
+import { getGlobalSettings } from '@/lib/wp-client';
+
+const globalSettings = await getGlobalSettings().catch(() => null);
+const favicon        = globalSettings?.logos?.favicon?.source_url || '';
+---
+
+<Layout
+  seo={{ title: 'Thank You - Ridge Marketing' }}
+  favicon={favicon}
+  headerColor="white"
+  noindex
+>
+  <Container>
+    <div class="page404 !max-w-none !px-0">
+      <div class="grid lg:grid-cols-3 gap-10 lg:gap-4 items-center">
+        <div class="lg:col-span-2">
+          <h1>Thank you</h1>
+          <p class={theme.text.P_STD}>Finley’s already wagging his tail — looks like your message made it through! While he’s off trying to trade a sock for a treat, our team will be digging into your submission and getting back to you soon. Until then, feel free to sniff around some of our other pages — they’re almost as awesome as Finley.</p>
+        </div>
+        <div class="max-w-sm mx-auto lg:max-w-none lg:mx-0 lg:col-span-1">
+          <img src="/images/finley.png" alt="Finley, the Ridge Marketing office dog" class="w-full h-auto" />
+        </div>
+      </div>
+    </div>
+    <FooterMenu />
+  </Container>
+</Layout>

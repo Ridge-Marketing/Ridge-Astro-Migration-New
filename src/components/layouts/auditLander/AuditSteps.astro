@@ -1,0 +1,84 @@
+---
+/**
+ * AI Audit steps — section intro, then alternating pale-teal / white step
+ * cards: numbered circle, heading, body, sub-body and step image, with an
+ * icon row underneath. Cards rise in when scrolled into view.
+ * Replaces Gatsby's auditLander/AuditSteps.js
+ */
+import Container from '@/components/global/Container.astro';
+import AuditImage from './AuditImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+const heading  = data.heading ?? false;
+const body     = data.body ?? false;
+const steps    = data.steps ?? [];
+const imgClass = 'w-full max-w-[615px] xl:min-w-[615px] object-contain';
+const imgSizes = '(min-width: 1280px) 615px, 100vw';
+---
+
+<section class="pt-20 bg-rm-pale-teal">
+  <Container container="slim">
+    <div class="flex flex-col gap-6 text-center mb-16">
+      {heading && <h2 class={`${theme.text.H5} text-black`} set:html={parser(heading)} />}
+      {body && <div class={`${theme.text.H4_LTE} text-black max-w-[900px] mx-auto`} set:html={parser(body)} />}
+    </div>
+  </Container>
+
+  {steps.length > 0 && (
+    <div class="flex flex-col gap-20">
+      {steps.map((step: any, index: number) => (
+        <div class={index % 2 === 0 ? 'bg-rm-pale-teal' : 'bg-white py-20'}>
+          <Container>
+            <div class="flex flex-col gap-10 audit-reveal" style={`transition-delay: ${index * 0.2}s;`}>
+              <div class="flex flex-col xl:flex-row gap-8 xl:gap-11 justify-between items-center">
+                <div class="flex flex-col gap-6 items-center xl:items-start text-center xl:text-left xl:max-w-[620px]">
+                  <!-- Step number -->
+                  <div class="relative w-[49px] h-[49px] shrink-0">
+                    <div class="absolute inset-0 bg-black rounded-full"></div>
+                    <span class={`absolute inset-0 flex items-center justify-center ${theme.text.H4} text-white`}>{index + 1}.</span>
+                  </div>
+                  {step.heading && <h3 class={`${theme.text.H3} !text-[34px] text-black`}>{step.heading}</h3>}
+                  {step.body && <div class={`${theme.text.H4_LTE} text-black`} set:html={parser(step.body)} />}
+                  {step.subBody && <p class={`${theme.text.P_STD} text-black`} set:html={parser(step.subBody)} />}
+                </div>
+                {step.image && (
+                  <div class="mt-6 xl:mt-0 hidden xl:block">
+                    <AuditImage image={step.image} class={imgClass} sizes={imgSizes} />
+                  </div>
+                )}
+              </div>
+
+              {step.icons?.length > 0 && (
+                <div class="flex flex-col xl:flex-row flex-wrap xl:flex-nowrap gap-8 mt-4 items-center xl:items-start justify-center xl:justify-start">
+                  {step.icons.map((icon: any) => (
+                    <div class="flex flex-col items-center xl:items-start gap-4 xl:gap-6 text-center xl:text-left">
+                      {icon.icon && (
+                        <AuditImage image={icon.icon} class="w-[60px] h-[60px] object-contain" sizes="60px" />
+                      )}
+                      <div class="flex flex-col gap-4 text-black">
+                        {icon.heading && <h4 class={theme.text.H4}>{icon.heading}</h4>}
+                        {icon.body && <p class={theme.text.P_STD} set:html={parser(icon.body)} />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {step.image && (
+                <div class="mt-6 xl:mt-0 xl:hidden mx-auto">
+                  <AuditImage image={step.image} class={imgClass} sizes={imgSizes} />
+                </div>
+              )}
+            </div>
+          </Container>
+        </div>
+      ))}
+    </div>
+  )}
+</section>

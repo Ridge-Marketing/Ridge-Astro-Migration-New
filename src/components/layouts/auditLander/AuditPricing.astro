@@ -1,0 +1,66 @@
+---
+/**
+ * AI Audit pricing — intro, then a row of price boxes (the recommended one
+ * raised with a teal "Recommended" tab), then CTA buttons. Boxes rise in
+ * one after another when scrolled into view.
+ * Replaces Gatsby's auditLander/AuditPricing.js
+ */
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data }   = Astro.props;
+const heading    = data.heading ?? false;
+const body       = data.body ?? false;
+const priceBoxes = data.priceBoxes ?? [];
+const buttons    = data.componentButtonGroup ?? [];
+---
+
+<section id="pricing" class="py-20 bg-[#f3f9f9]">
+  <Container container="slim">
+    <div class="flex flex-col gap-6 text-center mb-16">
+      {heading && <h2 class={`${theme.text.H5} text-black`} set:html={parser(heading)} />}
+      {body && <div class={`${theme.text.H4_LTE} text-black max-w-[900px] mx-auto`} set:html={parser(body)} />}
+    </div>
+
+    {priceBoxes.length > 0 && (
+      <div class="flex flex-col xl:flex-row justify-center xl:flex-nowrap gap-[60px] xl:gap-7 items-center xl:items-end mb-12">
+        {priceBoxes.map((box: any, index: number) => (
+          <div
+            class={`audit-reveal flex flex-col p-8 xl:p-12 border border-[#cdcdcd] bg-white relative w-full xlz:min-w-[400px] xl:w-auto ${box.recommended ? 'pt-14 xl:-mt-6 xl:pt-16' : ''}`}
+            style={`transition-delay: ${index * 0.15}s;`}
+          >
+            {box.recommended && (
+              <div class="absolute -top-4 left-8 xl:left-1/2 xl:-translate-x-1/2 bg-rm-blog-blue px-6 py-2">
+                <span class="font-basic-sans text-[26px] leading-[36px] font-semibold text-white uppercase whitespace-nowrap">Recommended</span>
+              </div>
+            )}
+            <div class="flex flex-col gap-6">
+              <div class="flex flex-col">
+                {box.heading && <h3 class="font-stratos text-[50px] leading-[60px] font-bold text-black">{box.heading}</h3>}
+                {box.subHeading && <p class={`${theme.text.H4_LTE} !font-light text-black`}>{box.subHeading}</p>}
+              </div>
+              {box.body && <p class={`${theme.text.FOOTER} !font-light text-black`} set:html={parser(box.body)} />}
+              {box.price && <p class="text-[34px] font-bold font-basic-sans !leading-[1] text-black">{box.price}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {buttons.length > 0 && (
+      <div class="flex justify-center">
+        {buttons.map((button: any) => (
+          button?.componentButton?.link?.url && (
+            <Buttons content={button.componentButton} sectionBackground="paleGrey" />
+          )
+        ))}
+      </div>
+    )}
+  </Container>
+</section>

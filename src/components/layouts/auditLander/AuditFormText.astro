@@ -1,0 +1,69 @@
+---
+/**
+ * AI Audit form section — teal intro line, then intro copy + arrow
+ * checklist beside the "Get Your Custom Website Audit" form box.
+ * Replaces Gatsby's auditLander/AuditFormText.js
+ */
+import Container from '@/components/global/Container.astro';
+import FormAudit2026 from '@/components/global/FormAudit2026.tsx';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data }    = Astro.props;
+const mainBody    = data.mainBody ?? false;
+const listBody    = data.listBody ?? false;
+const listItems   = data.list ?? [];
+---
+
+<section id="form" class="bg-white">
+  <Container container="slim">
+    <div class="py-20 text-center">
+      {mainBody && (
+        <h2
+          class="font-stratos text-[30px] leading-[30px] md:text-40px md:leading-[58px] !font-light text-rm-blog-blue max-w-[1255px] mx-auto"
+          set:html={parser(mainBody)}
+        />
+      )}
+    </div>
+
+    <div class="flex flex-col xl:flex-row md:flex-wrap gap-12 pb-20">
+      <!-- Left column: intro copy + checklist -->
+      <div class="flex flex-col gap-6 flex-1 xl:max-w-[613px]">
+        {listBody && (
+          <p
+            class="font-light text-[2.125rem] leading-[2.5rem] text-black font-basic-sans text-center xl:text-left"
+            set:html={parser(listBody)}
+          />
+        )}
+        {listItems.length > 0 && (
+          <div class="flex flex-col gap-8 mt-4 max-w-[350px] xl:max-w-full xl:w-full self-center">
+            {listItems.map((item: any) => (
+              <div class="flex items-center gap-4">
+                <svg class="w-6 h-6 shrink-0 text-rm-blog-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+                <span class={`${theme.text.H4} text-black`}>{item.item}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- Right column: form box -->
+      <div class="xl:w-[625px] shrink-0 sm:px-4">
+        <div class="bg-[#f6f8ef] p-8 xl:px-12 xl:pt-7 xl:pb-9" style="box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.2);">
+          <div class="flex flex-col gap-2 mb-2">
+            <h2 class={`${theme.text.H3} !text-[34px] text-rm-blog-blue`}>Get Your Custom Website Audit</h2>
+            <p class={`${theme.text.P_STD} text-black`}>Share your details below and we'll customize an audit plan for your goals.</p>
+          </div>
+          <FormAudit2026 client:visible classes="w-full" submitLabel="Request My Audit" redirectForm />
+        </div>
+      </div>
+    </div>
+  </Container>
+  <hr class="container xl:max-w-[1224px] mt-12 pb-12" />
+</section>

@@ -7,6 +7,8 @@ import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import { theme } from '@/lib/theme';
 import { resolveImage } from '@/lib/wp-client';
+import { vimeoEmbedUrl, getVimeoThumbnail } from '@/lib/vimeo';
+import PlayIcon from '@/components/global/PlayIcon.astro';
 
 interface Props {
   layoutData: {
@@ -19,24 +21,30 @@ const { layoutData } = Astro.props;
 const content   = layoutData.layoutContent  || {};
 const settings  = layoutData.layoutSettings || {};
 
+// No placeholder in the CMS → Vimeo's own poster frame (Gatsby always
+// mounted the player, which showed it; our iframe only loads on click).
+// Autoplaying videos load straight away, so they don't need one.
 const videos = await Promise.all(
-  (content.videos || []).map(async (v: any) => ({
-    source     : v.source || '',
-    caption    : v.caption || '',
-    autoplay   : !!v.autoplay,
-    placeholder: await resolveImage(v.placeholder),
-  }))
+  (content.videos || []).map(async (v: any) => {
+    const placeholder = await resolveImage(v.placeholder);
+    const vimeoThumb  = placeholder?.source_url || v.autoplay ? null : await getVimeoThumbnail(v.source);
+    return {
+      source     : v.source || '',
+      caption    : v.caption || '',
+      autoplay   : !!v.autoplay,
+      placeholder: placeholder?.source_url
+        ? placeholder
+        : vimeoThumb && { source_url: vimeoThumb.url, alt_text: vimeoThumb.title, width: vimeoThumb.width, height: vimeoThumb.height },
+    };
+  })
 );
 
+// Player URL (keeps the ?h= privacy hash unlisted videos need); autoplaying
+// videos play muted, looped, without controls. The rest only load on click,
+// so they start playing straight away (Gatsby: one click to play)
 function vimeoEmbed(url: string, autoplay = false): string {
-  const m = url?.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  const id = m ? m[1] : '';
-  if (!id) return url;
-  const params: string[] = [];
-  if (autoplay) {
-    params.push('autoplay=1', 'muted=1', 'loop=1', 'controls=0');
-  }
-  return `https://player.vimeo.com/video/${id}${params.length ? `?${params.join('&')}` : ''}`;
+  const params: Record<string, number> = autoplay ? { autoplay: 1, muted: 1, loop: 1, controls: 0 } : { autoplay: 1 };
+  return vimeoEmbedUrl(url, params) || url;
 }
 
 const main = videos[0];
@@ -72,18 +80,15 @@ const thumbs = videos.slice(0, 3); // matches "if (index < 3)" cap
             title="Video"
           />
           {!main.autoplay && (
-            <button
-              type="button"
-              class="absolute top-0 left-0 w-full h-full z-30 flex items-center justify-center text-white video-player__play"
-              aria-label="Play video"
-            >
-              <span class="rounded-full">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" aria-hidden="true">
-                  <circle cx="40" cy="40" r="40" fill="white" fill-opacity="0.85" />
-                  <path d="M33 26 L57 40 L33 54 Z" fill="black" />
-                </svg>
-              </span>
-            </button>
+            <div class="absolute top-0 left-0 w-full h-full z-30 flex flex-col items-center justify-center text-rm-white video-player__play">
+              <button
+                type="button"
+                class="relative rounded-full shadow-none transition-shadow hover:shadow-block video-player__play-btn"
+                aria-label="Play video"
+              >
+                <PlayIcon />
+              </button>
+            </div>
           )}
         </div>
         {main.caption && (
@@ -127,7 +132,8 @@ const thumbs = videos.slice(0, 3); // matches "if (index < 3)" cap
 
     const iframe  = root.querySelector<HTMLIFrameElement>('.video-player__iframe');
     const thumb   = root.querySelector<HTMLImageElement>('.video-player__thumb');
-    const play    = root.querySelector<HTMLButtonElement>('.video-player__play');
+    const play    = root.querySelector<HTMLElement>('.video-player__play');
+    const playBtn = root.querySelector<HTMLButtonElement>('.video-player__play-btn');
     const picks   = root.querySelectorAll<HTMLElement>('.video-player__pick');
 
     function loadIndex(i: number) {
@@ -139,7 +145,7 @@ const thumbs = videos.slice(0, 3); // matches "if (index < 3)" cap
       play?.remove();
     }
 
-    play?.addEventListener('click', () => loadIndex(0));
+    playBtn?.addEventListener('click', () => loadIndex(0));
     picks.forEach((p) => {
       const i = Number(p.dataset.index);
       const handler = () => loadIndex(i);

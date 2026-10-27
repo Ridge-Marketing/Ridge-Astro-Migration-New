@@ -8,6 +8,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { Input, PhoneInput, TextArea, Select, CheckboxGroup } from './FormFields';
 
 interface FormLander2026Props {
   classes?: string;
@@ -27,12 +28,6 @@ const INTERESTS = [
   'Video Production',
 ];
 
-const inputClasses =
-  'font-basic-sans border-b border-solid border-black min-h-[30px] w-full py-2 bg-transparent text-black text-[21px] font-light leading-[28px] focus:outline-none placeholder:text-black placeholder:font-light';
-
-const selectClasses =
-  'font-basic-sans border-b border-solid border-black min-h-[30px] w-full py-2 bg-transparent text-black text-[21px] font-light leading-[28px] focus:outline-none appearance-none';
-
 const btnBase =
   'inline-block text-21px font-stratos uppercase py-3 px-16 text-center font-normal border-2 border-solid transition-all ease-in-out cursor-pointer min-w-[210px]';
 const btnStyle =
@@ -44,7 +39,10 @@ export default function FormLander2026({
   btnContainerClasses = '',
   redirectForm = true,
 }: FormLander2026Props) {
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
+  // Hero email capture can prefill these; keep their labels lifted when it does
+  const prefilledName  = !!watch('name');
+  const prefilledEmail = !!watch('email');
   const [status, setStatus]       = useState<string | false>(false);
   const [step, setStep]           = useState(1);
   const [savedData, setSavedData] = useState<any>({});
@@ -160,18 +158,11 @@ export default function FormLander2026({
             </div>
           )}
           <div className="flex flex-wrap xl:gap-x-7">
-            <span className="mb-6 block w-full xl:w-[calc(50%-28px)]">
-              <input {...register('name', { required: true })} type="text" placeholder="Full Name" className={inputClasses} />
-            </span>
-            <span className="mb-6 block w-full xl:w-[calc(50%-28px)]">
-              <input {...register('company', { required: true })} type="text" placeholder="Company" className={inputClasses} />
-            </span>
-            <span className="mb-6 block w-full xl:w-[calc(50%-28px)]">
-              <input {...register('email', { required: true })} type="email" placeholder="Email" className={inputClasses} />
-            </span>
-            <span className="mb-6 block w-full xl:w-[calc(50%-28px)]">
-              <input {...register('phone', { required: true })} type="tel" placeholder="Phone" className={inputClasses} />
-            </span>
+            {/* Sliding-label fields (Gatsby FormFields, boxed white style) */}
+            <span className="block w-full xl:w-[calc(50%-28px)]"><Input bg="white" register={register} errors={errors} required type="text" name="name" label="Full Name" textColor="black" fontWeight="light" filled={prefilledName} /></span>
+            <span className="block w-full xl:w-[calc(50%-28px)]"><Input bg="white" register={register} errors={errors} required type="text" name="company" label="Company" textColor="black" fontWeight="light" /></span>
+            <span className="block w-full xl:w-[calc(50%-28px)]"><Input bg="white" register={register} errors={errors} required type="email" name="email" label="Email" textColor="black" fontWeight="light" filled={prefilledEmail} /></span>
+            <span className="block w-full xl:w-[calc(50%-28px)]"><PhoneInput bg="white" register={register} errors={errors} required name="phone" label="Phone" textColor="black" fontWeight="light" /></span>
             <div className={`mt-10 mx-auto xl:ml-0 ${btnContainerClasses}`}>
               <button
                 className={`${status === 'processing' ? 'opacity-80' : ''} ${btnBase} ${btnStyle}`}
@@ -195,50 +186,10 @@ export default function FormLander2026({
               {errors.message && <p className="font-bold">Marketing goals is required</p>}
             </div>
           )}
-          <span className="mb-6 block">
-            <select {...register('companySize', { required: true })} className={selectClasses} defaultValue="">
-              <option value="" disabled>Company Size</option>
-              <option value="< 10 Employees">&lt; 10 Employees</option>
-              <option value="10-50 Employees">10-50 Employees</option>
-              <option value="50-250 Employees">50-250 Employees</option>
-              <option value="250+ Employees">250+ Employees</option>
-            </select>
-          </span>
-          <span className="mb-6 block">
-            <select {...register('companyRevenue', { required: true })} className={selectClasses} defaultValue="">
-              <option value="" disabled>Company Revenue</option>
-              <option value="< $10M">&lt; $10M</option>
-              <option value="$10M-$50M">$10M-$50M</option>
-              <option value="$50M-$1B">$50M-$1B</option>
-              <option value="$1B+">$1B+</option>
-            </select>
-          </span>
-          <fieldset className="mb-6 block">
-            <legend className="font-basic-sans font-light text-[21px] leading-[28px] text-black mb-3">
-              What are you interested in? (Select all that apply)
-            </legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-7 gap-y-2">
-              {INTERESTS.map((interest) => (
-                <label key={interest} className="font-basic-sans font-light text-[18px] leading-[26px] text-black flex items-center gap-3 cursor-pointer">
-                  <input
-                    {...register('interests', { required: true })}
-                    type="checkbox"
-                    value={interest}
-                    className="w-[18px] h-[18px] accent-[#A9CF38] shrink-0"
-                  />
-                  {interest}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <span className="mb-6 block">
-            <textarea
-              {...register('message', { required: true })}
-              placeholder="Tell us about your marketing goals"
-              className={`${inputClasses} min-h-[100px]`}
-              rows={4}
-            />
-          </span>
+          <span className="mb-6 block"><Select bg="white" register={register} errors={errors} required name="companySize" label="Company Size" options={['< 10 Employees', '10-50 Employees', '50-250 Employees', '250+ Employees']} textColor="black" fontWeight="light" /></span>
+          <span className="mb-6 block"><Select bg="white" register={register} errors={errors} required name="companyRevenue" label="Company Revenue" options={['< $10M', '$10M-$50M', '$50M-$1B', '$1B+']} textColor="black" fontWeight="light" /></span>
+          <span className="mb-6 block"><CheckboxGroup bg="white" register={register} errors={errors} required name="interests" label="What are you interested in? (Select all that apply)" options={INTERESTS} textColor="black" fontWeight="light" /></span>
+          <span className="mb-6 block"><TextArea bg="white" register={register} errors={errors} required name="message" label="Tell us about your marketing goals" textColor="black" fontWeight="light" /></span>
           <input type="hidden" {...register('urlSource')} />
           <div className={`mt-10 ${btnContainerClasses}`}>
             <button

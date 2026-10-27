@@ -8,6 +8,7 @@ import parser from "@/lib/parser";
 import { theme } from "@/lib/theme";
 import { getLanders, getLanderBySlug, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from "@/lib/wp-client";
 import PPCLanderWrapperCMO from "@/components/layouts/ppcLander/PPCLanderWrapperCMO.astro";
+import AuditLanderWrapper from "@/components/layouts/auditLander/AuditLanderWrapper.astro";
 
 export async function getStaticPaths() {
     const allLanders = await getLanders()
@@ -53,7 +54,11 @@ const accentColor       = lander.acf?.accent_color || '#A9CF38';
 const secondaryColor    = lander.acf?.secondary_color || '#000000';
 
 const isB2B             = lander.slug === 'b2b-marketing-agency' ? true : false
-const headerPosition    = isB2B ? 'sticky' : 'fixed'
+const isAudit           = uri === '/lander/audit/'
+const headerPosition    = isB2B || isAudit ? 'sticky' : 'fixed'
+
+// "AI Audit" ACF group (hero, form_text, steps, pricing…) on the lander's REST acf
+const aiAudit           = isAudit && lander.acf?.hero ? lander.acf : null
 
 
 ---
@@ -68,5 +73,8 @@ const headerPosition    = isB2B ? 'sticky' : 'fixed'
 >
     {isB2B && 
         <PPCLanderWrapperCMO acf={lander.acf} />
+    }
+    {aiAudit &&
+        <AuditLanderWrapper acf={aiAudit} />
     }
 </Layout>

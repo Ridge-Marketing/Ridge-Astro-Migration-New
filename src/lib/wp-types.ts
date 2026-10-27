@@ -218,6 +218,8 @@ export interface WpMenuItem {
   url: string;
   parent: number;
   menu_order: number;
+  /** CSS classes set on the item in WP (e.g. "menu-break" starts a new footer-menu column) */
+  classes?: string[];
   acf?: {
     icon?: WpImage;
   };

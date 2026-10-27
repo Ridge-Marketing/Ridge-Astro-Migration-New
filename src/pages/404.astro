@@ -1,32 +1,37 @@
 ---
 /**
- * 404 page
+ * 404 page — Finley stole your page, plus the footer menu as a way back in.
+ * Replaces Gatsby's src/pages/404.js
  */
 import Layout from '@/components/global/Layout.astro';
 import Container from '@/components/global/Container.astro';
+import FooterMenu from '@/components/global/FooterMenu.astro';
+import { theme } from '@/lib/theme';
 import { getGlobalSettings } from '@/lib/wp-client';
 
 const globalSettings = await getGlobalSettings().catch(() => null);
-const favicon = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+const favicon        = globalSettings?.logos?.favicon?.source_url || '';
 ---
 
 <Layout
   seo={{ title: '404 - Page Not Found | Ridge Marketing' }}
   favicon={favicon}
   headerColor="white"
+  noindex
 >
   <Container>
-    <div class="page404">
-      <h1>Page Not Found</h1>
-      <p class="font-basic-sans font-light text-21px leading-28px">
-        The page you're looking for doesn't exist or has been moved.
-      </p>
-      <a
-        href="/"
-        class="inline-block text-21px font-stratos uppercase py-3 px-16 text-center font-normal border-2 border-solid transition-all ease-in-out text-rm-black border-rm-green bg-rm-green hover:bg-rm-black hover:text-rm-white hover:border-rm-black mt-8"
-      >
-        Go Home
-      </a>
+    <div class="page404 !max-w-none !px-0">
+      <div class="grid lg:grid-cols-3 gap-10 lg:gap-4 items-center">
+        <div class="lg:col-span-2">
+          <p class={theme.text.H4}>Page Not Found</p>
+          <h1>We’re sorry, the dog stole your page…</h1>
+          <p class={theme.text.P_STD}>Finley can be a mischievous little dog when it comes to socks, rocks and web pages, but we’re sure he’ll bring it back soon. In the meantime, please try one of these equally awesome pages instead…</p>
+        </div>
+        <div class="max-w-sm mx-auto lg:max-w-none lg:mx-0 lg:col-span-1">
+          <img src="/images/finley.png" alt="Finley, the Ridge Marketing office dog" class="w-full h-auto" />
+        </div>
+      </div>
     </div>
+    <FooterMenu />
   </Container>
 </Layout>

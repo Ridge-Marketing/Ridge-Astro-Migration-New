@@ -6,17 +6,12 @@
  */
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { Input, PhoneInput, TextArea, Select } from './FormFields';
 
 interface FormContactPageProps {
   classes?: string;
   submitLabel?: string;
 }
-
-const inputClasses =
-  'font-basic-sans border-b border-solid border-black min-h-[30px] w-full py-2 bg-transparent text-black text-[21px] font-light leading-[28px] focus:outline-none placeholder:text-black placeholder:font-light';
-
-const selectClasses =
-  'font-basic-sans border-b border-solid border-black min-h-[30px] w-full py-2 bg-transparent text-black text-[21px] font-light leading-[28px] focus:outline-none appearance-none';
 
 const btnBase =
   'inline-block text-21px font-stratos uppercase py-3 px-16 text-center font-normal border-2 border-solid transition-all ease-in-out cursor-pointer min-w-[210px]';
@@ -134,21 +129,12 @@ export default function FormContactPage({ classes = '', submitLabel = 'Submit' }
               {errors.message && <p className="font-bold">Marketing goals is required</p>}
             </div>
           )}
-          <span className="mb-6 block">
-            <input {...register('name', { required: true })} type="text" placeholder="Name" className={inputClasses} />
-          </span>
-          <span className="mb-6 block">
-            <input {...register('company', { required: true })} type="text" placeholder="Company" className={inputClasses} />
-          </span>
-          <span className="mb-6 block">
-            <input {...register('email', { required: true })} type="email" placeholder="Email" className={inputClasses} />
-          </span>
-          <span className="mb-6 block">
-            <input {...register('phone', { required: true })} type="tel" placeholder="Phone" className={inputClasses} />
-          </span>
-          <span className="mb-6 block">
-            <textarea {...register('message', { required: true })} placeholder="What are your marketing goals?" className={`${inputClasses} min-h-[100px]`} rows={4} />
-          </span>
+          {/* Sliding-label fields (Gatsby FormFields) */}
+          <span className="mb-6 block"><Input register={register} errors={errors} required type="text" name="name" label="Name" textColor="black" /></span>
+          <span className="mb-6 block"><Input register={register} errors={errors} required type="text" name="company" label="Company" textColor="black" /></span>
+          <span className="mb-6 block"><Input register={register} errors={errors} required type="email" name="email" label="Email" textColor="black" /></span>
+          <span className="mb-6 block"><PhoneInput register={register} errors={errors} required name="phone" label="Phone" textColor="black" /></span>
+          <span className="mb-6 block"><TextArea register={register} errors={errors} required name="message" label="What are your marketing goals?" textColor="black" /></span>
           <div className="mt-6">
             <button
               className={`${status === 'processing' ? 'opacity-80' : ''} ${btnBase} ${btnStyle}`}
@@ -176,28 +162,9 @@ export default function FormContactPage({ classes = '', submitLabel = 'Submit' }
               {errors.budget && <p className="font-bold">Budget is required</p>}
             </div>
           )}
-          <span className="mb-6 block">
-            <select {...register('companySize', { required: true })} className={selectClasses} defaultValue="">
-              <option value="" disabled>Company Size</option>
-              <option value="< 10 Employees">&lt; 10 Employees</option>
-              <option value="10-50 Employees">10-50 Employees</option>
-              <option value="50-250 Employees">50-250 Employees</option>
-              <option value="250+ Employees">250+ Employees</option>
-            </select>
-          </span>
-          <span className="mb-6 block">
-            <select {...register('companyRevenue', { required: true })} className={selectClasses} defaultValue="">
-              <option value="" disabled>Company Revenue</option>
-              <option value="Less than $5M">Less than $5M</option>
-              <option value="$5M-$50M">$5M-$50M</option>
-              <option value="$50M-250M">$50M-250M</option>
-              <option value="$250M-$1B">$250M-$1B</option>
-              <option value="$1B+">$1B+</option>
-            </select>
-          </span>
-          <span className="mb-6 block">
-            <input {...register('budget', { required: true })} type="text" placeholder="Budget" className={inputClasses} />
-          </span>
+          <span className="mb-6 block"><Select register={register} errors={errors} required name="companySize" label="Company Size" options={['< 10 Employees', '10-50 Employees', '50-250 Employees', '250+ Employees']} textColor="black" fontWeight="light" /></span>
+          <span className="mb-6 block"><Select register={register} errors={errors} required name="companyRevenue" label="Company Revenue" options={['Less than $5M', '$5M-$50M', '$50M-250M', '$250M-$1B', '$1B+']} textColor="black" fontWeight="light" /></span>
+          <span className="mb-6 block"><Input register={register} errors={errors} required type="text" name="budget" label="Budget" textColor="black" /></span>
           <div className="mt-6">
             <button
               className={`${status === 'processing' ? 'opacity-80' : ''} ${btnBase} ${btnStyle}`}

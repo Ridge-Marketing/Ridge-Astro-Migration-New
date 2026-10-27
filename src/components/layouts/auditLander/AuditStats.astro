@@ -1,0 +1,62 @@
+---
+/**
+ * AI Audit stats — white section: heading, body, intro line and a row of
+ * big green stats that scale in when scrolled into view.
+ * Replaces Gatsby's auditLander/AuditStats.js as rendered on the audit pages
+ * (cmo off). The carbon "cmo" variant used as a flexible layout lives in
+ * layouts/AuditStats.astro.
+ */
+import Container from '@/components/global/Container.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+const heading  = data.heading ?? false;
+const body     = data.body ?? false;
+const subBody  = data.subBody ?? false;
+const stats    = data.stats ?? [];
+---
+
+<section class="bg-white py-20">
+  <Container container="none" classes="max-w-[1450px] mx-auto px-4">
+    <div class="flex flex-col gap-6 text-center mb-16">
+      {heading && (
+        <h2
+          class={`${theme.text.H5} !text-[34px] !leading-[1.1] !font-semibold lg:!text-[40px] lg:!leading-[44px] lg:!font-bold text-black`}
+          set:html={parser(heading)}
+        />
+      )}
+      {body && (
+        <div class={`text-black ${theme.text.H4_LTE} max-w-[1110px] mx-auto`} set:html={parser(body)} />
+      )}
+    </div>
+
+    {subBody && (
+      <div class="text-center mb-12">
+        <p class={`${theme.text.H3} !text-[34px] text-black`} set:html={parser(subBody)} />
+      </div>
+    )}
+
+    {stats.length > 0 && (
+      <div class="flex flex-col xl:flex-row gap-12 xl:gap-0 px-4 xl:px-0 items-center flex-nowrap justify-center">
+        {stats.map((stat: any, index: number) => (
+          <div class="audit-reveal audit-reveal--scale flex flex-col gap-4 text-center w-full md:w-[446px]" style={`transition-delay: ${index * 0.2}s;`}>
+            <div class="flex flex-col gap-3">
+              {stat.stat && (
+                <p class={`${theme.text.STATS} !text-[100px] md:!text-[120px] !leading-[1] text-rm-green tracking-[-6px]`}>{stat.stat}</p>
+              )}
+              {stat.heading && (
+                <p class={`${theme.text.H3} !text-[34px] md:!text-[50px] !leading-[1.1] md:!leading-H2-H3 text-black`}>{stat.heading}</p>
+              )}
+            </div>
+            {stat.subHeading && <p class={`${theme.text.H4_LTE} text-black`}>{stat.subHeading}</p>}
+          </div>
+        ))}
+      </div>
+    )}
+  </Container>
+</section>

@@ -5,6 +5,7 @@
  */
 import Container from '@/components/global/Container.astro';
 import WpImage from '@/components/global/WpImage.astro';
+import FlexibleMedia from '@/components/global/FlexibleMedia.astro';
 import { theme } from '@/lib/theme';
 import { parser } from '@/lib/parser';
 import { resolveImage, getServices, extractPath } from '@/lib/wp-client';
@@ -171,16 +172,16 @@ const isSvgBg       = typeof content.background_image === 'object' && content.ba
     {hasVideoOverhang && (
       <div class="project-header__overhang" data-overhang>
         {isVimeo ? (
-          <div class="relative w-full" style="padding-top:56.25%;">
-            <iframe
-              src={videoOverhang}
-              class="absolute inset-0 w-full h-full"
-              frameborder="0"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowfullscreen
-              title="Project video"
-            />
-          </div>
+          <!-- Same as Gatsby: FlexibleMedia with the overhang image as a click-to-play
+               thumbnail. It builds the player URL (vimeo.com links can't be iframed,
+               and unlisted ones need their ?h= hash). -->
+          <FlexibleMedia
+            data={{
+              type       : 'video',
+              videoSource: 'vimeo',
+              video      : { videoUrl: videoOverhang, thumbnailImage: imageOverhang },
+            }}
+          />
         ) : (
           <video
             preload="metadata"

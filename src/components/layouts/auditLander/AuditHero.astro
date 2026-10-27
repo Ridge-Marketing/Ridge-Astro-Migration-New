@@ -1,0 +1,89 @@
+---
+/**
+ * AI Audit hero — responsive background (large desktop / desktop / tablet /
+ * mobile), pre-heading, headline, body and buttons on the left, optional
+ * laptop graphic on the right.
+ * Replaces Gatsby's auditLander/AuditHero.js
+ */
+import Container from '@/components/global/Container.astro';
+import Buttons from '@/components/global/Buttons.astro';
+import AuditImage from './AuditImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data }             = Astro.props;
+const preHeading           = data.preHeading ?? false;
+const heading              = data.heading ?? false;
+const body                 = data.body ?? false;
+const graphic              = data.graphic ?? false;
+const componentButtonGroup = data.componentButtonGroup ?? [];
+const bgClass              = 'w-full h-full object-cover object-bottom';
+---
+
+<section class="relative min-h-[975px] md:min-h-[1115px] xl:min-h-min">
+  {data.largeDesktop && (
+    <div class="absolute !bottom-0 inset-0 hidden xl:block">
+      <AuditImage image={data.largeDesktop} alt="" class={bgClass} fetchPriority="high" quality={100} />
+    </div>
+  )}
+  {data.desktopBackground && (
+    <div class="absolute !bottom-0 inset-0 hidden lg:block xl:hidden">
+      <AuditImage image={data.desktopBackground} alt="" class={bgClass} />
+    </div>
+  )}
+  {data.tabletBackground && (
+    <div class="absolute inset-0 hidden sm:block lg:hidden">
+      <AuditImage image={data.tabletBackground} alt="" class={bgClass} />
+    </div>
+  )}
+  {data.mobileBackground && (
+    <div class="absolute inset-0 sm:hidden bottom-0">
+      <AuditImage image={data.mobileBackground} alt="" class={bgClass} />
+    </div>
+  )}
+
+  <Container container="default" classes="relative z-10">
+    <div class="flex flex-col xl:flex-row items-center xl:items-start gap-12 xl:gap-0 pt-12 md:py-20 min-h-[500px] xl:min-h-[642px]">
+
+      <!-- Left column: text -->
+      <div class="flex flex-col gap-6 xl:gap-9 xl:w-[677px] xl:pr-12 text-center xl:text-left">
+        {preHeading && (
+          <p class={`${theme.text.H4} !leading-[36px] text-rm-blog-blue`}>{preHeading}</p>
+        )}
+        <div class="flex flex-col gap-4">
+          {heading && (
+            <h1
+              class="font-stratos uppercase font-bold text-[50px] md:text-80px leading-[50px] md:leading-[80px] xl:text-100px xl:leading-[76px]"
+              set:html={parser(heading)}
+            />
+          )}
+          {body && (
+            <p class={`${theme.text.H5} !font-normal text-black`} set:html={parser(body)} />
+          )}
+        </div>
+        {componentButtonGroup.length > 0 && (
+          <div class="flex flex-wrap justify-center xl:justify-start gap-6 mt-2">
+            {componentButtonGroup.map((button: any) => (
+              button?.componentButton?.link?.url && (
+                <Buttons content={button.componentButton} sectionBackground="paleTeal" />
+              )
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- Right column: laptop graphic -->
+      <div class="relative flex-1 flex items-center justify-center xl:justify-end xl:absolute xl:right-0 xl:top-1/2 xl:-translate-y-1/2 xl:w-[55%] 2xl:w-[50%]">
+        {graphic && (
+          <div class="relative w-full max-w-[500px] xl:max-w-none">
+            <AuditImage image={graphic} alt="" class="w-full object-contain" sizes="(min-width: 1280px) 55vw, 500px" />
+          </div>
+        )}
+      </div>
+    </div>
+  </Container>
+</section>

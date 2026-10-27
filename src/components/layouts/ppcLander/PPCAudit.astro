@@ -23,7 +23,9 @@ interface Props {
 const { acf } = Astro.props
 const heading         = acf.heading ?? false
 const subHeading      = acf.sub_heading ?? false
-const body            = acf.body ?? false
+// Optional chain so a missing body yields false instead of throwing on .replace();
+// <br>s become spaces so words don't run together
+const body            = acf.body?.replace(/\s*<br\s*\/?>\s*/gi, ' ').trim() || false
 const list            = acf.list ?? false
 const componentButton = acf.component__button ?? false
 

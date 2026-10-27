@@ -1,0 +1,62 @@
+---
+/**
+ * AI Audit logos — intro above a 30s CSS marquee of logos with white edge
+ * fades (the set is rendered twice and translated -50%).
+ * Replaces Gatsby's auditLander/AuditLogos.js
+ */
+import Container from '@/components/global/Container.astro';
+import AuditImage from './AuditImage.astro';
+import { theme } from '@/lib/theme';
+import { parser } from '@/lib/parser';
+
+interface Props {
+  data: any;
+}
+
+const { data }  = Astro.props;
+const heading   = data.heading ?? false;
+const body      = data.body ?? false;
+const logos     = (data.logos ?? []).filter((logo: any) => logo?.image);
+const allLogos  = [...logos, ...logos];
+---
+
+<section class="pb-20">
+  <Container container="slim">
+    <div class="flex flex-col gap-6 text-center mb-8 pt-20 border-t border-t-[#CDCDCD]">
+      {heading && <h2 class={`${theme.text.H5} text-black`} set:html={parser(heading)} />}
+      {body && <div class={`${theme.text.H4_LTE} text-black max-w-[1100px] mx-auto`} set:html={parser(body)} />}
+    </div>
+  </Container>
+
+  {logos.length > 0 && (
+    <div class="w-full relative overflow-hidden max-w-[1450px] mx-auto">
+      <div aria-hidden="true" class="w-[200px] h-full absolute left-0 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
+      <div aria-hidden="true" class="w-[200px] h-full absolute right-0 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
+
+      <div class="audit-logos-track flex" style="width: fit-content;">
+        {allLogos.map((logo: any, index: number) => (
+          <div class="h-[110px] w-[180px] flex-shrink-0 flex items-center justify-center mx-8" aria-hidden={index >= logos.length ? 'true' : undefined}>
+            <AuditImage image={logo.image} class="max-w-[180px] max-h-[80px] object-contain" sizes="180px" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</section>
+
+<style>
+  @keyframes auditLogosScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .audit-logos-track {
+    animation: auditLogosScroll 30s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .audit-logos-track {
+      animation: none;
+    }
+  }
+</style>

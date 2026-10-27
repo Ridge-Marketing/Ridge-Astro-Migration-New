@@ -9,6 +9,7 @@ import PageHeader from '@/components/layouts/PageHeader.astro';
 import PortfolioHeader from '@/components/layouts/PortfolioHeader.astro';
 import PageHeaderResponsive from '@/components/layouts/PageHeaderResponsive.astro';
 import Container from '@/components/global/Container.astro';
+import AuditLanderWrapper from '@/components/layouts/auditLander/AuditLanderWrapper.astro';
 import { getPages, getGlobalSettings, extractPath, transformKeys } from '@/lib/wp-client';
 
 export async function getStaticPaths() {
@@ -76,6 +77,10 @@ const showPageHeader    = pageHeader && !blackList.includes(title) && !isPageHea
 const isTermsOrPrivacy  = title === 'Terms and Conditions' || title === 'Privacy Policy';
 const is404             = title === '404';
 
+// /visibility-audit/ is the AI Audit lander (Gatsby: page.js renders only
+// AuditLanderWrapper, sticky header) — "AI Audit" ACF group on the page's REST acf
+const aiAudit         = uri === '/visibility-audit/' && page.acf?.hero ? page.acf : null;
+
 // Accent colors
 const accentColor     = page.acf?.accent_color || '#A9CF38';
 const secondaryColor  = page.acf?.secondary_color || '#000000';
@@ -97,10 +102,14 @@ if (title === 'Portfolio' && portfolioHeader && Object.keys(portfolioHeader).len
 <Layout
   seo={seo}
   favicon={favicon}
-  headerColor={headerColor}
+  headerColor={aiAudit ? 'black' : headerColor}
+  headerPosition={aiAudit ? 'sticky' : undefined}
   accentColor={accentColor}
   secondaryColor={secondaryColor}
 >
+  {aiAudit ? (
+    <AuditLanderWrapper acf={aiAudit} />
+  ) : (<>
   {pageHeaderResponsive && (
     <PageHeaderResponsive layoutData={pageHeaderResponsive} />
   )}
@@ -122,4 +131,5 @@ if (title === 'Portfolio' && portfolioHeader && Object.keys(portfolioHeader).len
   {flexibleLayouts.length > 0 && (
     <FlexibleLayouts layouts={flexibleLayouts} />
   )}
+  </>)}
 </Layout>

@@ -1,0 +1,82 @@
+---
+/**
+ * AI Audit lander — renders the "AI Audit" ACF group section by section.
+ * Used by /lander/audit/ and /visibility-audit/ (Gatsby: AuditLanderWrapper).
+ *
+ * Takes the record's raw REST `acf`. Sections get camelCase keys via
+ * transformKeys (preHeading, componentButtonGroup, priceBoxes…); image fields
+ * stay as-is (media ID or ACF image array) and are resolved by AuditImage.
+ */
+import AuditHero from './AuditHero.astro';
+import AuditFormText from './AuditFormText.astro';
+import AuditSteps from './AuditSteps.astro';
+import AuditPricing from './AuditPricing.astro';
+import AuditStats from './AuditStats.astro';
+import AuditLogos from './AuditLogos.astro';
+import AuditCallout from './AuditCallout.astro';
+import PPCTwoColContentCMO from '@/components/layouts/ppcLander/PPCTwoColContentCMO.astro';
+import { transformKeys } from '@/lib/wp-client';
+
+interface Props {
+  acf: any;
+}
+
+const { acf } = Astro.props;
+const data    = transformKeys(acf || {});
+// PPCTwoColContentCMO reads raw snake_case (video_text / checklist) — pass as-is
+const twoCol  = acf?.two_column_content;
+---
+
+{data.hero && <AuditHero data={data.hero} />}
+{data.formText && <AuditFormText data={data.formText} />}
+{(twoCol?.video_text || twoCol?.checklist) && <PPCTwoColContentCMO acf={twoCol} audit />}
+{data.steps && <AuditSteps data={data.steps} />}
+{data.pricing && <AuditPricing data={data.pricing} />}
+{data.stats && <AuditStats data={data.stats} />}
+{data.logos && <AuditLogos data={data.logos} />}
+{data.callout && <AuditCallout data={data.callout} />}
+
+<style is:global>
+  /* Gatsby wrapper: main { overflow: hidden } on these pages */
+  main {
+    overflow: hidden;
+  }
+
+  /* Scroll-in reveal (replaces framer-motion whileInView, once) */
+  .audit-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  }
+
+  .audit-reveal--scale {
+    transform: scale(0.8);
+  }
+
+  .audit-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .audit-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const revealItems = document.querySelectorAll<HTMLElement>('.audit-reveal');
+  if (revealItems.length) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+    revealItems.forEach((item) => observer.observe(item));
+  }
+</script>

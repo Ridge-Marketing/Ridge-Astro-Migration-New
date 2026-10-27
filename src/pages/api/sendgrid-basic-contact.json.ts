@@ -41,12 +41,26 @@ export const POST: APIRoute = async ({ request }) => {
     const sendGridRequest = {
       personalizations: [
         {
-          to: [{ email: 'dev@ridgemarketing.com', name: 'Andrea Quincy' }],
-          // cc omitted — SendGrid rejects an empty cc array
-          // cc: [
-          //   { email: 'rquincy@ridgemarketing.com', name: 'Rob Quincy' },
-          //   { email: 'dev@ridgemarketing.com', name: 'Developers' },
-          // ],
+          to: [
+              {
+                email: "aquincy@ridgemarketing.com", 
+                name: "Andrea Quincy"
+              }
+            ], 
+          cc: [
+            {
+              email:"rquincy@ridgemarketing.com", 
+              name:"Rob Quincy"
+            }, 
+            {
+              email:"dev@ridgemarketing.com", 
+              name:"Developers"
+            },
+            {
+              email:"chase@ridgemarketing.com", 
+              name:"Chase"
+            }
+          ],
           subject: `Ridge Site Lead - ${message.name}`,
           dynamic_template_data: {
             name: message.name,

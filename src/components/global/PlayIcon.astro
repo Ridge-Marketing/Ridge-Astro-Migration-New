@@ -1,0 +1,26 @@
+---
+/**
+ * Gatsby's Play icon (components/svg.js): outlined circle + triangle with a
+ * soft drop shadow. Takes currentColor. The filter id is unique per instance
+ * so several players on one page don't share (and lose) a filter.
+ */
+const filterId = `play-shadow-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<svg width="167" height="167" viewBox="0 0 167 167" fill="none" aria-hidden="true">
+  <g filter={`url(#${filterId})`}>
+    <path d="M112.699 78.6797L68.0117 51.5117C63.9492 49.4805 59.125 52.2734 59.125 56.8438V109.656C59.125 114.48 63.9492 117.273 68.0117 114.988L112.699 89.3438C117.016 87.0586 117.016 81.2188 112.699 78.6797ZM146.469 83.25C146.469 48.4648 118.285 20.2812 83.5 20.2812C48.7148 20.2812 20.5312 48.4648 20.5312 83.25C20.5312 118.035 48.7148 146.219 83.5 146.219C118.285 146.219 146.469 118.035 146.469 83.25ZM32.7188 83.25C32.7188 55.3203 55.3164 32.4688 83.5 32.4688C111.43 32.4688 134.281 55.3203 134.281 83.25C134.281 111.434 111.43 134.031 83.5 134.031C55.3164 134.031 32.7188 111.434 32.7188 83.25Z" fill="currentColor" />
+  </g>
+  <defs>
+    <filter id={filterId} x="0.53125" y="0.28125" width="165.938" height="165.938" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+      <feOffset />
+      <feGaussianBlur stdDeviation="10" />
+      <feComposite in2="hardAlpha" operator="out" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0" />
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
+    </filter>
+  </defs>
+</svg>

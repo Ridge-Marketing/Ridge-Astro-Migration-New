@@ -303,6 +303,7 @@ async function fetchMenuItems(menuIdOrSlug: string | number): Promise<WpMenuItem
       url: item.url,
       parent: item.parent || 0,
       menu_order: item.menu_order,
+      classes: item.classes || [],
       acf: item.acf,
       children: [],
     };
@@ -498,6 +499,18 @@ export async function resolveImage(image: any): Promise<any | null> {
   }
   // Already an object with source_url
   if (image.source_url || image.sourceUrl) return image;
+  // ACF "array" return format ({ ID, url, alt, width, height, mime_type }) —
+  // normalize to the media shape the components expect
+  if (image.url) {
+    return {
+      source_url: image.url,
+      alt_text  : image.alt || '',
+      mime_type : image.mime_type || '',
+      width     : image.width,
+      height    : image.height,
+    };
+  }
+  if (typeof image.ID === 'number') return getMediaById(image.ID);
   return null;
 }
 

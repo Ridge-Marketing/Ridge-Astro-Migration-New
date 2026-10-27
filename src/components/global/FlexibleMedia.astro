@@ -16,6 +16,8 @@
 import WpImage from '@/components/global/WpImage.astro';
 import { theme } from '@/lib/theme';
 import { resolveImage } from '@/lib/wp-client';
+import { vimeoEmbedUrl, getVimeoThumbnail } from '@/lib/vimeo';
+import PlayIcon from '@/components/global/PlayIcon.astro';
 
 interface Props {
   data: any;
@@ -43,6 +45,14 @@ const isVimeo     = isVideo && videoSource === 'vimeo';
 
 const thumb       = isVimeo ? await resolveImage(video?.thumbnailImage) : null;
 
+// No thumbnail set in WP → use Vimeo's own poster frame (oEmbed, build time).
+// If that's unavailable too, load the player right away like Gatsby did, so
+// the box is never empty.
+const vimeoThumb  = isVimeo && !thumb?.source_url ? await getVimeoThumbnail(video?.videoUrl) : null;
+const thumbSrc    = thumb?.source_url || vimeoThumb?.url || '';
+const thumbAlt    = thumb?.alt_text || vimeoThumb?.title || '';
+const playerSrc   = isVimeo && !thumbSrc ? vimeoEmbedUrl(video?.videoUrl) : null;
+// Unique per instance — several players can share a page
 // File-video flags
 const showControls  = !video || !video.controls || video.controls !== 'Hide';
 const autoplay     = video?.autoplay === 'Yes';
@@ -106,26 +116,38 @@ const lottieSrc    = isLottie ? data.lottie : '';
         style={`padding-top:${ratio};`}
         data-vimeo-url={video.videoUrl}
       >
-        {thumb?.source_url && (
+        {thumbSrc && (
           <div class="absolute top-0 left-0 w-full h-full z-30 flex flex-col items-center justify-center flexible-media-vimeo-thumb">
             <img
-              src={thumb.source_url}
-              alt={thumb.alt_text || ''}
+              src={thumbSrc}
+              alt={thumbAlt}
               class="absolute top-0 left-0 w-full h-full object-cover"
               loading="eager"
             />
           </div>
         )}
-        <button
-          type="button"
-          class="absolute inset-0 z-40 flex items-center justify-center text-white flexible-media-play"
-          aria-label="Play video"
-        >
-          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" aria-hidden="true">
-            <circle cx="40" cy="40" r="40" fill="white" fill-opacity="0.85" />
-            <path d="M33 26 L57 40 L33 54 Z" fill="black" />
-          </svg>
-        </button>
+        {playerSrc ? (
+          <iframe
+            src={playerSrc}
+            class="absolute top-0 left-0 w-full h-full"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowfullscreen
+            loading="lazy"
+            title={thumbAlt || 'Video'}
+          />
+        ) : (
+        <!-- Gatsby's Play icon (components/svg.js) in its white, round,
+             shadow-on-hover button -->
+        <div class="absolute top-0 left-0 w-full h-full z-40 flex flex-col items-center justify-center text-rm-white flexible-media-play-wrap">
+          <button
+            type="button"
+            class="relative rounded-full shadow-none transition-shadow hover:shadow-block flexible-media-play"
+            aria-label="Play video"
+          >
+            <PlayIcon />
+          </button>
+        </div>
+        )}
       </div>
       {data.caption && (
         <p class={`mt-2 ${theme.text.P_STD} max-w-[1120px] mx-auto`}>{data.caption}</p>
@@ -135,6 +157,7 @@ const lottieSrc    = isLottie ? data.lottie : '';
 </div>
 
 <script>
+  import { vimeoEmbedUrl } from '@/lib/vimeo';
   import lottie from 'lottie-web';
 
   // Lottie animations
@@ -169,10 +192,8 @@ const lottieSrc    = isLottie ? data.lottie : '';
     const url = root.dataset.vimeoUrl;
     if (!button || !url) return;
     button.addEventListener('click', () => {
-      // Build a vimeo embed URL with autoplay
-      let embed = url;
-      const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-      if (m) embed = `https://player.vimeo.com/video/${m[1]}?autoplay=1`;
+      // Player URL with autoplay; keeps the ?h= privacy hash unlisted videos need
+      const embed = vimeoEmbedUrl(url, { autoplay: 1 }) || url;
       const iframe = document.createElement('iframe');
       iframe.src = embed;
       iframe.className = 'absolute top-0 left-0 w-full h-full';
@@ -180,7 +201,7 @@ const lottieSrc    = isLottie ? data.lottie : '';
       iframe.setAttribute('allowfullscreen', '');
       const thumb = root.querySelector('.flexible-media-vimeo-thumb');
       thumb?.remove();
-      button.remove();
+      root.querySelector('.flexible-media-play-wrap')?.remove();
       root.appendChild(iframe);
     });
   });

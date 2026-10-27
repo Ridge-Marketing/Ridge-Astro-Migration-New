@@ -34,10 +34,18 @@ const {
   b2bHeader       = false,
 } = Astro.props;
 
+// Per-record accent colors as CSS custom properties on <html>, so the global
+// .accent-text / .secondary-text rules (global.css) pick them up in every
+// component on the page — Gatsby's ThemeContext did this site-wide
+const themeVars = [
+  accentColor ? `--accentColor: ${accentColor};` : '',
+  secondaryColor ? `--secondaryColor: ${secondaryColor};` : '',
+].join(' ').trim();
+
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" style={themeVars || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

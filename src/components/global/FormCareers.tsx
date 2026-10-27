@@ -5,6 +5,7 @@
  */
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Input, TextArea } from './FormFields';
 
 interface FormCareersProps {
   classes?: string;
@@ -30,12 +31,7 @@ export default function FormCareers({
   } = useForm();
   const [status, setStatus] = useState<string | false>(false);
 
-  const isLight = textColor === 'white' || textColor === 'rm-white';
-  const borderCol = isLight ? 'border-white' : 'border-black';
-  const txtCol = isLight ? 'text-white' : 'text-black';
-  const placeholderCol = isLight ? 'placeholder:text-white' : 'placeholder:text-black';
-
-  const inputClasses = `font-basic-sans border-b border-solid ${borderCol} min-h-[30px] w-full py-2 bg-transparent ${txtCol} text-[21px] font-light leading-[28px] focus:outline-none ${placeholderCol} placeholder:font-light`;
+  const fieldColor = textColor === 'black' || textColor === 'rm-black' ? 'black' : 'white';
 
   const onSubmit = async (data: any) => {
     setStatus('processing');
@@ -115,54 +111,13 @@ export default function FormCareers({
         </div>
       )}
 
-      <span className="block mb-6">
-        <input
-          {...register('name', { required: true })}
-          type="text"
-          placeholder="Name"
-          className={inputClasses}
-        />
-      </span>
-      <span className="block mb-6">
-        <input
-          {...register('email', { required: true })}
-          type="email"
-          placeholder="Email"
-          className={inputClasses}
-        />
-      </span>
-      <span className="block mb-6">
-        <input
-          {...register('phone', { required: true })}
-          type="tel"
-          placeholder="Phone"
-          className={inputClasses}
-        />
-      </span>
-      <span className="block mb-6">
-        <input
-          {...register('position', { required: true })}
-          type="text"
-          placeholder="Position Sought"
-          className={inputClasses}
-        />
-      </span>
-      <span className="block mb-6">
-        <input
-          {...register('portfolio')}
-          type="text"
-          placeholder="Portfolio or LinkedIn"
-          className={inputClasses}
-        />
-      </span>
-      <span className="block mb-6">
-        <textarea
-          {...register('message')}
-          placeholder="What would you bring to the Barn of Brands?"
-          className={`${inputClasses} min-h-[100px]`}
-          rows={4}
-        />
-      </span>
+      {/* Sliding-label fields (Gatsby FormFields); Gatsby wraps each in mb-2 */}
+      <span className="block mb-2"><Input register={register} errors={errors} required type="text" name="name" label="Name" textColor={fieldColor} /></span>
+      <span className="block mb-2"><Input register={register} errors={errors} required type="email" name="email" label="Email" textColor={fieldColor} /></span>
+      <span className="block mb-2"><Input register={register} errors={errors} required type="tel" name="phone" label="Phone" textColor={fieldColor} /></span>
+      <span className="block mb-2"><Input register={register} errors={errors} required type="text" name="position" label="Position Sought" textColor={fieldColor} /></span>
+      <span className="block mb-2"><Input register={register} errors={errors} type="text" name="portfolio" label="Portfolio or LinkedIn" textColor={fieldColor} /></span>
+      <span className="block"><TextArea register={register} errors={errors} name="message" label="What would you bring to the Barn of Brands" textColor={fieldColor} /></span>
 
       <div className="mt-6">
         <button

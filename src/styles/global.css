@@ -79,10 +79,14 @@
   --animate-textFadeIn: cycleIn 1s ease-out forwards;
   --animate-textFadeOut: cycleOut 1s ease-out forwards;
   --animate-slideUp: slideUp .75s ease-out forwards;
+
 }
 
 /* Max-width breakpoint variants (replaces extend.screens.-lg and -xl) */
 @custom-variant max-lg (@media (max-width: 1023px));
+/* Gatsby's '600' screen, used by CMS classes like 600:!pt-20. A variant, not a
+   breakpoint — breakpoints also add a .container max-width step. */
+@custom-variant 600 (@media (min-width: 600px));
 @custom-variant max-xl (@media (max-width: 1279px));
 
 /* ============================================
@@ -160,6 +164,9 @@
    (migrated from tailwind.config.js safelist)
    ============================================ */
 @source inline("!text-rm-ocean-teal opacity-25 lg:max-w-[650px] lg:max-w-[640px] !m-0 !pr-8 !pb-8 !pl-12 !py-12 bg-rm-green bg-rm-pale-grey bg-black bg-white bg-rm-pale-teal bg-rm-ocean-teal bg-rm-dark-grey bg-rm-black bg-rm-white text-rm-green text-rm-white text-rm-black text-white text-black text-center text-left text-right pt-0 pt-5 pt-6 pt-7 pt-8 pt-12 pt-16 pt-20 pt-24 pt-44 pb-0 pb-12 pb-16 pb-20 pb-24 pb-40 pb-60 md:pt-0 md:pt-20 md:pt-36 lg:pt-0 lg:pt-20 xl:pt-0 xl:pt-20 xl:pt-40 xl:pt-44 xl:p-24 xl:ml-24 -mb-12 md:-mb-32 overflow-hidden sm:p-1 sm:p-2 sm:p-3 sm:p-4 sm:p-5 sm:p-6 sm:p-8 sm:p-10 sm:p-12 md:p-1 md:p-2 md:p-3 md:p-4 md:p-5 md:p-6 md:p-8 md:p-10 md:p-12 lg:p-1 lg:p-2 lg:p-3 lg:p-4 lg:p-5 lg:p-6 lg:p-8 lg:p-10 lg:p-12 xl:p-1 xl:p-2 xl:p-3 xl:p-4 xl:p-5 xl:p-6 xl:p-8 xl:p-10 xl:p-12 p-1 p-2 p-3 p-4 p-5 p-6 p-8 p-10 p-12 pt-[56.25%] pt-[100%] hover:bg-rm-green hover:bg-rm-white hover:bg-rm-black hover:bg-white hover:bg-black hover:text-rm-green hover:text-rm-white hover:text-rm-black hover:text-white hover:text-black hover:border-rm-green hover:border-rm-white hover:border-rm-black hover:border-white hover:border-black border-rm-green border-rm-white border-rm-black border-white border-black bg-transparent font-stratos font-basic-sans font-stratos-lights font-bold font-semibold font-light font-normal uppercase inline-block inline block flex items-center justify-center text-21px text-18px text-26px text-30px text-40px text-45px text-50px text-55px text-60px text-80px text-100px text-120px text-160px leading-26px leading-28px leading-30px leading-32px leading-36px leading-44px leading-H2-H3 leading-PULL-Q leading-H1-m leading-H1 leading-120px leading-160px max-lg:after:transition-all max-lg:after:ease-out max-lg:after:inline-block max-lg:after:bg-contain max-lg:after:bg-center max-lg:after:bg-no-repeat max-lg:after:w-[20px] max-lg:after:h-[20px] max-lg:after:ml-2 max-lg:hover:after:translate-x-2 max-lg:before:hidden");
+/* Classes editors type into ACF "classes" fields (and Gatsby's safelist) —
+   Tailwind can't see them in source. Re-scan the CMS when new ones appear. */
+@source inline("!text-left 600:!pt-20 add-shadow-to-blocks barn-floated--text belowHomeHero bg-[#EFEEEE] bg-[#FFFAF4] bg-allshifts bg-white-black dark-play-buttons hidden leading-[3.73125rem] md:text-left mt-24 pb-10 pt-32 py-10 rowOrder text-[3.75rem] text-[60px] xs:pt-10 z-10");
 
 /* ============================================
    Base styles
@@ -205,6 +212,17 @@
 
 .container{
   @apply xl:!pl-12 xl:!pr-12 xl:max-w-[1280px] mx-auto
+}
+
+/* Tailwind's container utility adds a max-width step per breakpoint (1366,
+   1920…), which variants like md:container still get. Cap it at 1280 with
+   Gatsby's 3rem gutters so every container variant matches .container. */
+@utility container {
+  @media (width >= 1280px) {
+    max-width: 1280px;
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
 }
 
 /* Mobile Menu Height */
@@ -441,6 +459,11 @@ input:-internal-autofill {
    ============================================ */
 .max-960px {
   @apply max-w-[960px];
+}
+
+/* Section backgroundColor "whiteToBlack" (theme.backgroundColor → bg-white-black) */
+.bg-white-black {
+  background-image: linear-gradient(to bottom, #ffffff 0%, #ffffff 60%, #000000 60%, #000000 100%);
 }
 
 .bg-allshifts {
