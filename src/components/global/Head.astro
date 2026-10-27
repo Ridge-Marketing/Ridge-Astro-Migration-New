@@ -1,6 +1,11 @@
 ---
 /**
  * SEO head component — consumes Yoast REST API data (yoast_head_json)
+ *
+ * Yoast builds every URL on the CMS host (canonical, og:url, og:image,
+ * schema @ids), so they're mapped onto the site origin here — Gatsby's Head
+ * did the same. Absolute, so the uploads middleware doesn't make og:image
+ * relative (crawlers need the full URL).
  */
 interface Props {
   seo: any;
@@ -8,10 +13,25 @@ interface Props {
 }
 
 const { seo, favicon } = Astro.props;
+
+const siteOrigin = (Astro.site?.origin || 'https://ridgemarketing.com');
+const CMS_ORIGIN = /https?:\/\/(?:www\.)?cms\.ridgemarketing\.com/g;
+const toSite     = (url?: string) => url ? url.replace(CMS_ORIGIN, siteOrigin) : url;
+
+const canonical  = toSite(seo?.canonical);
+const ogUrl      = toSite(seo?.og_url) || canonical;
+const ogImage    = toSite(seo?.og_image?.[0]?.url);
+const twImage    = toSite(seo?.twitter_image);
+
+// JSON-LD from Yoast, on the site origin; "<" escaped so content can't close the tag
+const schema     = seo?.schema
+  ? toSite(JSON.stringify(seo.schema))!.replace(/</g, '\\u003c')
+  : null;
 ---
 
 {seo?.title && <title>{seo.title}</title>}
 {favicon && <link rel="icon" type="image/x-icon" href={favicon} />}
+{canonical && <link rel="canonical" href={canonical} />}
 
 <meta name="description" content={seo?.description || seo?.og_description || ''} />
 {seo?.title && <meta name="title" content={seo.title} />}
@@ -27,14 +47,17 @@ const { seo, favicon } = Astro.props;
 
 <!-- Open Graph -->
 <meta property="og:type" content={seo?.og_type || 'website'} />
-{seo?.og_url && <meta property="og:url" content={seo.og_url} />}
+{ogUrl && <meta property="og:url" content={ogUrl} />}
 {seo?.og_title && <meta property="og:title" content={seo.og_title} />}
 {seo?.og_description && <meta property="og:description" content={seo.og_description} />}
-{seo?.og_image?.[0]?.url && <meta property="og:image" content={seo.og_image[0].url} />}
+{ogImage && <meta property="og:image" content={ogImage} />}
 
 <!-- Twitter -->
 <meta property="twitter:card" content={seo?.twitter_card || 'summary_large_image'} />
-{seo?.og_url && <meta property="twitter:url" content={seo.og_url} />}
+{ogUrl && <meta property="twitter:url" content={ogUrl} />}
 {seo?.twitter_title && <meta property="twitter:title" content={seo.twitter_title} />}
 {seo?.twitter_description && <meta property="twitter:description" content={seo.twitter_description} />}
-{seo?.twitter_image && <meta property="twitter:image" content={seo.twitter_image} />}
+{twImage && <meta property="twitter:image" content={twImage} />}
+
+<!-- Structured data -->
+{schema && <script type="application/ld+json" set:html={schema} />}

@@ -51,9 +51,9 @@ const themeVars = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     {noindex
       ? <>
-          {/* Preview mode: shareable page, but no SEO data and no indexing */}
+          {/* Preview mode / thank-you / 404: no SEO data and no indexing, title only */}
           <meta name="robots" content="noindex" />
-          <Head seo={null} favicon={favicon} />
+          <Head seo={seo?.title ? { title: seo.title } : null} favicon={favicon} />
         </>
       : <Head seo={seo} favicon={favicon} />
     }

@@ -30,7 +30,7 @@ try {
 }
 
 export default defineConfig({
-  site: 'https://www.ridgemarketing.com',
+  site: 'https://ridgemarketing.com', // canonical host — www 301s to the apex
   output: 'static',
   adapter: netlify(),
   integrations: [react(), sitemap({

@@ -1,12 +1,16 @@
 ---
 /**
- * Individual blog lander pages
+ * Lander pages. Replaces Gatsby's lander.js template:
+ * b2b-marketing-agency → PPCLanderWrapperCMO, audit → AuditLanderWrapper,
+ * anything else → PageHeader + flexible layouts (e.g. full-service-digital-marketing).
  */
 
 import Layout from "@/components/global/Layout.astro";
 import parser from "@/lib/parser";
 import { theme } from "@/lib/theme";
-import { getLanders, getLanderBySlug, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from "@/lib/wp-client";
+import { getLanders, getGlobalSettings, extractPath, transformKeys } from "@/lib/wp-client";
+import FlexibleLayouts from "@/components/FlexibleLayouts.astro";
+import PageHeader from "@/components/layouts/PageHeader.astro";
 import PPCLanderWrapperCMO from "@/components/layouts/ppcLander/PPCLanderWrapperCMO.astro";
 import AuditLanderWrapper from "@/components/layouts/auditLander/AuditLanderWrapper.astro";
 
@@ -60,6 +64,14 @@ const headerPosition    = isB2B || isAudit ? 'sticky' : 'fixed'
 // "AI Audit" ACF group (hero, form_text, steps, pricing…) on the lander's REST acf
 const aiAudit           = isAudit && lander.acf?.hero ? lander.acf : null
 
+// Every other lander: page header + flexible layouts (Gatsby's default branch)
+const isDefault         = !isB2B && !isAudit
+const pageHeaderRaw     = isDefault ? lander.acf?.page_header : null
+const pageHeader        = pageHeaderRaw ? {
+  layoutContent : transformKeys(pageHeaderRaw.layout__content || pageHeaderRaw),
+  layoutSettings: transformKeys(pageHeaderRaw.layout__settings || {}),
+} : null
+const flexibleLayouts   = isDefault ? lander.acf?.layouts || [] : []
 
 ---
 <Layout
@@ -76,5 +88,11 @@ const aiAudit           = isAudit && lander.acf?.hero ? lander.acf : null
     }
     {aiAudit &&
         <AuditLanderWrapper acf={aiAudit} />
+    }
+    {pageHeader &&
+        <PageHeader layoutData={pageHeader} />
+    }
+    {flexibleLayouts.length > 0 &&
+        <FlexibleLayouts layouts={flexibleLayouts} />
     }
 </Layout>

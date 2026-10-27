@@ -325,8 +325,11 @@ All in `src/pages/api/`, `prerender = false`, named `*.json.ts`:
 
 ## PPC landers
 
-`src/pages/lander/[...slug].astro` → `PPCLanderWrapperCMO.astro` for B2B/CMO
-landers. Preview landers are excluded from the build entirely.
+`src/pages/lander/[...slug].astro` mirrors Gatsby's `lander.js`:
+`b2b-marketing-agency` → `PPCLanderWrapperCMO.astro`, `audit` →
+`AuditLanderWrapper`, every other lander → `PageHeader` + `FlexibleLayouts`
+(the full-service-digital-marketing landers). Preview landers are excluded
+from the build entirely.
 
 - Components: `PPCHeroCMO` (mobile) + `PPCHeroCMODesktop` with
   `PpcHeroQuickForm` / `PpcHeroEmailCapture` islands, `PPCTwoColContentCMO`,
@@ -358,9 +361,25 @@ landers. Preview landers are excluded from the build entirely.
 
 ---
 
+## SEO / head
+
+- `Head.astro` renders Yoast's `yoast_head_json`. Yoast builds every URL on
+  the CMS host, so canonical, og:url, twitter:url, og:image and the JSON-LD
+  schema are mapped to `Astro.site` (`https://ridgemarketing.com`, the apex;
+  www 301s to it). Keep them absolute — the uploads middleware would make a
+  bare CMS uploads URL relative, and crawlers need full URLs for og:image.
+- Canonical / og:url only render when Yoast provides them, so noindex pages
+  (`noindex` prop on `Layout`: preview posts, thank-you, 404) get just a
+  title + robots noindex.
+- `public/robots.txt` matches the Gatsby-generated one (allow all, sitemap
+  index, apex host).
+
 ## Status
 
-Build: 97 pages, zero unrecognized layouts (as of 2026-10-26).
+Build: 108 pages + `404.html`, zero unrecognized layouts (as of 2026-10-27).
+Every URL in production's sitemap (98) is built, and `dist/sitemap-0.xml`
+matches it 1:1 on the apex host. The extra 10 routes are landers, thank-you
+pages and `/wrapped_2024`, which the sitemap filter excludes on purpose.
 
 **Routes ported:** `/`, `/[...slug]`, `/blog`, `/blog/[slug]`,
 `/service/[slug]`, `/project/[slug]`, `/lander/[slug]`, `/404`, and the four
@@ -398,8 +417,22 @@ GridDev), WebDesignApproach (empty in Gatsby too), QuotesPpc.
   footer, and dropped Mouseflow. Astro's `Layout.astro` still loads GTM
   unconditionally — must be ported before launch.
 - `/wrapped_2024` renders blank (hardcoded Gatsby component, not ported).
-- Non-CMO landers (full-service-digital-marketing ×2, your-marketing-dream-team)
-  build but render empty — their wrappers aren't ported yet.
+  Production serves it (200), but it's out of the sitemap — port or redirect.
+- **AI Audit pages render empty / header-only** until "Show in REST API" is on
+  for the "AI Audit" ACF group (`group_6984afb3574b1`) and its location rule
+  covers page 8682. As of 2026-10-27 REST still returns only `page_header*`
+  for `/lander/audit/` and `/visibility-audit/`. `/visibility-audit/` is in the
+  production sitemap and in the main menu ("AI Search Audit" pill), so this
+  blocks launch.
+- **`/lander/your-marketing-dream-team/`** renders empty. Gatsby renders
+  `PpcLanderWrapper` (non-CMO) from the `Ridge2026PPC` ACF group, which isn't
+  exposed over REST (only `page_header_responsive` comes back), and the
+  non-CMO wrapper isn't ported. Needs the group in REST + a port.
+- **Build-time 429s**: back-to-back builds exhaust `getMediaById`'s retries
+  and the image silently drops (logged as `[getMediaById] media N
+  unavailable`). Check the build log for that line before deploying.
+  Batching media lookups (`/wp/v2/media?include=1,2,3&per_page=100`) would
+  cut the request count a lot.
 - `TwoColTextForm.astro` reuses `FormCTALayout.tsx`. If lander-specific
   `redirectForm` behavior is needed, port Gatsby's `FormLanders`.
 - `ImageCarousel` was Splide; now native scroll-snap + prev/next buttons (no
