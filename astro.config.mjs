@@ -17,7 +17,8 @@ const redirects  = Object.fromEntries(
 let previewSlugs = [];
 try {
   const res = await fetch(
-    'https://cms.ridgemarketing.com/wp-json/wp/v2/posts?per_page=100&_fields=slug,acf.additional_blog_fields'
+    // _build busts the CDN / WP Engine REST cache (see fresh() in wp-client.ts)
+    `https://cms.ridgemarketing.com/wp-json/wp/v2/posts?per_page=100&_fields=slug,acf.additional_blog_fields&_build=${Date.now().toString(36)}`
   );
   if (res.ok) {
     const posts  = await res.json();
@@ -84,7 +85,8 @@ export default defineConfig({
     },
   },
   image: {
-    domains: ['cms.ridgemarketing.com'],
+    // i.vimeocdn.com: Vimeo poster frames used when a video has no CMS placeholder
+    domains: ['cms.ridgemarketing.com', 'i.vimeocdn.com'],
   },
   redirects,
 });

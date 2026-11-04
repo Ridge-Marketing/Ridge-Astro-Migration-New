@@ -92,5 +92,35 @@ const themeVars = [
     </main>
 
     <Footer showCta={showFooterCta} landerData={landerData} />
+
+    <script>
+      // Start lazy images earlier than the browser would: native lazy-loading
+      // waits until an image is ~1–2.5k px away, which on long pages (and the
+      // image CDN's first transform) means it pops in on screen. Flip each
+      // lazy <img> to eager once it's within two viewports below (or one
+      // above) the screen. Covers images React islands render later too.
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const img = entry.target as HTMLImageElement;
+          img.loading = 'eager';
+          observer.unobserve(img);
+        }
+      }, { rootMargin: '100% 0px 200% 0px' });
+
+      const watch = (root: ParentNode) => {
+        root.querySelectorAll<HTMLImageElement>('img[loading="lazy"]').forEach((img) => observer.observe(img));
+      };
+
+      watch(document);
+      new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          m.addedNodes.forEach((node) => {
+            if (node instanceof HTMLImageElement && node.loading === 'lazy') observer.observe(node);
+            else if (node instanceof Element) watch(node);
+          });
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    </script>
   </body>
 </html>

@@ -27,6 +27,8 @@ const data    = transformKeys(acf || {});
 const twoCol  = acf?.two_column_content;
 ---
 
+<!-- Clips <main> on this page only (rule in global.css) — see the note there -->
+<span hidden data-clip-main></span>
 {data.hero && <AuditHero data={data.hero} />}
 {data.formText && <AuditFormText data={data.formText} />}
 {(twoCol?.video_text || twoCol?.checklist) && <PPCTwoColContentCMO acf={twoCol} audit />}
@@ -37,11 +39,6 @@ const twoCol  = acf?.two_column_content;
 {data.callout && <AuditCallout data={data.callout} />}
 
 <style is:global>
-  /* Gatsby wrapper: main { overflow: hidden } on these pages */
-  main {
-    overflow: hidden;
-  }
-
   /* Scroll-in reveal (replaces framer-motion whileInView, once) */
   .audit-reveal {
     opacity: 0;

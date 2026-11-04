@@ -60,11 +60,10 @@ try {
 }
 
 const textColor     = color === 'black' ? 'text-rm-white' : 'text-rm-black';
-let headerBgClass   = color === 'black' ? 'bg-black/70' : 'bg-white';
+// Gatsby's .header-color: a black header is 70% black over fixed-position
+// pages, but solid when sticky (B2B / audit landers, /visibility-audit/)
+const headerBgClass = color === 'black' ? (position === 'sticky' || isB2B ? 'bg-black' : 'bg-black/70') : 'bg-white';
 const headerPadding = color === 'black' ? 'hidden' : 'h-[100px]';
-if (isB2B) {
-  headerBgClass = 'bg-black'
-}
 ---
 
 <header

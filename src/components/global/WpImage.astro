@@ -28,6 +28,8 @@ interface Props {
   fetchPriority?: 'high' | 'low' | 'auto';
   style?: string;
   divHeight?: string;
+  /** Inline onload handler for the main image (e.g. fade in, drop a skeleton) */
+  onload?: string;
 }
 
 const {
@@ -42,7 +44,8 @@ const {
   quality = 80,
   fetchPriority,
   style,
-  divHeight = ''
+  divHeight = '',
+  onload
 } = Astro.props;
 
 // A high-priority image is meant to load right away, so don't lazy-load it
@@ -67,10 +70,15 @@ const imgWidth  = size?.width;
 const imgHeight = size?.height;
 const sized     = !passThrough && !!(imgWidth && imgHeight);
 
+// Blur placeholder: 32px wide (~1 KB) and stretched by CSS — the blur hides
+// the upscaling. Rendering it at full size, even at quality 1, was ~130 KB.
+const placeholderWidth  = 32;
+const placeholderHeight = sized ? Math.max(1, Math.round((placeholderWidth * imgHeight!) / imgWidth!)) : 0;
+
 ---
 
 {!sized ? (
-  <img src={src} alt={alt} class={className} style={style} loading={loading} fetchpriority={fetchPriority} />
+  <img src={src} alt={alt} class={className} style={style} loading={loading} fetchpriority={fetchPriority} onload={onload} />
 ) : responsive ? (<>
   <Image
     src={src}
@@ -85,18 +93,26 @@ const sized     = !passThrough && !!(imgWidth && imgHeight);
     style={style}
     quality={quality}
     format="webp"
+    onload={onload}
   />
 </>) : useInferSize ? (<>
   <div class={`relative overflow-hidden ${divHeight}`}>
+    {/* Blurred low-quality placeholder; the main image removes it once it has
+        loaded, so it can't show through transparent PNGs as a drop shadow.
+        Eager on purpose: it's tiny and has to be there before the main image —
+        <Image> defaults to lazy, so loading must be explicit. w-full/h-full
+        stretch the 32px file over the main image's box */}
     <Image
       src={src}
-      alt={alt}
-      width={imgWidth}
-      height={imgHeight}
-      class={`${className} blur-lg absolute top-0 left-0 opacity-30`}
-      loading={`lazy`}
-      quality={1}
+      alt=""
+      aria-hidden="true"
+      width={placeholderWidth}
+      height={placeholderHeight}
+      class={`${className} w-full h-full blur-lg absolute top-0 left-0 opacity-30`}
+      loading="eager"
+      quality={50}
       format="webp"
+      data-wp-placeholder
     />
     <Image
       src={src}
@@ -109,6 +125,7 @@ const sized     = !passThrough && !!(imgWidth && imgHeight);
       style={style}
       quality={quality}
       format="webp"
+      onload={`this.parentElement.querySelector('[data-wp-placeholder]')?.remove();${onload || ''}`}
     />
   </div>
 </>) : (
@@ -123,5 +140,6 @@ const sized     = !passThrough && !!(imgWidth && imgHeight);
     style={style}
     quality={quality}
     format="webp"
+    onload={onload}
   />
 )}

@@ -53,7 +53,9 @@ const faqSchema = faqItems.length > 0 ? JSON.stringify({
     </div>
   )}
 
-  <Container container={settings.containerWidth}>
+  {/* Always slim: Gatsby never queried containerWidth for this layout, so its
+     Container fell back to slim whatever the CMS says (matches production) */}
+  <Container container="slim">
     {content.title && (
       <h2 class={`${theme.text.H2} text-center mb-6 ${imageUrl ? 'pt-32' : ''}`}>
         {content.title}

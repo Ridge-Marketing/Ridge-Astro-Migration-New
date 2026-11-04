@@ -16,6 +16,17 @@ const WP_BASE = import.meta.env.WP_BASE_URL;
 const WP_API  = `${WP_BASE}/wp/v2`;
 const ACF_API = `${WP_BASE}/acf/v3`;
 
+// Cloudflare and WP Engine both cache REST GETs by exact URL (max-age 600, and
+// WP Engine's copy outlives that), so a build right after an edit can read the
+// old content. One cache-buster per build makes every build read fresh data;
+// the in-memory caches below still keep it to one fetch per URL per build.
+// Media lookups stay cacheable: their URLs/alt text rarely change, and there
+// are hundreds of them, so sending them all to the origin trips WP's 429s.
+const BUILD_ID = Date.now().toString(36);
+const fresh    = (url: string) => url.includes('/wp/v2/media')
+  ? url
+  : `${url}${url.includes('?') ? '&' : '?'}_build=${BUILD_ID}`;
+
 // ============================================
 // Utility: snake_case → camelCase key transform
 // ============================================
@@ -67,7 +78,7 @@ class WpApiError extends Error {
 async function fetchJSON<T>(url: string, retries = 5, authenticated = false): Promise<T> {
   const headers = authenticated ? authHeader : {};
   for (let attempt = 0; attempt < retries; attempt++) {
-    const res = await fetch(url, { headers });
+    const res = await fetch(fresh(url), { headers });
     if (res.ok) return res.json() as Promise<T>;
     if (RETRYABLE_STATUS.has(res.status) && attempt < retries - 1) {
       const delay = Math.pow(2, attempt + 1) * 1000;
@@ -90,7 +101,7 @@ async function fetchAllPaginated<T>(baseUrl: string, authenticated = false): Pro
 
   let firstRes: Response | null = null;
   for (let attempt = 0; attempt < 5; attempt++) {
-    firstRes = await fetch(firstPageUrl, { headers });
+    firstRes = await fetch(fresh(firstPageUrl), { headers });
     if (firstRes.ok) break;
     if (RETRYABLE_STATUS.has(firstRes.status) && attempt < 4) {
       await new Promise((r) => setTimeout(r, Math.pow(2, attempt + 1) * 1000));

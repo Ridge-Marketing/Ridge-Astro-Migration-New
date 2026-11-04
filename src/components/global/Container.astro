@@ -13,8 +13,8 @@ const { container = 'slim', classes = '' } = Astro.props;
 const sizes: Record<string, string> = {
   default: 'container mx-auto',
   slim: 'container xl:!max-w-[1224px] mx-auto',
-  // `!` needed: the unlayered .container rule in global.css (xl:max-w-[1280px])
-  // otherwise beats these layered utilities — same reason slim uses it
+  // `!` is a leftover from the old unlayered .container rule; harmless now that
+  // container is a layered @utility (see "Container" in CLAUDE.md)
   mini: 'container lg:!max-w-[750px] xl:!max-w-[930px] mx-auto',
   none: '',
 };

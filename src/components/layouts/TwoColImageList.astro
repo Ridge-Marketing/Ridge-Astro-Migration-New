@@ -42,7 +42,9 @@ const resolvedImages = await Promise.all(
 ---
 
 <Section settings={settings}>
-  <Container container={settings.containerWidth}>
+  {/* Always slim: Gatsby never queried containerWidth for this layout, so its
+     Container fell back to slim whatever the CMS says (matches production) */}
+  <Container container="slim">
     <div class="space-y-20 lg:space-y-28">
       {items.map((item: any, idx: number) => {
         const img = resolvedImages[idx];

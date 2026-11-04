@@ -21,7 +21,9 @@ const settings = layoutData.layoutSettings;
 ---
 
 <Section settings={settings}>
-  <Container container={settings.containerWidth}>
+  {/* Always slim: Gatsby never queried containerWidth for this layout, so its
+     Container fell back to slim whatever the CMS says (matches production) */}
+  <Container container="slim">
     <div>
       {content.topHeading && (
         <h3 class={`${theme.text.H5} text-center mb-4 xl:mb-0`}>

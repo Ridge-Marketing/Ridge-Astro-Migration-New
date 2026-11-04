@@ -9,6 +9,7 @@ import { theme } from '@/lib/theme';
 import { resolveImage } from '@/lib/wp-client';
 import { vimeoEmbedUrl, getVimeoThumbnail } from '@/lib/vimeo';
 import PlayIcon from '@/components/global/PlayIcon.astro';
+import WpImage from '@/components/global/WpImage.astro';
 
 interface Props {
   layoutData: {
@@ -65,10 +66,14 @@ const thumbs = videos.slice(0, 3); // matches "if (index < 3)" cap
       })))}>
         <div class="relative pt-[56.25%] video-player__stage">
           {main.placeholder?.source_url && (
-            <img
+            <WpImage
               src={main.placeholder.source_url}
               alt={main.placeholder.alt_text || ''}
+              width={main.placeholder.width}
+              height={main.placeholder.height}
               class="absolute top-0 left-0 w-full h-full object-cover z-10 video-player__thumb"
+              responsive
+              sizes="(max-width: 1280px) 100vw, 1248px"
               loading="eager"
             />
           )}
@@ -105,10 +110,14 @@ const thumbs = videos.slice(0, 3); // matches "if (index < 3)" cap
                 data-index={index}
               >
                 {v.placeholder?.source_url && (
-                  <img
+                  <WpImage
                     src={v.placeholder.source_url}
                     alt={v.placeholder.alt_text || ''}
+                    width={v.placeholder.width}
+                    height={v.placeholder.height}
                     class="absolute top-0 left-0 w-full h-full object-cover"
+                    responsive
+                    sizes="(max-width: 1280px) 33vw, 400px"
                     loading="lazy"
                   />
                 )}

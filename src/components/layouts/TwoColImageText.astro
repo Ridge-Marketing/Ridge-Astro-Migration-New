@@ -33,7 +33,9 @@ const imageAlt = resolved?.alt_text || content.componentFlexibleMedia?.imageAlt 
 ---
 
 <Section settings={settings}>
-  <Container container={settings.containerWidth}>
+  {/* Always slim: Gatsby never queried containerWidth for this layout, so its
+     Container fell back to slim whatever the CMS says (matches production) */}
+  <Container container="slim">
     <div class="lg:grid grid-cols-2 gap-16">
       <div class={`pb-12 lg:pb-0 flex items-center ${order}`}>
         <div>

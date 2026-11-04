@@ -92,6 +92,12 @@ src/
 ## Data layer (`src/lib/wp-client.ts`)
 
 - **All build-time fetches.** No client-side WP calls.
+- **REST responses are cached by URL** at Cloudflare (max-age 600) and again
+  at WP Engine, which outlives that — a build right after an edit used to get
+  pre-edit content. `fresh()` in `wp-client.ts` appends a per-build
+  `_build=<id>` to every WP fetch except `/wp/v2/media` (hundreds of lookups;
+  busting those trips 429s). `astro.config.mjs`'s preview-slug fetch does the
+  same.
 - **Cached fetchers** (memoized, one fetch per build): `getPages`, `getPosts`,
   `getServices`, `getProjects`, `getLanders`, `getGlobalSettings`. Media
   resolution and `getProjectById` / `getServiceById` are cached in Maps by ID.
@@ -112,7 +118,8 @@ src/
   `form_text`, `two_column_content`, `steps`, `pricing`, `stats`, `logos`,
   `callout`) is read from `acf` on lander 8212 (`/lander/audit/`) and page 8682
   (`/visibility-audit/`) → `components/layouts/auditLander/`; each route only
-  renders it when `acf.hero` is present.
+  renders it when `acf.hero` is present. Exposed over REST since 2026-11-04;
+  `/visibility-audit/` now matches production heading-for-heading.
 - `resolveImage()` also accepts ACF image arrays (`{ ID, url, alt, width,
   height }`), which some fields return over REST (menu icons, AI Audit).
 - **Image resolution**: ACF image fields are integer IDs. Always pass through
@@ -250,6 +257,13 @@ Use when a feature needs client state (filters, modals, carousels, forms).
 
 ---
 
+## Header
+
+`Header.astro` follows Gatsby's `.header-color`: white pages get a white
+header; a black header is `bg-black/70` on fixed-position pages but solid
+`bg-black` when sticky (`headerPosition="sticky"`: B2B and audit landers,
+`/visibility-audit/`).
+
 ## Color theming
 
 Per-record accent/secondary colors flow as `Layout` props:
@@ -269,20 +283,49 @@ Selectors that target child components need `is:global` or `:global(.cls)` —
 otherwise Astro scopes them with `[data-astro-cid-…]`. This is the #1 cause of
 "my styles don't apply".
 
-## Container gotcha
+`is:global` CSS ships with **every page of the route that imports the
+component**, not only pages that render it (`[...slug].astro` imports the AI
+Audit wrapper, so all WP pages got its styles). Never put page-level rules
+like `main { overflow: hidden }` there — that one broke `position: sticky`
+site-wide (Barn of Brands slider). Gate them on a marker instead:
+`main:has([data-clip-main])` in `global.css`, with
+`<span hidden data-clip-main>` in the PPC CMO and AI Audit wrappers.
 
-`.container` in `global.css` is **unlayered** CSS (`mx-auto`, `xl:!pl-12`,
-`xl:max-w-[1280px]`), so it beats Tailwind's layered utilities on the same
-element — unlike Gatsby, where `container` was a component class utilities
-overrode. To override it from a layout, use `!` utilities (`lg:!ml-0`,
-`xlz:!px-0`, `xl:!max-w-[…]` — layered `!important` beats unlayered
-`!important`). See `Container.astro` (slim/mini) and `ResultsImage.astro`.
+## Container
 
-Tailwind's own `container` utility (what `md:container` etc. use) steps its
-max-width at every breakpoint (1366, 1920…). An `@utility container` block in
-`global.css` caps it at 1280px with 3rem gutters from `xl` up, matching Gatsby.
+`container` is an `@utility` in `global.css` that reproduces Gatsby's
+tailwind.config container, measured on production at 380–1700px:
 
----
+| Viewport | max-width | padding (plain `container`) |
+| -------- | --------- | --------------------------- |
+| < 640    | 100%      | 1.5rem                      |
+| ≥ 640    | 640px     | 1.5rem                      |
+| ≥ 700    | 700px     | 0                           |
+| ≥ 930    | 930px     | 0                           |
+| ≥ 1280   | 1280px    | 3rem                        |
+
+It's layered, so utilities on the same element win, as in Gatsby —
+`Container.astro` adds `px-4`, which gives every `<Container>` 16px gutters.
+Its declarations follow Tailwind's built-in per-breakpoint steps, so they
+override them at every width. Don't reintroduce an unlayered `.container`
+rule — one with `xl:!pl-12` forced 48px gutters everywhere and was the cause
+of most "content is narrower than production" bugs.
+
+- Gatsby's `Container` falls back to **slim** when `container` is undefined.
+  Six Gatsby layouts pass `settings.containerWidth` but never query it in
+  GraphQL, so production always renders them slim whatever the CMS says:
+  BrandingCards, ButtonRow, FrequentlyAskedQuestions, TwoColIconText,
+  TwoColImageList, TwoColImageText. Their Astro ports hard-code `slim`.
+- Bare `container` divs in Gatsby code (header, slider inner, mobile menu,
+  blog nav) have no `px-4`; ports keep that exactly. The footer uses
+  `Container` (so it has `px-4`), and the blog post hgroup/article are capped
+  at `max-w-[900px]`.
+- Tailwind 3 and 4 order conflicting utilities differently (`xl:ml-9 xl:ml-14`
+  resolved to ml-9 in Gatsby, ml-14 in TW4). When a port has two values for
+  the same property, keep the one production renders.
+- To check a page against production, compare `getBoundingClientRect()`
+  left/width of every h1–h3 on both at the same viewport; most of the site now
+  matches to the pixel.
 
 ## Tailwind v4 gotchas
 
@@ -298,7 +341,8 @@ max-width at every breakpoint (1366, 1920…). An `@utility container` block in
   `safelist`). When an editor's class doesn't apply, add it there.
 - Don't add breakpoints for one-off prefixes — every `--breakpoint-*` also adds
   a `.container` max-width step. Use `@custom-variant` (see `600:`).
-- `@utility` blocks may cause parse errors — use plain CSS classes instead.
+- `@utility` works for extending built-ins (see `container`); keep other
+  custom classes as plain CSS.
 - Arbitrary values like `1280px`, `[18px]` trip the `suggestCanonicalClasses`
   lint. Cosmetic.
 
@@ -418,18 +462,15 @@ GridDev), WebDesignApproach (empty in Gatsby too), QuotesPpc.
   unconditionally — must be ported before launch.
 - `/wrapped_2024` renders blank (hardcoded Gatsby component, not ported).
   Production serves it (200), but it's out of the sitemap — port or redirect.
-- **AI Audit pages render empty / header-only** until "Show in REST API" is on
-  for the "AI Audit" ACF group (`group_6984afb3574b1`) and its location rule
-  covers page 8682. As of 2026-10-27 REST still returns only `page_header*`
-  for `/lander/audit/` and `/visibility-audit/`. `/visibility-audit/` is in the
-  production sitemap and in the main menu ("AI Search Audit" pill), so this
-  blocks launch.
 - **`/lander/your-marketing-dream-team/`** renders empty. Gatsby renders
-  `PpcLanderWrapper` (non-CMO) from the `Ridge2026PPC` ACF group, which isn't
-  exposed over REST (only `page_header_responsive` comes back), and the
-  non-CMO wrapper isn't ported. Needs the group in REST + a port.
-- **Build-time 429s**: back-to-back builds exhaust `getMediaById`'s retries
-  and the image silently drops (logged as `[getMediaById] media N
+  `PpcLanderWrapper` (non-CMO) from the "PPC 2026" ACF group
+  (`group_69446878313aa`, lander 7895), which still isn't in REST as of
+  2026-11-04 (only `page_header_responsive` comes back). The headless theme's
+  `acf/load_field_group` filter at the end of `functions.php` forces
+  `show_in_rest` for it and for AI Audit — if that's deployed, check the
+  group's location rule. Then port the non-CMO wrapper.
+- **Build-time 429s**: back-to-back builds can exhaust `getMediaById`'s
+  retries and the image silently drops (logged as `[getMediaById] media N
   unavailable`). Check the build log for that line before deploying.
   Batching media lookups (`/wp/v2/media?include=1,2,3&per_page=100`) would
   cut the request count a lot.

@@ -210,19 +210,39 @@
    Component Styles (migrated from src/css/styles.css)
    ============================================ */
 
-.container{
-  @apply xl:!pl-12 xl:!pr-12 xl:max-w-[1280px] mx-auto
-}
-
-/* Tailwind's container utility adds a max-width step per breakpoint (1366,
-   1920…), which variants like md:container still get. Cap it at 1280 with
-   Gatsby's 3rem gutters so every container variant matches .container. */
+/* Container — Gatsby's tailwind.config container, measured on production:
+   max-width 100% / 640 / 700 / 930 / 1280 at 0 / 640 / 700 / 930 / 1280px,
+   padding 1.5rem below 700px, 0 from 700px, 3rem from 1280px. It's a
+   utility (layered), so px-4 etc. on the same element override the padding,
+   as they did in Gatsby — Container.astro relies on that for its 16px gutters.
+   These declarations come after Tailwind's own per-breakpoint steps (400,
+   768, 1025, 1366…), so they win at every width. */
 @utility container {
+  margin-inline: auto;
+  max-width: none;
+  padding-inline: 1.5rem;
+  @media (width >= 640px) {
+    max-width: 640px;
+  }
+  @media (width >= 700px) {
+    max-width: 700px;
+    padding-inline: 0;
+  }
+  @media (width >= 930px) {
+    max-width: 930px;
+  }
   @media (width >= 1280px) {
     max-width: 1280px;
-    padding-left: 3rem;
-    padding-right: 3rem;
+    padding-inline: 3rem;
   }
+}
+
+/* Lander wrappers (PPC CMO, AI Audit) clip <main> like Gatsby's did, but only
+   on pages that render them: a component's is:global CSS ships with every page
+   of the route that imports it, and `main { overflow: hidden }` site-wide
+   breaks position: sticky (e.g. the Barn of Brands vertical slider). */
+main:has([data-clip-main]) {
+  overflow: hidden;
 }
 
 /* Mobile Menu Height */

@@ -35,7 +35,9 @@ const items = await Promise.all(
 ---
 
 <Section settings={settings}>
-  <Container container={settings.containerWidth}>
+  {/* Always slim: Gatsby never queried containerWidth for this layout, so its
+     Container fell back to slim whatever the CMS says (matches production) */}
+  <Container container="slim">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-12">
       {items.map((item: any) => (
         <div class="flex flex-col">

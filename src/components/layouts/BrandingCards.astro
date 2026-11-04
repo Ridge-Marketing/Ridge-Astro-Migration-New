@@ -52,7 +52,9 @@ const cards = await Promise.all(
 
 <Section classes="relative" settings={settings}>
   <div class="absolute top-0 h-[280px] bg-black w-full"></div>
-  <Container container={settings.containerWidth}>
+  {/* Always slim: Gatsby never queried containerWidth for this layout, so its
+     Container fell back to slim whatever the CMS says (matches production) */}
+  <Container container="slim">
     {content.heading && (
       <p class={`${theme.text.H2} text-center text-white relative`}>{content.heading}</p>
     )}

@@ -85,14 +85,14 @@ const isSeoPost = post.slug === 'seo-vs-aeo-vs-geo';
   headerColor="white"
   noindex={isPreview}
 >
-  <hgroup class="container pt-20 mx-auto px-4">
+  <hgroup class="container blog-container pt-20 max-w-[900px] mx-auto px-4">
     <h1 class={`${theme.text.H1_STD} mb-9`} set:html={post.title?.rendered}/>
     <div class="flex items-center">
       {avatarUrl && (
         <img
           src={avatarUrl}
           alt={authorName}
-          class="w-[70px] h-[70px] mr-5 rounded-full object-center object-cover"
+          class="w-[70px] h-[70px] !max-w-[70px] max-h-[70px] min-w-[70px] min-h-[70px] !mr-5 !mb-0 !ml-0 rounded-full object-center object-cover"
           loading="lazy"
         />
       )}
@@ -115,7 +115,7 @@ const isSeoPost = post.slug === 'seo-vs-aeo-vs-geo';
     )}
   </hgroup>
 
-  <article class="container blog-container my-9 font-basic-sans mx-auto px-4">
+  <article class="container blog-container my-9 font-basic-sans max-w-[900px] mx-auto px-4">
     <div set:html={content} />
   </article>
 

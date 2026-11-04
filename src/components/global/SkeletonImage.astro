@@ -1,0 +1,44 @@
+---
+/**
+ * Resolved WP image with its space reserved at the image's aspect ratio and a
+ * pulsing skeleton behind it. The image fades in on load while the skeleton
+ * fades out and is removed, so it never shows behind transparent PNGs.
+ * Responsive WebP srcset via WpImage. Used by ProjectHeader (featured image,
+ * image overhang).
+ */
+import WpImage from '@/components/global/WpImage.astro';
+
+interface Props {
+  image: { source_url: string; alt_text?: string; width?: number; height?: number };
+  alt?: string;
+  sizes?: string;
+  fetchPriority?: 'high' | 'low' | 'auto';
+  loading?: 'lazy' | 'eager';
+  /** Skeleton color (e.g. the project accent); grey when unset */
+  color?: string | false;
+}
+
+const { image, alt, sizes, fetchPriority, loading, color } = Astro.props;
+
+const ratioStyle    = image.width && image.height
+  ? `aspect-ratio: ${image.width} / ${image.height}; max-width: ${image.width}px;`
+  : undefined;
+const skeletonClass = color ? '' : 'bg-gray-400';
+const skeletonStyle = color ? `background-color: ${color}` : undefined;
+---
+
+<div class="relative mx-auto w-full" style={ratioStyle}>
+  <div class={`absolute inset-0 ${skeletonClass} animate-pulse transition-opacity duration-700`} style={skeletonStyle} aria-hidden="true" data-skeleton></div>
+  <WpImage
+    src={image.source_url}
+    alt={alt ?? image.alt_text ?? ''}
+    width={image.width}
+    height={image.height}
+    responsive
+    sizes={sizes}
+    fetchPriority={fetchPriority}
+    loading={loading}
+    class="relative mx-auto w-full h-auto opacity-0 transition-opacity duration-700"
+    onload="const s=this.parentElement.querySelector('[data-skeleton]');this.classList.remove('opacity-0');if(s){s.classList.remove('animate-pulse');s.classList.add('opacity-0');setTimeout(()=>s.remove(),700)}"
+  />
+</div>

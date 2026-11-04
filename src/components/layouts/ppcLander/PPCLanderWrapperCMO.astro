@@ -29,9 +29,8 @@ const asLayoutData = (section: any) => ({
 })
 ---
 
-<style is:global>
-    main { overflow : hidden }
-</style>
+<!-- Clips <main> on this page only (rule in global.css) — see the note there -->
+<span hidden data-clip-main></span>
 
 {acf.hero_cmo && <>
     <PPCHeroCMO acf={acf.hero_cmo} />
