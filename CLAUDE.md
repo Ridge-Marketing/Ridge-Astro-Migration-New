@@ -102,8 +102,10 @@ src/
   `getServices`, `getProjects`, `getLanders`, `getGlobalSettings`. Media
   resolution and `getProjectById` / `getServiceById` are cached in Maps by ID.
   Caching matters — WP rate-limits (429).
-- `fetchJSON` / `fetchAllPaginated` retry 429s with exponential backoff
-  (5 attempts, 2s→16s — shorter budgets lose to WP Engine's rate-limit window);
+- `fetchJSON` / `fetchAllPaginated` go through `fetchWithRetry`, which
+  retries 429/502/503/504 **and network errors** with exponential backoff
+  (6 attempts, 2s→32s — shorter budgets lose to WP Engine's rate-limit window,
+  and a 504 burst on Netlify outlasted 5);
   pagination follows `X-WP-TotalPages`. `getMenus`, `getMenuItems` and
   `getOptionsPage` are cached too — the header/footer call them on every page.
 - Remote image sizing goes through `src/lib/remote-size.ts` (cached + retried)
@@ -448,6 +450,11 @@ from the build entirely.
 - Canonical / og:url only render when Yoast provides them, so noindex pages
   (`noindex` prop on `Layout`: preview posts, thank-you, 404) get just a
   title + robots noindex.
+- **Social image fallback**: pages with no Yoast social image (home,
+  privacy, barn-of-brands, the b2b AI service page — also missing on
+  production) get `DEFAULT_OG` in `Head.astro`, the barn illustration.
+  `twitter:image` falls back to `og:image`; width/height/alt are emitted.
+  Better still, set the image in Yoast (per page, or the site default).
 - `public/robots.txt` matches the Gatsby-generated one (allow all, sitemap
   index, apex host).
 
@@ -502,9 +509,13 @@ GridDev), WebDesignApproach (empty in Gatsby too), QuotesPpc.
   `acf/load_field_group` filter at the end of `functions.php` forces
   `show_in_rest` for it and for AI Audit — if that's deployed, check the
   group's location rule. Then port the non-CMO wrapper.
+- **By-ID lookups return `null` on failure** (`getProjectById`,
+  `getServiceById`, `getMediaById`, `getReviewById`); callers that map over
+  IDs must `.filter(Boolean)` the results. `ProjectBlocks` didn't, and a
+  Netlify build died with "reading 'gridImageUrl'" after a 504.
 - **Build-time 429s**: back-to-back builds can exhaust `getMediaById`'s
   retries and the image silently drops (logged as `[getMediaById] media N
-  unavailable`). Check the build log for that line before deploying.
+  unavailable` / `[getProjectById] project N unavailable`). Check the build log for that line before deploying.
   Batching media lookups (`/wp/v2/media?include=1,2,3&per_page=100`) would
   cut the request count a lot.
 - `TwoColTextForm.astro` reuses `FormCTALayout.tsx`. If lander-specific

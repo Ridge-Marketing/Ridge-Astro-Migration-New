@@ -74,20 +74,34 @@ class WpApiError extends Error {
   }
 }
 
-// 5 attempts = 2s/4s/8s/16s backoff — WP Engine's 429 window outlasts a shorter run
-async function fetchJSON<T>(url: string, retries = 5, authenticated = false): Promise<T> {
-  const headers = authenticated ? authHeader : {};
-  for (let attempt = 0; attempt < retries; attempt++) {
-    const res = await fetch(fresh(url), { headers });
-    if (res.ok) return res.json() as Promise<T>;
-    if (RETRYABLE_STATUS.has(res.status) && attempt < retries - 1) {
-      const delay = Math.pow(2, attempt + 1) * 1000;
-      await new Promise((r) => setTimeout(r, delay));
-      continue;
+// Default 6 attempts = 2s/4s/8s/16s/32s backoff (~1 min). WP Engine's 429
+// window outlasts a shorter run, and a 504 burst on Netlify once outlasted
+// 5 attempts (~30s) and failed the build.
+const DEFAULT_ATTEMPTS = 6;
+
+/**
+ * fetch() with retries. Retries 429/502/503/504 and network errors (fetch
+ * throwing on a reset or timed-out connection — common while WP Engine is
+ * struggling, and previously not retried at all). Returns the final Response
+ * (ok or not); throws only if the last attempt is a network error.
+ */
+async function fetchWithRetry(url: string, headers: Record<string, string>, attempts = DEFAULT_ATTEMPTS): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const last = attempt >= attempts - 1;
+    try {
+      const res = await fetch(fresh(url), { headers });
+      if (res.ok || !RETRYABLE_STATUS.has(res.status) || last) return res;
+    } catch (err) {
+      if (last) throw err;
     }
-    throw new WpApiError(res.status, `WP API error: ${res.status} ${res.statusText} for ${url}`);
+    await new Promise((r) => setTimeout(r, Math.pow(2, attempt + 1) * 1000));
   }
-  throw new Error(`WP API: max retries exceeded for ${url}`);
+}
+
+async function fetchJSON<T>(url: string, attempts = DEFAULT_ATTEMPTS, authenticated = false): Promise<T> {
+  const res = await fetchWithRetry(url, authenticated ? authHeader : {}, attempts);
+  if (res.ok) return res.json() as Promise<T>;
+  throw new WpApiError(res.status, `WP API error: ${res.status} ${res.statusText} for ${url}`);
 }
 
 /**
@@ -97,21 +111,10 @@ async function fetchJSON<T>(url: string, retries = 5, authenticated = false): Pr
 async function fetchAllPaginated<T>(baseUrl: string, authenticated = false): Promise<T[]> {
   const separator     = baseUrl.includes('?') ? '&' : '?';
   const firstPageUrl  = `${baseUrl}${separator}per_page=50&page=1`;
-  const headers       = authenticated ? authHeader : {};
+  const firstRes      = await fetchWithRetry(firstPageUrl, authenticated ? authHeader : {});
 
-  let firstRes: Response | null = null;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    firstRes = await fetch(fresh(firstPageUrl), { headers });
-    if (firstRes.ok) break;
-    if (RETRYABLE_STATUS.has(firstRes.status) && attempt < 4) {
-      await new Promise((r) => setTimeout(r, Math.pow(2, attempt + 1) * 1000));
-      continue;
-    }
+  if (!firstRes.ok) {
     throw new Error(`WP API error: ${firstRes.status} for ${firstPageUrl}`);
-  }
-
-  if (!firstRes || !firstRes.ok) {
-    throw new Error(`WP API error: failed to fetch ${firstPageUrl}`);
   }
 
   const totalPages = parseInt(firstRes.headers.get('X-WP-TotalPages') || '1', 10);
@@ -121,7 +124,7 @@ async function fetchAllPaginated<T>(baseUrl: string, authenticated = false): Pro
 
   const remaining = await Promise.all(
     Array.from({ length: totalPages - 1 }, (_, i) =>
-      fetchJSON<T[]>(`${baseUrl}${separator}per_page=50&page=${i + 2}`, 5, authenticated)
+      fetchJSON<T[]>(`${baseUrl}${separator}per_page=50&page=${i + 2}`, DEFAULT_ATTEMPTS, authenticated)
     )
   );
 
@@ -167,7 +170,7 @@ export async function getServiceById(id: number): Promise<WpService | null> {
 
   try {
     // Authenticated: unpublished/private services 401 without credentials
-    const service = await fetchJSON<WpService>(`${WP_API}/service/${id}?_embed`, 5, true);
+    const service = await fetchJSON<WpService>(`${WP_API}/service/${id}?_embed`, DEFAULT_ATTEMPTS, true);
     serviceCache.set(id, service);
     return service;
   } catch {
@@ -386,7 +389,7 @@ let menusPromise: Promise<Array<{ id: number; name: string; slug: string }>> | n
 
 export function getMenus(): Promise<Array<{ id: number; name: string; slug: string }>> {
   if (!menusPromise) {
-    menusPromise = fetchJSON<Array<{ id: number; name: string; slug: string }>>(`${WP_API}/menus`, 5, true)
+    menusPromise = fetchJSON<Array<{ id: number; name: string; slug: string }>>(`${WP_API}/menus`, DEFAULT_ATTEMPTS, true)
       .catch((err) => {
         menusPromise = null;
         throw err;
@@ -485,7 +488,8 @@ export async function getProjectById(id: number): Promise<any | null> {
     const project = await fetchJSON<any>(`${WP_API}/project/${id}?_embed`);
     projectCache.set(id, project);
     return project;
-  } catch {
+  } catch (err) {
+    console.warn(`[getProjectById] project ${id} unavailable:`, (err as Error).message);
     return null;
   }
 }
@@ -520,7 +524,7 @@ export async function getMediaById(id: number): Promise<any | null> {
     // the old, now-draft homepage) — those 401 and are retried authenticated.
     const url   = `${WP_API}/media/${id}?_fields=id,source_url,alt_text,mime_type,media_details`;
     const media = await fetchJSON<any>(url).catch((err) => {
-      if (err instanceof WpApiError && err.status === 401) return fetchJSON<any>(url, 5, true);
+      if (err instanceof WpApiError && err.status === 401) return fetchJSON<any>(url, DEFAULT_ATTEMPTS, true);
       throw err;
     });
     const result = {

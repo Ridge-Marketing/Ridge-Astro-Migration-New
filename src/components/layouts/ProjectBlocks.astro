@@ -33,7 +33,9 @@ if (content.shadowbox) {
 // Resolve project images at build time
 const projects = content.projects || [];
 
-const resolvedProjects = await Promise.all(
+// A project that couldn't be fetched (deleted, or WP down past the retries)
+// maps to undefined — drop it rather than crash the page render
+const resolvedProjects = (await Promise.all(
   projects.map(async (project: any) => {
 
       const projectData = await getProjectById(project)
@@ -66,7 +68,7 @@ const resolvedProjects = await Promise.all(
         }
       }
   })
-);
+)).filter(Boolean);
 ---
 
 <Section settings={settings} transparent={true}>
