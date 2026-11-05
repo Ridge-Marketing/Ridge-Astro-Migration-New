@@ -67,9 +67,8 @@ export default function BlogIndex({ posts }: Props) {
             )}
             <div className="w-full md:ml-[5%] md:w-[35%]">
               <h2 className={theme.text.H5 + 'mb-6'}>
-                <a href={featured.link} className="hover:text-rm-green">
-                  {featured.title}
-                </a>
+                {/* WP titles are HTML-encoded ("&amp;"), like the grid cards below */}
+                <a href={featured.link} className="hover:text-rm-green" dangerouslySetInnerHTML={{ __html: featured.title }} />
               </h2>
               <p
                 className={theme.text.P_STD + 'mb-6'}

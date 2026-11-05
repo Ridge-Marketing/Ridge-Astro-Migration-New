@@ -71,13 +71,13 @@ const singleImage   = resolvedImages.length === 1;
       bgIsSvg ? (
         <img
           src={bgImage.source_url}
-          alt=""
+          alt={bgImage.alt_text || ''}
           class="project-portfolio__bg object-cover absolute w-full"
         />
       ) : (
         <img
           src={bgImage.source_url}
-          alt=""
+          alt={bgImage.alt_text || ''}
           class="project-portfolio__bg object-cover absolute w-full"
           loading="lazy"
         />

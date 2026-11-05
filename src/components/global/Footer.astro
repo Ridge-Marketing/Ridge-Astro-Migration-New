@@ -23,7 +23,7 @@ let address = '';
 
 try {
   content = await getGlobalSettings();
-  logo        = content.logos?.dark?.source_url || content.logos?.dark?.sourceUrl || '';
+  logo        = content.logos?.dark?.source_url || '';
   logoAlt     = content.logos?.dark?.alt_text || 'Ridge Marketing';
   socials     = content.contact?.socials || [];
   if (content.contact?.address?.address) {
@@ -97,11 +97,15 @@ const currentYear = new Date().getFullYear();
           {socials.length > 0 && (
             <ul class="flex mt-9 justify-center lg:justify-start">
               {socials.map((social: any) => {
-                const iconUrl = social.icon?.source_url || social.icon?.sourceUrl || '';
-                const iconAlt = social.icon?.alt_text || '';
+                // The icon is the link's only content, so its alt is the link's
+                // accessible name — fall back to the link title, then the site
+                const linkUrl = convertCMSLink(social.link?.url);
+                const host    = (() => { try { return new URL(linkUrl).hostname.replace(/^www\./, ''); } catch { return ''; } })();
+                const iconUrl = social.icon?.source_url || '';
+                const iconAlt = social.icon?.alt_text || social.link?.title || host || 'Social media';
                 return (
                   <li class="mr-3 last-of-type:mr-0 hover:text-rm-green">
-                    <a href={convertCMSLink(social.link?.url)} target={social.link?.target}>
+                    <a href={linkUrl} target={social.link?.target || undefined} rel={social.link?.target === '_blank' ? 'noopener noreferrer' : undefined}>
                       {iconUrl && <img class="block" alt={iconAlt} src={iconUrl} />}
                     </a>
                   </li>

@@ -60,12 +60,12 @@ const overlay = 'linear-gradient(127deg, rgba(29,64,67,0.85) 24.09%, rgba(28,56,
     />
   ) : imageUrl && (
     <div class="absolute top-0 left-0 w-full h-full opacity-70">
-      <img src={imageUrl} alt="" class={`${tabletImageUrl ? 'hidden xl:block' : mobileImageUrl ? 'hidden md:block' : 'block'} w-full h-full object-cover`} loading="eager" />
+      <img src={imageUrl} alt={bgImage?.alt_text || ''} class={`${tabletImageUrl ? 'hidden xl:block' : mobileImageUrl ? 'hidden md:block' : 'block'} w-full h-full object-cover`} loading="eager" />
       {tabletImageUrl && (
-        <img src={tabletImageUrl} alt="" class={`${mobileImageUrl ? 'hidden md:block' : 'block'} xl:hidden w-full h-full object-cover`} loading="eager" />
+        <img src={tabletImageUrl} alt={tabletImage?.alt_text || ''} class={`${mobileImageUrl ? 'hidden md:block' : 'block'} xl:hidden w-full h-full object-cover`} loading="eager" />
       )}
       {mobileImageUrl && (
-        <img src={mobileImageUrl} alt="" class="md:hidden block w-full h-full object-cover" loading="eager" />
+        <img src={mobileImageUrl} alt={mobileImage?.alt_text || ''} class="md:hidden block w-full h-full object-cover" loading="eager" />
       )}
     </div>
   )}

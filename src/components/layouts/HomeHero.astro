@@ -47,14 +47,14 @@ const isImage = !video;
   {isImage && imageUrl && (
     <div class="absolute bg-cover top-0 left-0 w-full h-full bg-no-repeat">
       {/* Desktop image */}
-      <img src={imageUrl} alt="" class="z-[-10] hidden xl:block w-full h-full object-cover" loading="eager" />
+      <img src={imageUrl} alt={bgImage?.alt_text || ''} class="z-[-10] hidden xl:block w-full h-full object-cover" loading="eager" />
       {/* Tablet image */}
       {tabletImageUrl && (
-        <img src={tabletImageUrl} alt="" class="z-[-10] hidden md:block xl:hidden w-full h-full object-cover" loading="eager" />
+        <img src={tabletImageUrl} alt={tabletImage?.alt_text || ''} class="z-[-10] hidden md:block xl:hidden w-full h-full object-cover" loading="eager" />
       )}
       {/* Mobile image */}
       {mobileImageUrl && (
-        <img src={mobileImageUrl} alt="" class="z-[-10] md:hidden block w-full h-full object-cover" loading="eager" />
+        <img src={mobileImageUrl} alt={mobileImage?.alt_text || ''} class="z-[-10] md:hidden block w-full h-full object-cover" loading="eager" />
       )}
     </div>
   )}

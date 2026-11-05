@@ -113,6 +113,11 @@ src/
   private posts). `getServiceById` is authenticated and returns `null` on
   failure — a private service post (401) used to kill the `/results` build.
 - **Global settings**: custom endpoint `/wp-json/options/all`.
+  `getGlobalSettings()` normalizes its ACF image arrays (`{ url, alt }`) to
+  `{ source_url, alt_text }` like `resolveImage()` — logos, favicon, footer
+  social icons. It used to emit `{ sourceUrl, altText }`, which no consumer
+  read, so the header logo and the social links (whose only content is the
+  icon) lost their alt text and accessible names.
 - **REST only** — no WPGraphQL. Any ACF group the site renders needs
   "Show in REST API" on. The "AI Audit" group (`group_6984afb3574b1`: `hero`,
   `form_text`, `two_column_content`, `steps`, `pricing`, `stats`, `logos`,
@@ -155,6 +160,15 @@ src/
 - Project carousel image: `project.acf.images.carousel_feature` (media ID).
 - Yoast SEO is under `yoast_head_json` on every record.
 - ACF `true_false` fields are a literal `false`, not absent — guard accordingly.
+- ACF taxonomy fields are **term IDs** over REST (`taxonomy: [4448]`), where
+  GraphQL gave `{ id, name }`. Match on ID (see `PostCards.astro`, which
+  silently showed the newest posts everywhere when it matched on `.name`).
+- **WP strings are HTML-encoded** (`title.rendered`, Yoast title/description/
+  schema: `Dun &amp; Bradstreet`, `[&hellip;]`). Astro escapes again, so
+  rendering one as text or an attribute shows the entity literally. Either
+  `set:html` it, or run `decodeEntities()` / `decodeDeep()` from
+  `src/lib/entities.ts` first (`Head.astro` decodes all Yoast data). After a
+  build, grep `dist` for `&amp;amp;` / `&#38;#` outside JSON data attributes.
 - WP returns 403 without a User-Agent (e.g. bare `urllib`) — send `User-Agent: curl/8`.
 
 ---
@@ -227,6 +241,10 @@ export async function getStaticPaths() {
    PascalCase legacy key).
 
 ### Conventions
+
+- **Alt text**: pass the CMS alt (`image.alt_text`) on every content image,
+  hero/header backgrounds included; `alt=""` only when the CMS has none or
+  the image sits next to the same text (menu icons, button arrows).
 
 - `Section` for the top-level wrap (padding, bg color, anchor IDs).
 - `Container` for width (`default | slim | mini | none`).
@@ -362,6 +380,11 @@ All in `src/pages/api/`, `prerender = false`, named `*.json.ts`:
   `ridge_get_data_to_add_to_sheet`) and strips `resume`. SeoPopup adds a joined
   `name` (and logs to the sheet, unlike Gatsby).
 - SendGrid rejects an empty `cc: []` — omit the field instead.
+- **Security headers** (X-Frame-Options DENY, nosniff, X-XSS-Protection,
+  Referrer-Policy same-origin, HSTS) are set on `/*` in `netlify.toml`.
+  Gatsby got them implicitly from `gatsby-plugin-netlify`; the Astro adapter
+  adds none, so don't drop that block. Netlify applies them to static files,
+  not to API function responses.
 - Don't add an `/api/* → /.netlify/functions/:splat` redirect to
   `netlify.toml`; a stale one previously hijacked every form POST.
 
@@ -412,6 +435,16 @@ from the build entirely.
   schema are mapped to `Astro.site` (`https://ridgemarketing.com`, the apex;
   www 301s to it). Keep them absolute — the uploads middleware would make a
   bare CMS uploads URL relative, and crawlers need full URLs for og:image.
+- **Posts live at a different path than WP's permalink**: WP serves them at
+  `/<slug>/`, the site at `/blog/<slug>/` (Gatsby's post.js prefixed `/blog`).
+  `postPath(post)` in `wp-client.ts` is the one place post URLs are built
+  (route, prev/next, PostCards, blog index). `postSeo(post)` moves the post's
+  Yoast data onto that URL — canonical, og:url/twitter:url, every schema
+  `@id`/`url` — and adds the Blog level to the BreadcrumbList (Home > Blog >
+  Post). Without it all 59 posts pointed at 404s/redirects. Any other record
+  served off its WP permalink needs the same treatment. Check after builds:
+  every `dist/**/index.html` canonical should equal
+  `https://ridgemarketing.com` + its path.
 - Canonical / og:url only render when Yoast provides them, so noindex pages
   (`noindex` prop on `Layout`: preview posts, thank-you, 404) get just a
   title + robots noindex.
@@ -480,8 +513,6 @@ GridDev), WebDesignApproach (empty in Gatsby too), QuotesPpc.
   infinite loop).
 - `FlexibleMedia` Vimeo builds an iframe on first click (no
   `@u-wave/react-vimeo`).
-- `globalSettings.logos.favicon` uses `source_url`, but several routes also
-  check `.sourceUrl` as a fallback, which TS flags. Cosmetic.
 - If you see "Failed to resolve import 'lottie-web'", run `npm install`
   (used by `VerticalSlider.astro` and `FlexibleMedia.astro`).
 

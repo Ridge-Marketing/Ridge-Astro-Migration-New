@@ -40,7 +40,7 @@ const objectPos = content.objectPosition || content.object_position || 'center';
   {imageUrl && (
     <WpImage
       src={imageUrl}
-      alt=""
+      alt={bgImage?.alt_text || ''}
       width={bgImage?.width}
       height={bgImage?.height}
       responsive

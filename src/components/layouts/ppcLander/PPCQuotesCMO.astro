@@ -5,6 +5,7 @@
  * Replaces Gatsby's ppcLander/PpcQuotes.js (rendered with cmo={true});
  * slider mechanism mirrors layouts/Quotes.astro (script, not an island)
  */
+import { decodeEntities } from '@/lib/entities';
 import Container from '@/components/global/Container.astro'
 import { theme } from '@/lib/theme'
 import parser from '@/lib/parser'
@@ -28,7 +29,7 @@ const slides = (await Promise.all(
         if (!review) return null
 
         return {
-            title:        review.title?.rendered || '',
+            title:        decodeEntities(review.title?.rendered || ''),
             content:      parser(review.content?.rendered || ''),
             titleCompany: review.acf?.title_company || '',
         }

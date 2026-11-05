@@ -27,22 +27,22 @@ const bgClass              = 'w-full h-full object-cover object-bottom';
 <section class="relative min-h-[975px] md:min-h-[1115px] xl:min-h-min">
   {data.largeDesktop && (
     <div class="absolute !bottom-0 inset-0 hidden xl:block">
-      <AuditImage image={data.largeDesktop} alt="" class={bgClass} fetchPriority="high" quality={100} />
+      <AuditImage image={data.largeDesktop} class={bgClass} fetchPriority="high" quality={100} />
     </div>
   )}
   {data.desktopBackground && (
     <div class="absolute !bottom-0 inset-0 hidden lg:block xl:hidden">
-      <AuditImage image={data.desktopBackground} alt="" class={bgClass} />
+      <AuditImage image={data.desktopBackground} class={bgClass} />
     </div>
   )}
   {data.tabletBackground && (
     <div class="absolute inset-0 hidden sm:block lg:hidden">
-      <AuditImage image={data.tabletBackground} alt="" class={bgClass} />
+      <AuditImage image={data.tabletBackground} class={bgClass} />
     </div>
   )}
   {data.mobileBackground && (
     <div class="absolute inset-0 sm:hidden bottom-0">
-      <AuditImage image={data.mobileBackground} alt="" class={bgClass} />
+      <AuditImage image={data.mobileBackground} class={bgClass} />
     </div>
   )}
 
@@ -80,7 +80,7 @@ const bgClass              = 'w-full h-full object-cover object-bottom';
       <div class="relative flex-1 flex items-center justify-center xl:justify-end xl:absolute xl:right-0 xl:top-1/2 xl:-translate-y-1/2 xl:w-[55%] 2xl:w-[50%]">
         {graphic && (
           <div class="relative w-full max-w-[500px] xl:max-w-none">
-            <AuditImage image={graphic} alt="" class="w-full object-contain" sizes="(min-width: 1280px) 55vw, 500px" />
+            <AuditImage image={graphic} class="w-full object-contain" sizes="(min-width: 1280px) 55vw, 500px" />
           </div>
         )}
       </div>

@@ -84,7 +84,7 @@ const visibility = floatedImageUrl ? 'block' : 'hidden invisible';
         <div class="mb-9 max-w-[250px] lg:max-w-full lg:mb-0 lg:w-[30%] lg:ml-[5%] mt-12 lg:mt-0 shrink-0">
           <WpImage
             src={floatedImageUrl}
-            alt=""
+            alt={floatedImage?.alt_text || ''}
             width={floatedImage?.width}
             height={floatedImage?.height}
             responsive

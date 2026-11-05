@@ -4,3 +4,17 @@
 
 [images]
   remote_images = ["https://cms\\.ridgemarketing\\.com/.*"]
+
+# Security headers. Gatsby got these from gatsby-plugin-netlify's defaults
+# (every path); the Astro adapter adds none, so they're set here to match
+# production. HSTS is what Netlify serves today, made explicit.
+# X-Frame-Options DENY blocks other sites from framing these pages (embedding
+# Vimeo etc. here is unaffected).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options           = "DENY"
+    X-Content-Type-Options    = "nosniff"
+    X-XSS-Protection          = "1; mode=block"
+    Referrer-Policy           = "same-origin"
+    Strict-Transport-Security = "max-age=31536000"

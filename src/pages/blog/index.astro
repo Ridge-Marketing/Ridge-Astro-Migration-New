@@ -5,12 +5,12 @@
  */
 import Layout from '@/components/global/Layout.astro';
 import BlogIndex from '@/components/blog/BlogIndex.tsx';
-import { getPosts, getGlobalSettings, getPageBySlug } from '@/lib/wp-client';
+import { getPosts, getGlobalSettings, getPageBySlug, postPath } from '@/lib/wp-client';
 import { theme } from '@/lib/theme';
 
 const allPosts        = await getPosts();
 const globalSettings  = await getGlobalSettings().catch(() => null);
-const favicon         = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+const favicon         = globalSettings?.logos?.favicon?.source_url || '';
 
 // Get the blog page's SEO data from WordPress (page slug: "blog", id: 289)
 const blogPage        = await getPageBySlug('blog').catch(() => null);
@@ -29,7 +29,7 @@ const serializedPosts = posts.map((post: any) => {
     id: post.id,
     title: post.title?.rendered || '',
     excerpt: post.excerpt?.rendered || '',
-    link: `/blog/${post.slug}/`,
+    link: postPath(post),
     featuredImageUrl: featuredMedia?.source_url || '',
     featuredImageAlt: featuredMedia?.alt_text || '',
   };

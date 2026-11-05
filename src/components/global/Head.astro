@@ -7,15 +7,24 @@
  * did the same. Absolute, so the uploads middleware doesn't make og:image
  * relative (crawlers need the full URL).
  */
+import { decodeDeep } from '@/lib/entities';
+
 interface Props {
   seo: any;
   favicon?: string;
 }
 
-const { seo, favicon } = Astro.props;
+const { seo: rawSeo, favicon } = Astro.props;
+
+// Yoast's strings arrive HTML-encoded ("Dun &amp; Bradstreet"); Astro encodes
+// again on render, so decode every string (title, descriptions, schema) first
+const seo = rawSeo ? decodeDeep(rawSeo) : rawSeo;
 
 const siteOrigin = (Astro.site?.origin || 'https://ridgemarketing.com');
 const CMS_ORIGIN = /https?:\/\/(?:www\.)?cms\.ridgemarketing\.com/g;
+
+// Records served at a path other than their WP permalink (posts → /blog/)
+// are moved before they get here — see postSeo() in wp-client.ts
 const toSite     = (url?: string) => url ? url.replace(CMS_ORIGIN, siteOrigin) : url;
 
 const canonical  = toSite(seo?.canonical);

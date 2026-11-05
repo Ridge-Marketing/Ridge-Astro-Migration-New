@@ -63,16 +63,16 @@ const imageClass   = [
 
 <section class="relative overflow-hidden min-h-[400px] lg:min-h-[580px]">
   {imageLarge?.source_url && (
-    <img src={imageLarge.source_url} alt="" class="absolute top-0 left-0 w-full h-full object-cover hidden xl:block" style={objectPos} loading="eager" />
+    <img src={imageLarge.source_url} alt={imageLarge.alt_text || ''} class="absolute top-0 left-0 w-full h-full object-cover hidden xl:block" style={objectPos} loading="eager" />
   )}
   {image?.source_url && (
-    <img src={image.source_url} alt="" class={`absolute -top-[40px] left-0 w-full h-full object-cover ${imageClass}`} style={objectPos} loading="eager" />
+    <img src={image.source_url} alt={image.alt_text || ''} class={`absolute -top-[40px] left-0 w-full h-full object-cover ${imageClass}`} style={objectPos} loading="eager" />
   )}
   {imageTablet?.source_url && (
-    <img src={imageTablet.source_url} alt="" class="absolute -top-[40px] left-0 w-full h-full object-cover hidden md:block lg:hidden" style={objectPos} loading="eager" />
+    <img src={imageTablet.source_url} alt={imageTablet.alt_text || ''} class="absolute -top-[40px] left-0 w-full h-full object-cover hidden md:block lg:hidden" style={objectPos} loading="eager" />
   )}
   {imageMobile?.source_url && (
-    <img src={imageMobile.source_url} alt="" class="absolute -top-[40px] left-0 w-full h-full object-cover md:hidden" style={objectPos} loading="eager" />
+    <img src={imageMobile.source_url} alt={imageMobile.alt_text || ''} class="absolute -top-[40px] left-0 w-full h-full object-cover md:hidden" style={objectPos} loading="eager" />
   )}
   {video && (
     <video playsinline autoplay muted loop src={video} class="absolute top-0 left-0 object-cover object-center w-full h-full" />

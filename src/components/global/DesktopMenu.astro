@@ -3,6 +3,7 @@
  * Desktop navigation — static, CSS-driven hover dropdowns
  * Replaces Gatsby's DesktopMenu.js
  */
+import { decodeEntities } from '@/lib/entities';
 import { theme } from '@/lib/theme';
 import { convertCMSLink } from '@/lib/wp-client';
 
@@ -18,7 +19,7 @@ const triangleSvg = `<svg width="45" height="17" viewBox="0 0 45 17" fill="none"
 
 <div class="flex justify-end h-full items-center gap-10">
   {menuItems.map((navItem, index) => {
-    const label = navItem.title?.rendered || navItem.title || '';
+    const label = decodeEntities(navItem.title?.rendered || navItem.title || '');
     const uid = label.replace(/\s/g, '_');
     const children = navItem.children || [];
 

@@ -7,6 +7,7 @@
  * The slider logic is handled by client-side JS (scoped per instance).
  * Replaces Gatsby's Quotes.js
  */
+import { decodeEntities } from '@/lib/entities';
 import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import { theme } from '@/lib/theme';
@@ -36,7 +37,7 @@ const slides = (await Promise.all(
     if (!review) return null;
 
     return {
-      title: review.title?.rendered || '',
+      title: decodeEntities(review.title?.rendered || ''),
       // Drop line breaks (<br>, <br/>, <br />) — swapped for a space so words don't run together
       content: parser(review.content?.rendered || '').replace(/\s*<br\s*\/?>\s*/gi, ' ').trim(),
       reviewsFields: {

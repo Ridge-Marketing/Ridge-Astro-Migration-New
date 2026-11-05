@@ -3,6 +3,7 @@
  * Project Blocks layout — project grid with 2 or 3 column modes
  * Replaces Gatsby's ProjectBlocks.js
  */
+import { decodeEntities } from '@/lib/entities';
 import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import WpImage from '@/components/global/WpImage.astro';
@@ -37,7 +38,7 @@ const resolvedProjects = await Promise.all(
 
       const projectData = await getProjectById(project)
       if (projectData) {
-        const title   = projectData.title?.rendered || project.title || '';
+        const title   = decodeEntities(projectData.title?.rendered || project.title || '');
         const uri     = `/project/${projectData.slug ?? '#'}`;
 
         // ACF data — REST API returns under `acf`, GraphQL uses `projectInformation`

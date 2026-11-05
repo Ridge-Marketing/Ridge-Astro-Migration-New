@@ -6,7 +6,7 @@
 import Section from '@/components/global/Section.astro';
 import Container from '@/components/global/Container.astro';
 import BlogCardHome from '@/components/blog/BlogCardHome.astro';
-import { getPosts, resolveImage, extractPath } from '@/lib/wp-client';
+import { getPosts, resolveImage, extractPath, postPath } from '@/lib/wp-client';
 import { theme } from '@/lib/theme';
 
 interface Props {
@@ -20,24 +20,39 @@ const { layoutData } = Astro.props;
 const content = layoutData.layoutContent;
 const settings = layoutData.layoutSettings;
 
-// Fetch posts and filter out preview mode
-const allPosts = await getPosts();
-const posts = allPosts.filter((p: any) => {
-  const fields = p.acf?.additional_blog_fields || p.acf?.additionalBlogFields || {};
-  return !fields.preview_mode && !fields.previewMode;
-}).slice(0, 3);
+// Gatsby: take the 3 newest public posts — or, when the block's first
+// category is "AI", the 3 newest AI posts (its allWpPostAI query) — and show
+// those in one of the block's categories, in taxonomy order.
+// The ACF taxonomy field is category IDs over REST (`[4448]`), not the
+// { id, name } objects GraphQL returned; matching on .name found nothing, so
+// every block showed the newest 3 posts. Accept either shape and match by ID.
+const taxonomyIds = ((content.taxonomy || []) as any[])
+  .map((t) => (typeof t === 'object' && t ? t.id ?? t.term_id : t))
+  .map(Number)
+  .filter(Boolean);
+const allPosts    = await getPosts();
+const termsOf     = (p: any): Array<{ id: number; name: string }> => p._embedded?.['wp:term']?.[0] || [];
+const termName    = (id: number) => {
+  for (const p of allPosts) {
+    const term = termsOf(p).find((t) => t.id === id);
+    if (term) return term.name;
+  }
+  return '';
+};
+const aiOnly      = taxonomyIds.length > 0 && termName(taxonomyIds[0]) === 'AI';
+const posts       = allPosts
+  .filter((p: any) => {
+    const fields = p.acf?.additional_blog_fields || p.acf?.additionalBlogFields || {};
+    return !fields.preview_mode && !fields.previewMode;
+  })
+  .filter((p: any) => !aiOnly || termsOf(p).some((t) => t.name === 'AI'))
+  .slice(0, 3);
 
-// Filter by matching category names from taxonomy array
-const taxonomy = content.taxonomy || [];
 const cards: any[] = [];
-
-for (const tax of taxonomy) {
+for (const id of taxonomyIds) {
   for (const post of posts) {
-    const categories = post._embedded?.['wp:term']?.[0] || [];
-    for (const cat of categories) {
-      if (tax.name === cat.name && cards.length < 3 && !cards.includes(post)) {
-        cards.push(post);
-      }
+    if (cards.length < 3 && !cards.includes(post) && termsOf(post).some((t) => t.id === id)) {
+      cards.push(post);
     }
   }
 }
@@ -65,10 +80,12 @@ const resolvedCards = await Promise.all(
     }
 
     return {
-      title: post.title?.rendered || '',
-      link: `/blog/${post.slug}/`,
+      title   : post.title?.rendered || '',
+      link    : postPath(post),
       imageSrc: resolved?.source_url || '',
-      imageAlt: resolved?.alt_text || '',
+      // Gatsby used the featured image's alt even when showing the square
+      // image; prefer the square image's own alt, then fall back to that
+      imageAlt: resolved?.alt_text || featuredMedia?.alt_text || '',
     };
   })
 );

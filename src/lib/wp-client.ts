@@ -209,6 +209,39 @@ export async function getPosts(): Promise<WpPost[]> {
   return postsFetchPromise;
 }
 
+/**
+ * Where a post lives on the site. WP's permalink is /<slug>/; the site serves
+ * posts under /blog/ (Gatsby did the same). Every post URL — route, cards,
+ * prev/next, SEO — comes from here.
+ */
+export const postPath = (post: { slug: string }) => `/blog/${post.slug}/`;
+
+/**
+ * The post's Yoast data moved onto its /blog/ URL. Yoast builds everything
+ * from the WP permalink, so canonical, og:url and every schema @id/url lose
+ * /blog/, and the breadcrumb goes Home > Post. Rewrites the permalink inside
+ * all of it (still on the CMS origin — Head.astro maps that to the site) and
+ * adds the Blog level to the BreadcrumbList. A canonical an editor pointed
+ * somewhere else is left alone.
+ */
+export function postSeo(post: { slug: string; link: string; yoast_head_json?: any }): any {
+  const seo = post.yoast_head_json;
+  if (!seo || !post.link) return seo;
+
+  const origin  = new URL(post.link).origin;
+  const siteUrl = `${origin}${postPath(post)}`;
+  const moved   = JSON.parse(JSON.stringify(seo).split(post.link).join(siteUrl));
+
+  for (const node of moved.schema?.['@graph'] ?? []) {
+    if (node['@type'] !== 'BreadcrumbList' || !Array.isArray(node.itemListElement)) continue;
+    const items = node.itemListElement;
+    if (items.some((i: any) => i.item === `${origin}/blog/`)) continue;
+    items.splice(1, 0, { '@type': 'ListItem', name: 'Blog', item: `${origin}/blog/` });
+    items.forEach((i: any, n: number) => { i.position = n + 1; });
+  }
+  return moved;
+}
+
 export async function getPostBySlug(slug: string): Promise<WpPost | null> {
   const posts = await fetchJSON<WpPost[]>(
     `${WP_API}/posts?slug=${encodeURIComponent(slug)}&_embed`
@@ -379,13 +412,21 @@ export async function getGlobalSettings(): Promise<WpGlobalSettings> {
     // Custom REST endpoint registered in WordPress
     const data = await fetchJSON<any>(`${WP_BASE}/options/all`);
     // Normalize the data shape to match what components expect
+    // ACF image arrays ({ url, alt }) → the WpImage shape resolveImage()
+    // returns, so header/footer read alt_text like every other image. (These
+    // were { sourceUrl, altText }, which nothing read: the logos, favicon and
+    // social icons all lost their CMS alt text.)
+    const toImage = (img: any) => !img
+      ? undefined
+      : typeof img === 'string'
+        ? { source_url: img, alt_text: '' }
+        : { source_url: img.url || '', alt_text: img.alt || '' };
+
     globalSettingsCache = {
       logos: {
-        dark: data.logos?.dark ? { sourceUrl: data.logos.dark.url, altText: data.logos.dark.alt } : undefined,
-        light: data.logos?.light ? { sourceUrl: data.logos.light.url, altText: data.logos.light.alt } : undefined,
-        favicon: typeof data.logos?.favicon === 'string'
-          ? { sourceUrl: data.logos.favicon }
-          : data.logos?.favicon ? { sourceUrl: data.logos.favicon.url } : undefined,
+        dark   : toImage(data.logos?.dark),
+        light  : toImage(data.logos?.light),
+        favicon: toImage(data.logos?.favicon),
       },
       contact: {
         address: { address: data.contact?.address?.address || '' },
@@ -394,7 +435,7 @@ export async function getGlobalSettings(): Promise<WpGlobalSettings> {
           phone: data.contact?.phone?.phone || { title: '', url: '', target: '' },
         },
         socials: (data.contact?.socials || []).map((s: any) => ({
-          icon: s.icon ? { sourceUrl: s.icon.url, altText: s.icon.alt } : undefined,
+          icon: toImage(s.icon),
           link: s.link || { title: '', url: '', target: '' },
         })),
       },

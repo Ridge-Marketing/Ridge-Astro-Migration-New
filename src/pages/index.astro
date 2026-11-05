@@ -20,7 +20,7 @@ const frontPage = allPages.find((p: any) => extractPath(p.link) === '/') ||
   ) || allPages[0];
 
 const globalSettings = await getGlobalSettings().catch(() => null);
-const favicon = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+const favicon = globalSettings?.logos?.favicon?.source_url || '';
 
 const seo = frontPage?.yoast_head_json;
 

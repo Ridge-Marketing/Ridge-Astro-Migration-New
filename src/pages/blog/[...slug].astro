@@ -8,7 +8,7 @@ import Container from '@/components/global/Container.astro';
 import WpImage from '@/components/global/WpImage.astro';
 import PostNav from '@/components/blog/PostNav.astro';
 import SeoPopup from '@/components/blog/SeoPopup.tsx';
-import { getPosts, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from '@/lib/wp-client';
+import { getPosts, postPath, postSeo, getGlobalSettings, resolveImage, extractPath, convertCMSLink } from '@/lib/wp-client';
 import { parser } from '@/lib/parser';
 import { optimizeContentImages } from '@/lib/content-images';
 import { theme } from '@/lib/theme';
@@ -35,8 +35,8 @@ export async function getStaticPaths() {
       params: { slug: post.slug },
       props: {
         post,
-        prevSlug: `/blog/${prevPost.slug}/`,
-        nextSlug: `/blog/${nextPost.slug}/`,
+        prevSlug: postPath(prevPost),
+        nextSlug: postPath(nextPost),
       },
     };
   });
@@ -45,9 +45,9 @@ export async function getStaticPaths() {
 const { post, prevSlug, nextSlug } = Astro.props;
 
 const globalSettings      = await getGlobalSettings().catch(() => null);
-const favicon             = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+const favicon             = globalSettings?.logos?.favicon?.source_url || '';
 
-const seo                 = post.yoast_head_json;
+const seo                 = postSeo(post);
 const blogFields          = post.acf?.additional_blog_fields || post.acf?.additionalBlogFields || {};
 const isPreview           = blogFields.preview_mode || blogFields.previewMode || false;
 

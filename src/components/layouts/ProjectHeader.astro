@@ -82,13 +82,13 @@ const isSvgBg       = typeof content.background_image === 'object' && content.ba
     isSvgBg ? (
       <img
         src={bgImage.source_url}
-        alt=""
+        alt={bgImage.alt_text || ''}
         class={`project-header__bg-image absolute ${top} bottom-80 left-0 w-full h-full object-cover`}
       />
     ) : (
       <img
         src={bgImage.source_url}
-        alt=""
+        alt={bgImage.alt_text || ''}
         loading="eager"
         class={`project-header__bg-image absolute ${top} bottom-80 left-0 w-full h-full object-cover`}
       />

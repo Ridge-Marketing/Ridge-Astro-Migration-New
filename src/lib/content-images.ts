@@ -30,11 +30,15 @@ function parseAttrs(tag: string): Attrs {
   return attrs;
 }
 
+// Parsed values are kept as they appeared in the HTML (already encoded, e.g.
+// alt="&quot;Innovation&quot;"), so buildTag only escapes double quotes;
+// re-escaping "&" showed entities literally in alt text. Values set here
+// (CDN URLs) go through escapeAttr when they're set.
 const escapeAttr = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 const decodeAttr = (value: string) => value.replace(/&amp;/g, '&').replace(/&#0?38;/g, '&');
 
 function buildTag(attrs: Attrs): string {
-  const parts = [...attrs].map(([name, value]) => (value === null ? name : `${name}="${escapeAttr(value)}"`));
+  const parts = [...attrs].map(([name, value]) => (value === null ? name : `${name}="${value.replace(/"/g, '&quot;')}"`));
   return `<img ${parts.join(' ')}>`;
 }
 
@@ -61,9 +65,9 @@ async function optimizeTag(tag: string, quality: number): Promise<string> {
     const image = await getImage({ src, width, height, widths, sizes, format: 'webp', quality });
 
     attrs.delete('srcset');
-    attrs.set('src', image.src);
-    attrs.set('srcset', image.srcSet.attribute);
-    attrs.set('sizes', sizes);
+    attrs.set('src', escapeAttr(image.src));
+    attrs.set('srcset', escapeAttr(image.srcSet.attribute));
+    attrs.set('sizes', escapeAttr(sizes));
     attrs.set('width', String(width));
     attrs.set('height', String(height));
     if (!attrs.has('loading'))  attrs.set('loading', 'lazy');

@@ -35,7 +35,7 @@ export async function getStaticPaths() {
 const { page } = Astro.props;
 
 const globalSettings  = await getGlobalSettings().catch(() => null);
-const favicon         = globalSettings?.logos?.favicon?.source_url || globalSettings?.logos?.favicon?.sourceUrl || '';
+const favicon         = globalSettings?.logos?.favicon?.source_url || '';
 
 const seo     = page.yoast_head_json;
 const title   = page.title?.rendered || '';

@@ -23,8 +23,8 @@ let mobileMenuItems: any[]  = [];
 
 try {
   const globalSettings  = await getGlobalSettings();
-  logoLight             = globalSettings.logos?.light?.source_url || globalSettings.logos?.light?.sourceUrl || '';
-  logoDark              = globalSettings.logos?.dark?.source_url || globalSettings.logos?.dark?.sourceUrl || '';
+  logoLight             = globalSettings.logos?.light?.source_url || '';
+  logoDark              = globalSettings.logos?.dark?.source_url || '';
   logoAlt               = globalSettings.logos?.light?.alt_text || 'Ridge Marketing';
 } catch (e) {
   console.warn('Failed to fetch global settings for header:', e);
